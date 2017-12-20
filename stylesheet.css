@@ -1,0 +1,13 @@
+.form {
+    float: left;
+    width: 60%;
+}
+
+.result {
+    float: right;
+    width: 35%;
+}
+
+.display {
+    width: 300px;
+}

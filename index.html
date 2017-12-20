@@ -1,0 +1,111 @@
+    <!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='UTF-8'>
+    <link rel="stylesheet" href="stylesheet.css">
+    <script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+    <title> Image Masker </title>
+  </head>
+  <body>
+    <h1> Image Masker </h1>
+    <div class="form">
+      <form id='masker'>
+      <fieldset> 
+        <p> 
+          Source Image URL:
+          <input type='text' placeholder='Your Image' id='original' size=60 onblur="loadSourceImage()" value="https://i.imgur.com/Dk6yehI.jpg"/>
+        </p>
+      </fieldset>
+      <fieldset>
+        <p>
+          Enter Opacity (0-100):
+          <input type='text' id='alpha' value=100>
+        </p>
+      </fieldset>
+      <fieldset>
+        <p>
+          Pick a mask to use.
+        </p>
+        <img width='125' height='125' src='images/1.png' onclick='loadMaskImage(this)' />
+        <img width='125' height='125' src='images/2.png' onclick='loadMaskImage(this)' />
+        <img width='125' height='125' src='images/3.png' onclick='loadMaskImage(this)' />
+        <img width='125' height='125' src='images/4.png' onclick='loadMaskImage(this)' />
+        <img width='125' height='125' src='images/5.png' onclick='loadMaskImage(this)' />
+      </fieldset>
+    </form>
+  </div>
+  <div class="result">
+    <canvas id='canvas'></canvas>
+    <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur"/>
+  </div>
+  <script type="text/javascript" src="js/fabric.min.js"></script>
+  <script>
+    var baseImage = null;
+    var maskImage = null;
+    var finalImage = null;
+    var height, width;
+    var mask = null;
+    var canvas = new fabric.Canvas("canvas");
+    
+    function addProxyToUrl(baseUrl) {
+        return baseUrl;
+        //return url = "https://cors-anywhere.herokuapp.com/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
+    }
+
+    function loadSourceImage() {
+        sourceImageUrl = addProxyToUrl(document.getElementById('original').value);
+        fabric.util.loadImage(sourceImageUrl, function(_baseImage) {
+            baseImage = _baseImage;
+            height = _baseImage.height;
+            width = _baseImage.width;
+            canvas.setHeight(height).setWidth(width);
+            canvas.setBackgroundImage(new fabric.Image(_baseImage), canvas.renderAll.bind(canvas), {
+                width: width,
+                height: height,
+                originX: 0,
+                originY: 0
+            });
+        }, null, "Anonymous");
+    }
+    loadSourceImage();
+
+    function loadMaskImage(selectedMask) {
+        alpha = document.getElementById('alpha').value / 100;
+        maskImageUrl = selectedMask.src;
+        fabric.util.loadImage(maskImageUrl, function(_maskImage) {
+            maskImage = _maskImage;
+            if (finalImage) {
+                canvas.remove(finalImage);
+            }
+            finalImage = new fabric.Image(maskImage).set();
+            finalImage.set('opacity', alpha);
+            canvas.add(finalImage);
+        }, null, "Anonymous");
+    }
+
+    function upload() {
+      var img = document.getElementById('canvas').toDataURL('image/png').split(',')[1];
+
+      $.ajax({
+          url: 'https://api.imgur.com/3/image',
+          type: 'post',
+          headers: {
+              Authorization: 'Client-ID 9c586fafe6ec100'
+          },
+          data: {
+              image: img
+          },
+          dataType: 'json',
+          success: function(response) {
+              if(response.success) {
+                  window.location = response.data.link;
+              }
+          }
+      });
+    document.getElementById('uploadbutton').value = "Uploading...";
+    document.getElementById('uploadbutton').disabled = true;
+
+    }
+</script>
+  </body>
+</html>
