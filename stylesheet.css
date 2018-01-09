@@ -1,13 +1,21 @@
-.form {
-    float: left;
-    width: 60%;
+body {
+	background-color: #f0f0f0;
+	margin: 30px;
 }
 
-.result {
-    float: right;
-    width: 35%;
+
+.tools {
+	grid-area: tools;
 }
 
-.display {
-    width: 300px;
+.preview {
+	grid-area: preview;
+}
+
+#container {
+	display: grid;
+	grid-gap: 40px;
+	grid-template-columns: 200px auto;
+	grid-template-areas: 
+		"tools preview"
 }
