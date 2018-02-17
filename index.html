@@ -25,15 +25,21 @@
       <img width='125' height='125' src='images/2.png' onclick='loadMaskImage(this)' />
       <img width='125' height='125' src='images/3.png' onclick='loadMaskImage(this)' />
       <img width='125' height='125' src='images/4.png' onclick='loadMaskImage(this)' />
-      <img width='125' height='125' src='images/5.png' onclick='loadMaskImage(this)' />
+      <div class="maskUpload">
+        <label for="uploadMask">
+          <img width='125' height='125' src='images/upload.png'/>
+        </label>
+        <input type="file" id="uploadMask" style="display: none;" onchange="uploadMaskImage(event)">
+      </div>
       </div>
       <div class="preview">
-        <canvas id='canvas'></canvas>
         <div class="buttons">
           <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" style="display: none;"/>
           <input type="text" id="uploadedUrl"  style="display: none;">
           <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
+          <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
         </div>
+        <canvas id='canvas'></canvas>
       </div>
     </div>
   <script type="text/javascript" src="js/fabric.min.js"></script>
@@ -71,6 +77,36 @@
     }
     loadSourceImage();
 
+    function uploadMaskImage(e) {
+      var filetype = e.target.files[0].type;
+      var url = URL.createObjectURL(e.target.files[0]);
+      alpha = document.getElementById('alpha').value / 100;
+
+      if (filetype === "image/png") {
+        if (finalImage) {
+          canvas.remove(finalImage);
+        }
+        fabric.Image.fromURL(url, function(img) {
+          img.set({
+            cornerSize: 15,
+            borderColor: "white",
+            cornerColor: "white",
+            transparentCorners: false,
+            hasRotatingPoint: false,
+            opacity: alpha
+          });
+          finalImage = img;
+          canvas.add(finalImage);
+        });
+        document.getElementById('uploadbutton').style.display = "inline-block";
+        document.getElementById('uploadbutton').value = "Upload to Imgur";
+        document.getElementById('uploadbutton').disabled = false;
+        document.getElementById('uploadedUrl').style.display = "none";
+        document.getElementById('copyToClipboard').style.display = "none";
+        document.getElementById('checkForRIS').style.display = "none";
+    }
+  }
+
     function loadMaskImage(selectedMask) {
         alpha = document.getElementById('alpha').value / 100;
         maskImageUrl = selectedMask.src;
@@ -94,6 +130,7 @@
         document.getElementById('uploadbutton').disabled = false;
         document.getElementById('uploadedUrl').style.display = "none";
         document.getElementById('copyToClipboard').style.display = "none";
+        document.getElementById('checkForRIS').style.display = "none";
     }
 
     function upload() {
@@ -115,6 +152,7 @@
                   document.getElementById('uploadbutton').style.display = "none";
                   document.getElementById('uploadedUrl').style.display = "inline-block";
                   document.getElementById('copyToClipboard').style.display = "inline-block";
+                  document.getElementById('checkForRIS').style.display = "inline-block";
               } else {
                 document.getElementById('uploadedUrl').value = "Failed to upload";
               }
@@ -128,6 +166,14 @@
       var copyText = document.getElementById("uploadedUrl");
       copyText.select();
       document.execCommand("Copy");
+    }
+
+    function checkRIS() {
+      var url = document.getElementById("uploadedUrl").value;
+      window.open("http://www.google.com/searchbyimage?image_url="+url);
+      window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&pageurl=http%3A%2F%2Fwww.squobble.com&imgurl="+url);
+      window.open("https://www.yandex.com/images/search?rpt=imageview&img_url="+url);
+      window.open("http://www.tineye.com/search/?url="+url);
     }
 </script>
   </body>

@@ -19,3 +19,6 @@ body {
 	grid-template-areas: 
 		"tools preview"
 }
+.buttons {
+	margin-bottom: 5px;
+}
