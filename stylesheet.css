@@ -27,3 +27,7 @@ body {
 .masks img {
     cursor: pointer;
 }
+
+.hidden {
+	display: none;
+}
