@@ -6,13 +6,30 @@ var mask = null;
 var realCanvas = new fabric.Canvas("realCanvas");
 var fakeCanvas = new fabric.Canvas("fakeCanvas");
 
+$("html").on("paste",function(event){
+
+var items = (event.clipboardData ||   event.originalEvent.clipboardData).items;
+for (index in items) {
+    var item = items[index];
+    if (item.kind === 'file') {
+        var blob = item.getAsFile();
+        var reader = new FileReader();
+        reader.onload = function(event){
+            loadSourceImage(event.target.result, false);
+            console.log(event.target.result)}; // data url!
+        reader.readAsDataURL(blob);
+    }
+}
+
+})
+
 function addProxyToUrl(baseUrl) {
   return url = "https://cors-anywhere.herokuapp.com/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
 }
 
 function checkURL(url) {
   if(url.match(/\.(jpeg|jpg|png)/) != null) {
-    loadSourceImage();
+    loadSourceImage(url, true);
   }
 }
 
@@ -39,13 +56,9 @@ function requiresResize(id, md) {
     return false;
 }
 
-function loadSourceImage() {
-    baseUrl = document.getElementById('original').value;
-    if (baseUrl == "") {
-        sourceImageUrl = "images/placeholder.png"
-    } else {
-        sourceImageUrl = addProxyToUrl(document.getElementById('original').value);
-    }
+function loadSourceImage(baseUrl, externalImage) {
+  if (externalImage == true) {
+    sourceImageUrl = addProxyToUrl(baseUrl);
     fabric.util.loadImage(sourceImageUrl, function(_baseImage) {
       if (_baseImage == null) {
         alert("Something went wrong while loading the image.");
@@ -65,8 +78,30 @@ function loadSourceImage() {
         scaleY: fakeCanvas.height / height
       });
     }, null, "Anonymous");
+  } else {
+      sourceImageUrl = baseUrl;
+      fabric.Image.fromURL(sourceImageUrl, function(img) {
+      baseImage = img;
+      fakeBaseImage = fabric.util.object.clone(img);
+      height = img.height;
+      width = img.width;
+      calculateDimensions(img.height, img.width);
+      fakeCanvas.setHeight(newHeight).setWidth(newWidth);
+      realCanvas.setHeight(height).setWidth(width);
+      realCanvas.setBackgroundImage(img, realCanvas.renderAll.bind(realCanvas), {
+          width: width,
+          height: height
+      });
+      fakeCanvas.setBackgroundImage(fakeBaseImage, fakeCanvas.renderAll.bind(fakeCanvas), {
+        scaleX: fakeCanvas.width / width,
+        scaleY: fakeCanvas.height / height
+      });
+    });
+  }
 }
-loadSourceImage();
+if (document.getElementById('original').value != '') {
+  loadSourceImage(document.getElementById('original').value, true);
+}
 
 function loadMask(selectedMask) {
   var url = "";
