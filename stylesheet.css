@@ -3,12 +3,24 @@ body {
 	margin: 30px;
 }
 
+#uploader {
+    position:fixed;
+    padding:0;
+    margin:0;
 
-.tools {
-	grid-area: tools;
+    top:0;
+    left:0;
+
+    width: 100%;
+    height: 100%;
+    background:rgba(255,255,255,0.5);
 }
 
-.preview {
+#masker {
+	grid-area: masker;
+}
+
+#preview {
 	grid-area: preview;
 }
 
@@ -17,17 +29,17 @@ body {
 	grid-gap: 40px;
 	grid-template-columns: 200px auto;
 	grid-template-areas: 
-		"tools preview"
+		"masker preview"
 }
 
-.buttons {
+#buttons {
 	margin-bottom: 5px;
 }
 
-.masks img {
+#masks img {
     cursor: pointer;
 }
 
-.hidden {
+#hidden {
 	display: none;
 }

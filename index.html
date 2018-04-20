@@ -8,42 +8,43 @@
     <title> Image Masker </title>
   </head>
   <body>
-    <h1> Image Masker </h1>
+		<div id="uploader">
+			<label for="imageUpload" style="cursor:pointer;">
+				Use paste or click anywhere to upload an image.
+			</label>
+			<input type="file" id="imageUpload" style="display: none;" onchange="uploadImage(event)">
+		</div>
     <div id="container">
-      <div class="tools">
-        <p> 
-          Source Image URL:
-          <input type='text' placeholder='Your Image' id='original' size=20 oninput="checkURL(this.value)" value=""/>
-        </p>
-        <p>
-          Enter Opacity (0-100):
-          <input type='text' id='alpha' value=100>
-        </p>
-      <p>
-        Pick a mask to use.
-      </p>
-      <div class="masks">
-        <img width='125' height='125' src='images/1.png' onclick='loadMask(this)'/>
-        <img width='125' height='125' src='images/2.png' onclick='loadMask(this)'/>
-        <img width='125' height='125' src='images/3.png' onclick='loadMask(this)'/>
-        <img width='125' height='125' src='images/4.png' onclick='loadMask(this)'/>
-        <label for="uploadMask" style="cursor: pointer;">
-          <img width='125' height='125' src='images/upload.png'/>
-        </label>
-        <input type="file" id="uploadMask" style="display: none;" onchange="loadMask(event)">
+			<div id="masker">
+				<div id="masks">
+	        <img width='125' height='125' src='images/1.png' onclick='loadMask(this)'/>
+	        <img width='125' height='125' src='images/2.png' onclick='loadMask(this)'/>
+	        <img width='125' height='125' src='images/3.png' onclick='loadMask(this)'/>
+	        <img width='125' height='125' src='images/4.png' onclick='loadMask(this)'/>
+	        <label for="uploadMask" style="cursor: pointer;">
+	          <img width='125' height='125' src='images/upload.png'/>
+	        </label>
+	        <input type="file" id="uploadMask" style="display: none;" onchange="loadMask(event)">
+      	</div>
+      	<div id="tools">
+        	Enter Opacity (0-100):
+        	<input type='text' id='alpha' value=100>
+      	</div>
       </div>
-    </div>
-      <div class="preview">
-        <div class="buttons">
+      <div id="preview">
+        <div id="buttons">
           <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" style="display: none;"/>
           <input type="text" id="uploadedUrl"  style="display: none;">
           <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
           <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
         </div>
-        <canvas id='fakeCanvas'></canvas>
+        <div id="previewImage">
+        	<img id='imagePreview'>
+        </div>
       </div>
     </div>
-    <div class="hidden">
+		<div id="hidden">
+			<input type='text' id='original'>
       <canvas id='realCanvas'></canvas>
     </div>
     <script src="js/masker.js"></script>

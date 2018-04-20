@@ -1,27 +1,35 @@
 var baseImage = null;
 var maskImage = null;
-var fakeMaskImage = null;
-var height, width, newHeight, newWidth;
+var height, width;
 var mask = null;
 var realCanvas = new fabric.Canvas("realCanvas");
-var fakeCanvas = new fabric.Canvas("fakeCanvas");
+document.getElementById('container').style.display = "none";
+
+
 
 $("html").on("paste",function(event){
-
-var items = (event.clipboardData ||   event.originalEvent.clipboardData).items;
-for (index in items) {
-    var item = items[index];
-    if (item.kind === 'file') {
-        var blob = item.getAsFile();
-        var reader = new FileReader();
-        reader.onload = function(event){
-            loadSourceImage(event.target.result, false);
-            console.log(event.target.result)}; // data url!
-        reader.readAsDataURL(blob);
+  if(event.originalEvent.clipboardData){
+    var items = event.originalEvent.clipboardData.items;
+    if (items) {
+      for (index in items) {
+        var item = items[index];
+        if (item.kind === 'file') {
+          var blob = item.getAsFile();
+          var source = URL.createObjectURL(blob);
+          loadSourceImage(source, false);
+          return;
+        } else if (item.kind === 'string') {
+            if(item.type == "text/plain") {
+              item.getAsString(function (s){
+              document.getElementById('original').value = s;
+              checkURL(s);
+            });
+          }
+        }
+      }
     }
-}
-
-})
+  }
+});
 
 function addProxyToUrl(baseUrl) {
   return url = "https://cors-anywhere.herokuapp.com/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
@@ -33,27 +41,30 @@ function checkURL(url) {
   }
 }
 
-function calculateDimensions(h, w) {
-  newHeight = h;
-  newWidth = w;
-  if (w > h) {
-    if (w > 1000) {
-      newHeight *= 1000/w;
-      newWidth = 1000;
-    }
-  } else {
-    if (h > 1000) {
-      newWidth *= 1000/h;
-      newHeight = 1000;
-    }
-  }
-}
-
 function requiresResize(id, md) {
   if (id > md)
     return true;
   else
     return false;
+}
+
+function updatePreview() {
+  var image = document.getElementById('imagePreview');
+  realCanvas.renderAll();
+  image.src = realCanvas.toDataURL('image/jpeg', 1.0);
+  if(realCanvas.width > realCanvas.height) {
+    image.width = 700;
+  } else {
+    image.height = 700;
+  }
+}
+
+function uploadImage(e) {
+  var filetype = e.target.files[0].type;
+  url = URL.createObjectURL(e.target.files[0]);
+  if (filetype == "image/png" || filetype == "image/jpeg") {
+    loadSourceImage(url, false);
+  }
 }
 
 function loadSourceImage(baseUrl, externalImage) {
@@ -66,42 +77,34 @@ function loadSourceImage(baseUrl, externalImage) {
       baseImage = _baseImage;
       height = _baseImage.height;
       width = _baseImage.width;
-      calculateDimensions(_baseImage.height, _baseImage.width);
-      fakeCanvas.setHeight(newHeight).setWidth(newWidth);
       realCanvas.setHeight(height).setWidth(width);
       realCanvas.setBackgroundImage(new fabric.Image(_baseImage), realCanvas.renderAll.bind(realCanvas), {
           width: width,
           height: height
       });
-      fakeCanvas.setBackgroundImage(new fabric.Image(_baseImage), fakeCanvas.renderAll.bind(fakeCanvas), {
-        scaleX: fakeCanvas.width / width,
-        scaleY: fakeCanvas.height / height
-      });
+      updatePreview();
     }, null, "Anonymous");
   } else {
       sourceImageUrl = baseUrl;
       fabric.Image.fromURL(sourceImageUrl, function(img) {
       baseImage = img;
-      fakeBaseImage = fabric.util.object.clone(img);
       height = img.height;
       width = img.width;
-      calculateDimensions(img.height, img.width);
-      fakeCanvas.setHeight(newHeight).setWidth(newWidth);
       realCanvas.setHeight(height).setWidth(width);
       realCanvas.setBackgroundImage(img, realCanvas.renderAll.bind(realCanvas), {
           width: width,
           height: height
       });
-      fakeCanvas.setBackgroundImage(fakeBaseImage, fakeCanvas.renderAll.bind(fakeCanvas), {
-        scaleX: fakeCanvas.width / width,
-        scaleY: fakeCanvas.height / height
-      });
+      updatePreview();
     });
   }
+  document.getElementById('uploader').style.display = "none";
+  document.getElementById('container').style.display = "grid";
 }
-if (document.getElementById('original').value != '') {
-  loadSourceImage(document.getElementById('original').value, true);
-}
+
+// if (document.getElementById('original').value != '') {
+//   loadSourceImage(document.getElementById('original').value, true);
+// }
 
 function loadMask(selectedMask) {
   var url = "";
@@ -114,36 +117,37 @@ function loadMask(selectedMask) {
   } else {
     url = selectedMask.src;
   }
+
   alpha = document.getElementById('alpha').value / 100;
+
   if (maskImage) {
-    fakeCanvas.remove(fakeMaskImage);
     realCanvas.remove(maskImage);
   }
+
   fabric.Image.fromURL(url, function(img) {
     img.set('opacity', alpha);
     maskImage = img;
-    fakeMaskImage = fabric.util.object.clone(img);
     if (requiresResize(width, img.width)) {
       maskImage.set('scaleX', realCanvas.width / img.width);
-      fakeMaskImage.set('scaleX', fakeCanvas.width / maskImage.width);
     }
     if(requiresResize(height, img.height)) {
       maskImage.set('scaleY', realCanvas.height / img.height);
-      fakeMaskImage.set('scaleY', fakeCanvas.height / maskImage.height);
     }
     realCanvas.add(maskImage);
-    fakeCanvas.add(fakeMaskImage);
+    updatePreview();
   });
+
   document.getElementById('uploadbutton').style.display = "inline-block";
   document.getElementById('uploadbutton').value = "Upload to Imgur";
   document.getElementById('uploadbutton').disabled = false;
   document.getElementById('uploadedUrl').style.display = "none";
   document.getElementById('copyToClipboard').style.display = "none";
   document.getElementById('checkForRIS').style.display = "none";
+  updatePreview();
 }
 
 function upload() {
-  var img = document.getElementById('realCanvas').toDataURL('image/png').split(',')[1];
+  var img = document.getElementById('realCanvas').toDataURL('image/jpeg', 1.0).split(',')[1];
 
   $.ajax({
     url: 'https://api.imgur.com/3/image',
