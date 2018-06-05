@@ -9,26 +9,29 @@
   </head>
   <body>
 		<div id="uploader">
-			<label for="imageUpload" style="cursor:pointer;">
-				Use paste or click anywhere to upload an image.
+			<label id="uploadlabel" for="imageUpload" style="cursor:pointer;">
+				Use paste or click here to upload an image.
 			</label>
 			<input type="file" id="imageUpload" style="display: none;" onchange="uploadImage(event)">
 		</div>
     <div id="container">
 			<div id="masker">
+        <div id="tools">
+          Enter Opacity (0-100):
+          <input type='text' id='alpha' value=100>
+        </div>
+        <br>
 				<div id="masks">
-	        <img width='125' height='125' src='images/1.png' onclick='loadMask(this)'/>
-	        <img width='125' height='125' src='images/2.png' onclick='loadMask(this)'/>
-	        <img width='125' height='125' src='images/3.png' onclick='loadMask(this)'/>
-	        <img width='125' height='125' src='images/4.png' onclick='loadMask(this)'/>
+          Pick a mask:
+          <br>
+	        <img width='145' height='145' src='images/1.png' onclick='loadMask(this)'/>
+	        <img width='145' height='145' src='images/2.png' onclick='loadMask(this)'/>
+	        <img width='145' height='145' src='images/3.png' onclick='loadMask(this)'/>
+	        <img width='145' height='145' src='images/4.png' onclick='loadMask(this)'/>
 	        <label for="uploadMask" style="cursor: pointer;">
-	          <img width='125' height='125' src='images/upload.png'/>
+	          <img width='145' height='145' src='images/upload.png'/>
 	        </label>
 	        <input type="file" id="uploadMask" style="display: none;" onchange="loadMask(event)">
-      	</div>
-      	<div id="tools">
-        	Enter Opacity (0-100):
-        	<input type='text' id='alpha' value=100>
       	</div>
       </div>
       <div id="preview">
@@ -44,7 +47,6 @@
       </div>
     </div>
 		<div id="hidden">
-			<input type='text' id='original'>
       <canvas id='realCanvas'></canvas>
     </div>
     <script src="js/masker.js"></script>

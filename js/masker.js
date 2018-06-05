@@ -1,6 +1,6 @@
 var baseImage = null;
 var maskImage = null;
-var height, width;
+var imageHeight, imageWidth;
 var mask = null;
 var realCanvas = new fabric.Canvas("realCanvas");
 document.getElementById('container').style.display = "none";
@@ -21,7 +21,6 @@ $("html").on("paste",function(event){
         } else if (item.kind === 'string') {
             if(item.type == "text/plain") {
               item.getAsString(function (s){
-              document.getElementById('original').value = s;
               checkURL(s);
             });
           }
@@ -68,32 +67,31 @@ function uploadImage(e) {
 }
 
 function loadSourceImage(baseUrl, externalImage) {
+  var randomResize = Math.random() * 0.1 + 0.9;
   if (externalImage == true) {
     sourceImageUrl = addProxyToUrl(baseUrl);
-    fabric.util.loadImage(sourceImageUrl, function(_baseImage) {
-      if (_baseImage == null) {
+    fabric.util.loadImage(sourceImageUrl, function(img) {
+      if (img == null) {
         alert("Something went wrong while loading the image.");
       }
-      baseImage = _baseImage;
-      height = _baseImage.height;
-      width = _baseImage.width;
-      realCanvas.setHeight(height).setWidth(width);
+      imageHeight = img.height * randomResize;
+      imageWidth = img.width * randomResize;
+      realCanvas.setHeight(imageHeight).setWidth(imageWidth);
       realCanvas.setBackgroundImage(new fabric.Image(_baseImage), realCanvas.renderAll.bind(realCanvas), {
-          width: width,
-          height: height
+          width: imageWidth,
+          height: imageHeight
       });
       updatePreview();
     }, null, "Anonymous");
   } else {
       sourceImageUrl = baseUrl;
       fabric.Image.fromURL(sourceImageUrl, function(img) {
-      baseImage = img;
-      height = img.height;
-      width = img.width;
-      realCanvas.setHeight(height).setWidth(width);
+      imageHeight = img.height * randomResize;
+      imageWidth = img.width * randomResize;
+      realCanvas.setHeight(imageHeight).setWidth(imageWidth);
       realCanvas.setBackgroundImage(img, realCanvas.renderAll.bind(realCanvas), {
-          width: width,
-          height: height
+          width: imageWidth,
+          height: imageHeight
       });
       updatePreview();
     });
@@ -101,10 +99,6 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('uploader').style.display = "none";
   document.getElementById('container').style.display = "grid";
 }
-
-// if (document.getElementById('original').value != '') {
-//   loadSourceImage(document.getElementById('original').value, true);
-// }
 
 function loadMask(selectedMask) {
   var url = "";
@@ -124,14 +118,14 @@ function loadMask(selectedMask) {
     realCanvas.remove(maskImage);
   }
 
-  fabric.Image.fromURL(url, function(img) {
-    img.set('opacity', alpha);
-    maskImage = img;
-    if (requiresResize(width, img.width)) {
-      maskImage.set('scaleX', realCanvas.width / img.width);
+  fabric.Image.fromURL(url, function(mask) {
+    mask.set('opacity', alpha);
+    maskImage = mask;
+    if (requiresResize(imageWidth, mask.width)) {
+      maskImage.set('scaleX', realCanvas.width / mask.width);
     }
-    if(requiresResize(height, img.height)) {
-      maskImage.set('scaleY', realCanvas.height / img.height);
+    if(requiresResize(imageHeight, mask.height)) {
+      maskImage.set('scaleY', realCanvas.height / mask.height);
     }
     realCanvas.add(maskImage);
     updatePreview();
