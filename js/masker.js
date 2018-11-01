@@ -67,31 +67,31 @@ function uploadImage(e) {
 }
 
 function loadSourceImage(baseUrl, externalImage) {
-  var randomResize = Math.random() * 0.1 + 0.9;
+  var resizeFactor = Math.random() * 0.1 + 0.9;
   if (externalImage == true) {
     sourceImageUrl = addProxyToUrl(baseUrl);
     fabric.util.loadImage(sourceImageUrl, function(img) {
       if (img == null) {
         alert("Something went wrong while loading the image.");
       }
-      imageHeight = img.height * randomResize;
-      imageWidth = img.width * randomResize;
-      realCanvas.setHeight(imageHeight).setWidth(imageWidth);
-      realCanvas.setBackgroundImage(new fabric.Image(_baseImage), realCanvas.renderAll.bind(realCanvas), {
-          width: imageWidth,
-          height: imageHeight
+      canvasHeight = img.height * resizeFactor;
+      canvasWidth = img.width * resizeFactor;
+      realCanvas.setHeight(canvasHeight).setWidth(canvasWidth);
+      realCanvas.setBackgroundImage(new fabric.Image(img), realCanvas.renderAll.bind(realCanvas), {
+          scaleX: realCanvas.width / img.width,
+          scaleY: realCanvas.height / img.height
       });
       updatePreview();
     }, null, "Anonymous");
   } else {
       sourceImageUrl = baseUrl;
       fabric.Image.fromURL(sourceImageUrl, function(img) {
-      imageHeight = img.height * randomResize;
-      imageWidth = img.width * randomResize;
-      realCanvas.setHeight(imageHeight).setWidth(imageWidth);
+      canvasHeight = img.height * resizeFactor;
+      canvasWidth = img.width * resizeFactor;
+      realCanvas.setHeight(canvasHeight).setWidth(canvasWidth);
       realCanvas.setBackgroundImage(img, realCanvas.renderAll.bind(realCanvas), {
-          width: imageWidth,
-          height: imageHeight
+          scaleX: realCanvas.width / img.width,
+          scaleY: realCanvas.height / img.height
       });
       updatePreview();
     });
