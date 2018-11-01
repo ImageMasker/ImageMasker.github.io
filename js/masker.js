@@ -1,6 +1,6 @@
 var baseImage = null;
 var maskImage = null;
-var imageHeight, imageWidth;
+var canvasHeight, canvasWidth;
 var mask = null;
 var realCanvas = new fabric.Canvas("realCanvas");
 document.getElementById('container').style.display = "none";
@@ -121,10 +121,10 @@ function loadMask(selectedMask) {
   fabric.Image.fromURL(url, function(mask) {
     mask.set('opacity', alpha);
     maskImage = mask;
-    if (requiresResize(imageWidth, mask.width)) {
+    if (requiresResize(canvasWidth, mask.width)) {
       maskImage.set('scaleX', realCanvas.width / mask.width);
     }
-    if(requiresResize(imageHeight, mask.height)) {
+    if(requiresResize(canvasHeight, mask.height)) {
       maskImage.set('scaleY', realCanvas.height / mask.height);
     }
     realCanvas.add(maskImage);
