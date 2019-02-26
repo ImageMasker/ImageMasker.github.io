@@ -1,16 +1,46 @@
+body {
+    font-family: "Roboto", "Arial", sans-serif;
+    margin: 1%;
+}
+
 #uploadlabel {
-	border: 1px solid white;
+    display: block;
 	text-align: center;
+    font-size: 300%;
 	color:#000;
 	margin: auto;
     width: 100%;
     height: 100%;
-    display: block;
-
+    position: absolute;
+    top: 25%;
+    
 }
 
 #masker {
 	grid-area: masker;
+}
+
+#tools {
+    height: 10%;
+    border: solid;
+    border-radius: 5px;
+    padding: 6px;
+    padding-left: 12px;
+    margin: 0px;
+    
+}
+
+#alpha {
+    margin-top: 3px;
+}
+
+#masks {
+    margin-top: -8px;
+    border: solid;
+    border-radius: 5px;
+    display: inline-block;
+    padding: 6px;
+    padding-left: 12px;
 }
 
 #preview {
@@ -19,8 +49,8 @@
 
 #container {
 	display: grid;
-	grid-gap: 40px;
-	grid-template-columns: 300px auto;
+	grid-gap: 10px;
+	grid-template-columns: 325px auto;
 	grid-template-areas: 
 		"masker preview"
 }
