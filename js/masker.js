@@ -141,6 +141,7 @@ function loadMask(selectedMask) {
       maskImage.set('scaleY', 0.5);
     }
     maskImage.rotate(Math.random()*6 - 3);
+    maskImage.set({transformMatrix: [ 1, Math.random()/4, Math.random()/4, 1, 0, 0 ]});
     maskImage.set('originX', 'center');
     maskImage.set('originY', 'center');
     maskImage.set('top', realCanvas.height/2);

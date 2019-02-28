@@ -1,16 +1,66 @@
+body {
+    font-family: "Roboto", "Arial", sans-serif;
+	margin: 1%;
+	background-color:#eee;
+}
+
 #uploadlabel {
-	border: 1px solid white;
+    display: block;
 	text-align: center;
+    font-size: 300%;
 	color:#000;
 	margin: auto;
-    width: 100%;
-    height: 100%;
-    display: block;
+    width: 75%;
+    height: 50%;
+	margin-top: 25vh;
+	line-height: 5em;
+	background-color: rgb(240, 214, 181);
+    transition: 0.5s;
+}
 
+#uploadlabel:hover{
+	background-color: rgb(233, 187, 144);
+}
+
+#uploader{
+	margin: 0 auto;
+	display: block;
+}
+
+br~img{
+	transition: 0.5s;
+	border-radius: 5%;
+}
+
+img:hover{
+	background-color: white;
 }
 
 #masker {
 	grid-area: masker;
+}
+
+#tools {
+    height: 10%;
+    border: 2px solid #555;
+    border-radius: 5px;
+    padding: 6px;
+    padding-left: 12px;
+    margin: 0px;
+    
+}
+
+#alpha {
+    margin-top: 3px;
+}
+
+#masks {
+    margin-top: -8px;
+    border: 2px solid #555;
+    border-radius: 5px;
+    display: inline-block;
+    padding: 6px;
+    padding-left: 12px;
 }
 
 #preview {
@@ -19,8 +69,8 @@
 
 #container {
 	display: grid;
-	grid-gap: 40px;
-	grid-template-columns: 300px auto;
+	grid-gap: 10px;
+	grid-template-columns: 325px auto;
 	grid-template-areas: 
 		"masker preview"
 }
@@ -33,6 +83,29 @@
     cursor: pointer;
 }
 
+
 #hidden {
 	display: none;
+}
+
+#buttons button, #buttons :first-child{
+	background-color: rgb(236, 140, 116);
+	color: white;
+	border: none;
+	padding: 10px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	transition: 0.5s;
+}
+
+#buttons button:hover, #buttons :first-child:hover{
+	background-color: rgb(240, 161, 142);
+}
+
+#alpha{
+	background-color:#ccc;
+	color: rgb(26, 26, 26);
+	border: none;
+	padding: 10px;
 }
