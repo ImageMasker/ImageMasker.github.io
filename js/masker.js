@@ -41,7 +41,14 @@ function checkURL(url) {
 }
 
 function requiresResize(id, md) {
-  if (id > md)
+  if (1.2*id > md)
+    return true;
+  else
+    return false;
+}
+
+function requiresMinimize(id, md) {
+  if (4*id < md)
     return true;
   else
     return false;
@@ -127,6 +134,17 @@ function loadMask(selectedMask) {
     if(requiresResize(canvasHeight, mask.height)) {
       maskImage.set('scaleY', realCanvas.height / mask.height);
     }
+    if (requiresMinimize(canvasWidth, mask.width)) {
+      maskImage.set('scaleX', 0.5);
+    }
+    if(requiresMinimize(canvasHeight, mask.height)) {
+      maskImage.set('scaleY', 0.5);
+    }
+    maskImage.rotate(Math.random()*6 - 3);
+    maskImage.set('originX', 'center');
+    maskImage.set('originY', 'center');
+    maskImage.set('top', realCanvas.height/2);
+    maskImage.set('left', realCanvas.width/2);
     realCanvas.add(maskImage);
     updatePreview();
   });
