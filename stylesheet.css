@@ -1,21 +1,22 @@
 body {
     font-family: "Roboto", "Arial", sans-serif;
 	margin: 1%;
-	background-color:#eee;
+	background-color:rgb(240, 236, 228);
 }
 
 #uploadlabel {
     display: block;
 	text-align: center;
-    font-size: 300%;
-	color:#000;
+    font-size: 3vw;
+	color:rgb(63, 63, 63);
 	margin: auto;
     width: 75%;
     height: 50%;
 	margin-top: 25vh;
 	line-height: 5em;
 	background-color: rgb(240, 214, 181);
-    transition: 0.5s;
+	transition: 0.5s;
+	border-radius: 20px;
 }
 
 #uploadlabel:hover{
@@ -27,7 +28,7 @@ body {
 	display: block;
 }
 
-br~img{
+br~img, label img{
 	transition: 0.5s;
 	border-radius: 5%;
 }
@@ -46,13 +47,49 @@ img:hover{
     border-radius: 5px;
     padding: 6px;
     padding-left: 12px;
-    margin: 0px;
+	margin: 0px;
+	background:  rgb(247, 229, 205);
+	line-height: 30px;
     
 }
 
 #alpha {
-    margin-top: 3px;
+	margin-top: 3px;
+	display:inline-block;
+	line-height: 0;
+
+	-webkit-appearance: none;
+	appearance: none;
+	background-color:rgb(231, 199, 173);
+	outline: none;
+	height: 10px;
+	border: none;
+	opacity: 0.5;
+	width: 50%;
+	padding: 10px;
+	transition: 0.5s;
 }
+
+#alpha:hover{
+	background-color:rgb(236, 212, 192);
+}
+
+#alpha::-webkit-slider-thumb{
+	-webkit-appearance: none;
+	appearance: none;
+	background: rgb(224, 146, 82);
+	width: 5px;
+	height: 20px;
+}
+
+#sliderValue{
+	display: inline-block;
+	line-height: 0;
+	margin-top: 0.75em;
+	vertical-align: top;
+	font-size: 1.5em;
+}
+
 
 #masks {
     margin-top: -8px;
@@ -60,7 +97,8 @@ img:hover{
     border-radius: 5px;
     display: inline-block;
     padding: 6px;
-    padding-left: 12px;
+	padding-left: 12px;
+	background: rgb(247, 229, 205);
 }
 
 #preview {
@@ -68,7 +106,7 @@ img:hover{
 }
 
 #container {
-	display: grid;
+	display: none;
 	grid-gap: 10px;
 	grid-template-columns: 325px auto;
 	grid-template-areas: 
@@ -103,9 +141,48 @@ img:hover{
 	background-color: rgb(240, 161, 142);
 }
 
-#alpha{
-	background-color:#ccc;
-	color: rgb(26, 26, 26);
+#roundTitle, #uploadedUrl{
 	border: none;
+	background-color: rgb(238, 168, 150);
+	color: white;
 	padding: 10px;
+	display: none;
+}
+
+#PostReddit{
+	margin-top: 10px;
+}
+
+#roundTitle::placeholder{
+	color: white;
+}
+
+#mobilePaste{
+	display: none;
+	text-align: center;
+	padding: 20px;
+}
+
+#mobilePaste input{
+	background-color :rgb(240, 214, 181);
+	border: none;
+	width: 40vw;
+	height: 75px;
+	color:rgb(63, 63, 63);
+	padding: 10px;
+	margin-bottom: 10px;
+	font-size: 150%
+}
+
+/*#mobilePaste button{
+	border: none;
+	background-color :rgb(226, 207, 182);
+	color:rgb(63, 63, 63);
+	height: 60px;
+}*/
+
+@media screen and (max-aspect-ratio: 11/16) {
+	#mobilePaste{
+		display: block;
+	}
 }

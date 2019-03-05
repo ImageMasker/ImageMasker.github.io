@@ -1,55 +1,69 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset='UTF-8'>
-    <link rel="stylesheet" href="stylesheet.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/2.0.1/fabric.min.js"></script>
-    <title> Image Masker </title>
-  </head>
-  <body>
-		<div id="uploader">
-			<label id="uploadlabel" for="imageUpload" style="cursor:pointer;">
-				Use paste or click here to upload an image.
-			</label>
-			<input type="file" id="imageUpload" style="display: none;" onchange="uploadImage(event)">
-		</div>
-    <div id="container">
-			<div id="masker">
-        <div id="tools">
-          Enter Opacity (0-100):
-          <input type='text' id='alpha' value=100>
-        </div>
+
+<head>
+  <meta charset='UTF-8'>
+  <link rel="stylesheet" href="stylesheet.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/2.0.1/fabric.min.js"></script>
+  <title> Image Masker </title>
+  <link rel="icon" href="images/favicon.png">
+</head>
+
+<body>
+  <div id="uploader">
+    <label id="uploadlabel" for="imageUpload" style="cursor:pointer;">
+      Use paste or click here to upload an image.
+    </label>
+    <input type="file" id="imageUpload" style="display: none;" onchange="uploadImage(event)">
+  </div>
+  <div id="mobilePaste">
+    <input id="pastedURL" type="url" placeholder="Or paste the image URL here...">
+    <!--<button onclick="submitURL()" type="button">Upload</button>-->
+  </div>
+  <div id="container">
+    <div id="masker">
+      <div id="tools">
+        Set Opacity (0-100):
         <br>
-				<div id="masks">
-          Pick a mask:
-          <br>
-	        <img width='145' height='145' src='images/1.png' onclick='loadMask(this)'/>
-	        <img width='145' height='145' src='images/2.png' onclick='loadMask(this)'/>
-	        <img width='145' height='145' src='images/3.png' onclick='loadMask(this)'/>
-          <img width='145' height='145' src='images/4.png' onclick='loadMask(this)'/>
-          <img width='145' height='145' src='images/5.png' onclick='loadMask(this)'/>
-	        <label for="uploadMask" style="cursor: pointer;">
-	          <img width='145' height='145' src='images/upload.png'/>
-	        </label>
-	        <input type="file" id="uploadMask" style="display: none;" onchange="loadMask(event)">
-      	</div>
-      </div>
-      <div id="preview">
-        <div id="buttons">
-          <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" style="display: none;"/>
-          <input type="text" id="uploadedUrl"  style="display: none;">
-          <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
-          <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
-        </div>
-        <div id="previewImage">
-        	<img id='imagePreview'>
+        <div id="slider">
+          <input type="range" min="0" max="100" value="100" id="alpha" oninput="updateSlider()">
+          <span id="sliderValue">100</span>
         </div>
       </div>
+      <br>
+      <div id="masks">
+        Pick a mask:
+        <br>
+        <img width='145' height='145' src='images/1.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/2.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/3.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/4.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/5.png' onclick='loadMask(this)' />
+        <label for="uploadMask" style="cursor: pointer;">
+          <img width='145' height='145' src='images/upload.png' />
+        </label>
+        <input type="file" id="uploadMask" style="display: none;" onchange="loadMask(event)">
+      </div>
     </div>
-		<div id="hidden">
-      <canvas id='realCanvas'></canvas>
+    <div id="preview">
+      <div id="buttons">
+        <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" style="display: none;" />
+        <input type="text" id="uploadedUrl" style="display: none;">
+        <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
+        <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
+        <input type="text" id="roundTitle" placeholder="Round Title">
+        <button type="button" id="PostReddit" onclick="postReddit()" style="display: none;">Submit to /r/PictureGame</button>
+      </div>
+      <div id="previewImage">
+        <img id='imagePreview'>
+      </div>
     </div>
-    <script src="js/masker.js"></script>
-  </body>
+  </div>
+  <div id="hidden">
+    <canvas id='realCanvas'></canvas>
+  </div>
+  <script src="js/masker.js"></script>
+</body>
+
 </html>
