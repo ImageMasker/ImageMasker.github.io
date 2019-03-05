@@ -143,13 +143,12 @@ function loadMask(selectedMask) {
     if (requiresResize(canvasHeight, mask.height)) {
       maskImage.set('scaleY', 1.3 * realCanvas.height / mask.height);
     }
-    if (requiresMinimize(canvasWidth, mask.width) || requiresMinimize(canvasHeight, mask.height)) {
+    if (requiresMinimize(canvasWidth, mask.width)){
       maskImage.set('scaleX', 0.5);
+    }
+    if(requiresMinimize(canvasHeight, mask.height)) {
       maskImage.set('scaleY', 0.5);
     }
-    /*if(requiresMinimize(canvasHeight, mask.height)) {
-      maskImage.set('scaleY', 0.5);
-    }*/
     maskImage.rotate(Math.random() * 4 - 2);
     maskImage.set({ transformMatrix: [1, Math.random() / 5, Math.random() / 5, 1, 0, 0] });
     maskImage.set('originX', 'center');
