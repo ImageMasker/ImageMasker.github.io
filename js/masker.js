@@ -448,8 +448,7 @@ function deleteImage(){
   localStorage.setItem('answers', listAnswers);
 
   if (imagesArray.length == 0){
-    //document.getElementById("savedRounds").style.display = "none";
-    displaySavedRounds(0);
+    document.getElementById("savedRounds").style.display = "none";
   } else{
     i=0;
     displaySavedRounds(3);
