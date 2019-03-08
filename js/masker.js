@@ -129,6 +129,8 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('uploader').style.display = "none";
   document.getElementById('mobilePaste').style.display = "none";
   document.getElementById('container').style.display = "grid";
+  document.getElementById('uploadbutton').style.visibility = "visible";
+  //document.getElementById('myMasks').style.display = "grid";
   document.getElementById('savedRounds').style.display = "none";
   document.getElementById('displayRounds').style.display = "none";
 }
@@ -164,7 +166,7 @@ function loadMask(selectedMask) {
     if (requiresMinimize(canvasWidth, mask.width) || requiresMinimize(canvasHeight, mask.height)) {
       //maskImage.set('scaleX', 0.5);
       //maskImage.set('scaleY', 0.5);
-      slider.value = 30;
+      slider.value = 40;
     }
     maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
     maskImage.set('scaleY', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
@@ -179,7 +181,6 @@ function loadMask(selectedMask) {
   });
 
   //it would be better to use a class and hide them in one line
-  document.getElementById('uploadbutton').style.display = "inline-block";
   document.getElementById('uploadbutton').value = "Upload to Imgur";
   document.getElementById('uploadbutton').disabled = false;
   document.getElementById('uploadedUrl').style.display = "none";
@@ -438,3 +439,14 @@ function deleteImage(){
   }
 
 }
+/*
+function addMask(){
+  var br = document.getElementById("br");
+  var maskURL = document.getElementById("maskURL");
+  var url = maskURL.value;
+  if (url.substring(0,4) != "http"){
+    url = "https://" + url;
+  }
+  br.insertAdjacentHTML('afterend', "<img width='145' height='145' src=\"" + url + "\" onclick='loadMask(this)' />")
+  
+}*/

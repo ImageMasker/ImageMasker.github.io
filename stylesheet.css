@@ -28,7 +28,7 @@ body {
 	display: block;
 }
 
-br~img, label img{
+br~img, label img, button~img{
 	transition: 0.5s;
 	border-radius: 5%;
 }
@@ -149,6 +149,11 @@ img:hover{
 	
 }
 
+#uploadbutton{
+	display: block !important;
+	visibility: hidden;
+}
+
 #displayRounds{
 	border: none;
 	background-color: rgb(240, 214, 181);
@@ -245,7 +250,51 @@ img:hover{
 #previewImage{
 	display: none;
 }
+/*
+#myMasks{
+	display: none;
+	float: right;
+	position: absolute;
+	right: 5vw;
+	top: 10vh;
+	background:  rgb(247, 229, 205);
+	grid-gap: 10px;
+	grid-template-columns: 325px auto;
+}
 
+#myMasks img{
+	padding: 5px;
+	border: none;
+	margin-left: 20px;
+	cursor: pointer;
+}
+
+
+#myMasks input{
+	width: 80%;
+	margin-left: 20px;
+	height: 20px;
+	text-align: center;
+	border: none;
+	color: white;
+	border: none;
+	background-color: rgb(238, 168, 150);
+}
+
+#myMasks button{
+	width: 80%;
+	margin-left: 20px;
+	margin-top: 10px;
+	height: 20px;
+	border: none;
+	background-color: rgb(236, 140, 116);
+	color: white;
+	cursor: pointer;
+
+
+}
+*/
+/*Without this input mobile users can't paste URLs*/
 @media screen and (max-aspect-ratio: 11/16) {
 	#mobilePaste{
 		display: block;
@@ -280,7 +329,7 @@ body.night{
 	color: whitesmoke;
 }
 
-#uploadlabel.night, #displayRounds.night, #tools.night, #masks.night{
+#uploadlabel.night, #displayRounds.night, #tools.night, #masks.night, #myMasks.night{
 	background-color: rgb(52, 57, 107);
 	color: rgb(228, 226, 226);
 }
@@ -289,7 +338,7 @@ body.night{
 	background-color: rgb(71, 77, 146);
 }
 
-#buttons.night *, #buttons.night :first-child{
+#buttons.night *, #buttons.night :first-child, #myMasks button.night{
 	background-color: rgb(53, 44, 95);
 }
 
@@ -297,7 +346,7 @@ body.night{
 	background-color: rgb(53, 44, 95);
 }
 
-#displayedTitle.night, #displayedAnswer.night, #buttons.night input{
+#displayedTitle.night, #displayedAnswer.night, #buttons.night input, #myMasks input.night{
 	background-color: rgb(74, 59, 136);
 }
 
