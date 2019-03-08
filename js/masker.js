@@ -1,14 +1,13 @@
 var baseImage = null;
 var maskImage = null;
 var canvasHeight, canvasWidth;
+var imgHeight, imgWidth;
+var number;
 var mask = null;
-var imgInstance;
-var triangle;
 var canvas = new fabric.Canvas(document.getElementById('canvas'), {
   isDrawingMode: true
 });
 document.getElementById('container').style.display = "none";
-
 
 canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
@@ -91,8 +90,8 @@ function loadSourceImage(baseUrl, externalImage) {
       }
       canvasHeight = img.height * resizeFactor;
       canvasWidth = img.width * resizeFactor;
-      sessionStorage.setItem('height', img.height);
-      sessionStorage.setItem('width', img.width);
+      imgHeight = img.height;
+      imgWidth = img.width;
 
       canvas.setHeight(canvasHeight).setWidth(canvasWidth);
 
@@ -116,9 +115,8 @@ function loadSourceImage(baseUrl, externalImage) {
     fabric.Image.fromURL(sourceImageUrl, function (img) {
       canvasHeight = img.height * resizeFactor;
       canvasWidth = img.width * resizeFactor;
-      sessionStorage.setItem('height', img.height);
-      sessionStorage.setItem('width', img.width);
-
+      imgHeight = img.height;
+      imgWidth = img.width;
       canvas.setHeight(canvasHeight).setWidth(canvasWidth);
 
       if (img.height > img.width) {
@@ -211,16 +209,14 @@ function upload() {
   //canvas.isDrawingMode = false;
   document.getElementById('previewImage').style.display = "block";
   updatePreview();
-  var originalHeight = sessionStorage.getItem('height');
-  var originalWidth = sessionStorage.getItem('width');
-  if (originalHeight > originalWidth) {
-    canvas.setZoom(originalHeight / 800);
-    canvas.setWidth(canvas.width * originalHeight / 800);
-    canvas.setHeight(canvas.height * originalHeight / 800);
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(imgHeight / 800);
+    canvas.setWidth(canvas.width * imgHeight / 800);
+    canvas.setHeight(canvas.height * imgHeight / 800);
   } else {
-    canvas.setZoom(originalWidth / 800);
-    canvas.setWidth(canvas.width * originalWidth / 800);
-    canvas.setHeight(canvas.height * originalWidth / 800);
+    canvas.setZoom(imgWidth / 800);
+    canvas.setWidth(canvas.width * imgWidth / 800);
+    canvas.setHeight(canvas.height * imgWidth / 800);
   }
 
   setTimeout(imgurUpload, 500); 
@@ -320,13 +316,14 @@ function getRoundNumber() {
     var i = text.search("roundNumber\":");
     var roundNumber = text.substr(i + 13, 5);
     var nextRound = parseInt(roundNumber) + 1;
-    sessionStorage.setItem('round', nextRound);
+    number = nextRound;
+    //sessionStorage.setItem('round', nextRound);
   }
   request.send();
 }
 
 function postReddit(i) {
-  var number = sessionStorage.getItem('round');
+  //var number = sessionStorage.getItem('round');
   var round = "[Round " + number + "] ";
   if (i == 2) {
     var imageLink = document.getElementById("uploadedUrl").value;
