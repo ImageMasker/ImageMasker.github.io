@@ -10,9 +10,11 @@
   <link rel="icon" href="images/favicon.png">
 </head>
 
-<body>
+<body class="color">
+  <button id="night" onclick="toggle()">🌙</button>
+  <script src="js/night.js"></script>
   <div id="uploader">
-    <label id="uploadlabel" for="imageUpload" style="cursor:pointer;">
+    <label class="color" id="uploadlabel" for="imageUpload" style="cursor:pointer;">
       Paste image or click here to upload an image.
     </label>
     <input type="file" id="imageUpload" style="display: none;" onchange="uploadImage(event)">
@@ -20,20 +22,20 @@
   <div id="mobilePaste">
     <input id="pastedURL" type="url" placeholder="Or paste the image URL here...">
   </div>
-  <button id="displayRounds" type="button" onclick="displaySavedRounds(0)">Saved rounds</button>
+  <button class="color" id="displayRounds" type="button" onclick="displaySavedRounds(0)">Saved rounds</button>
   <div id="savedRounds">
-    <button id="left" onclick="displaySavedRounds(1)"> ◀ </button>
+    <button class="color" id="left" onclick="displaySavedRounds(1)"> ◀ </button>
     <img id="displayedImage">
-    <button id="right" onclick="displaySavedRounds(2)"> ▶ </button>
+    <button class="color" id="right" onclick="displaySavedRounds(2)"> ▶ </button>
     <br>
-    <input id="displayedTitle" placeholder="Round title" type="text"> <br>
-    <input id="displayedAnswer" placeholder="Round answer" type="text"> <br>
-    <button id="PostReddit2" onclick="postReddit(1)">Submit to /r/PictureGame</button><br>
-    <button id="delete" onclick="deleteImage()">Delete round</button>
+    <input class="color" id="displayedTitle" placeholder="Round title" type="text"> <br>
+    <input class="color" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
+    <button class="color" id="PostReddit2" onclick="postReddit(1)">Submit to /r/PictureGame</button><br>
+    <button class="color" id="delete" onclick="deleteImage()">Delete round</button>
   </div>
   <div id="container">
     <div id="masker">
-      <fieldset id="tools">
+      <fieldset class="color" id="tools">
         <legend>Tools</legend>
         Set Opacity:
         <br>
@@ -52,7 +54,7 @@
         </div>
       </fieldset>
       <br>
-      <fieldset id="masks">
+      <fieldset class="color" id="masks">
         <legend>Masks</legend>
         <br>
         <img width='145' height='145' src='images/1.png' onclick='loadMask(this)' />
@@ -67,7 +69,7 @@
       </fieldset>
     </div>
     <div id="preview">
-      <div id="buttons">
+      <div class="color" id="buttons">
         <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" style="display: none;" />
         <input type="text" id="uploadedUrl" style="display: none;">
         <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
@@ -78,7 +80,7 @@
           /r/PictureGame</button>
         <button type="button" id="Save" onclick="saveImage()" style="display: none;">Save round</button>
       </div>
-      <div  id="previewImage">
+      <div id="previewImage">
         <img id='imagePreview'>
       </div>
       <div id="canvasDiv">
@@ -89,6 +91,7 @@
   <!--<div id="hidden">
     <canvas id='canvas'></canvas>
   </div>-->
+  <script src="js/night.js"></script>
   <script src="js/masker.js"></script>
 </body>
 

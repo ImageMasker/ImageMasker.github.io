@@ -1,4 +1,3 @@
-var baseImage = null;
 var maskImage = null;
 var canvasHeight, canvasWidth;
 var imgHeight, imgWidth;
@@ -8,6 +7,7 @@ var canvas = new fabric.Canvas(document.getElementById('canvas'), {
   isDrawingMode: true
 });
 document.getElementById('container').style.display = "none";
+
 
 canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
@@ -90,11 +90,11 @@ function loadSourceImage(baseUrl, externalImage) {
       canvas.setHeight(canvasHeight).setWidth(canvasWidth);
 
       if (img.height > img.width) {
-        canvas.setWidth(canvasWidth * 800 / img.height);
-        canvas.setHeight(canvasHeight * 800 / img.height);
+        canvas.setWidth(canvasWidth * 900 / img.height);
+        canvas.setHeight(canvasHeight * 900 / img.height);
       } else {
-        canvas.setWidth(canvas.width * 800 / img.width);
-        canvas.setHeight(canvas.height * 800 / img.width);
+        canvas.setWidth(canvas.width * 900 / img.width);
+        canvas.setHeight(canvas.height * 900 / img.width);
       }
 
 
@@ -102,7 +102,6 @@ function loadSourceImage(baseUrl, externalImage) {
         scaleX: canvas.width / img.width,
         scaleY: canvas.height / img.height
       });
-      //updatePreview();
     }, null, "Anonymous");
   } else {
     sourceImageUrl = baseUrl;
@@ -114,18 +113,17 @@ function loadSourceImage(baseUrl, externalImage) {
       canvas.setHeight(canvasHeight).setWidth(canvasWidth);
 
       if (img.height > img.width) {
-        canvas.setWidth(canvasWidth * 800 / img.height);
-        canvas.setHeight(canvasHeight * 800 / img.height);
+        canvas.setWidth(canvasWidth * 900 / img.height);
+        canvas.setHeight(canvasHeight * 900 / img.height);
       } else {
-        canvas.setWidth(canvas.width * 800 / img.width);
-        canvas.setHeight(canvas.height * 800 / img.width);
+        canvas.setWidth(canvas.width * 900 / img.width);
+        canvas.setHeight(canvas.height * 900 / img.width);
       }
 
       canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
         scaleX: canvas.width / img.width,
         scaleY: canvas.height / img.height
       });
-      //updatePreview();
     });
   }
   document.getElementById('uploader').style.display = "none";
@@ -158,11 +156,9 @@ function loadMask(selectedMask) {
     maskImage = mask;
     var slider = document.getElementById("zoom");
     if (requiresResize(canvasWidth, mask.width)) {
-      //maskImage.set('scaleX', 1.3 * canvas.width / mask.width);
       slider.value = 70;
     }
     if (requiresResize(canvasHeight, mask.height)) {
-      //maskImage.set('scaleY', 1.3 * canvas.height / mask.height);
       slider.value = 70;
     }
     if (requiresMinimize(canvasWidth, mask.width) || requiresMinimize(canvasHeight, mask.height)) {
@@ -180,7 +176,6 @@ function loadMask(selectedMask) {
     maskImage.set('top', canvas.height / 2);
     maskImage.set('left', canvas.width / 2);
     canvas.add(maskImage);
-    //updatePreview();
   });
 
   //it would be better to use a class and hide them in one line
@@ -195,7 +190,6 @@ function loadMask(selectedMask) {
   document.getElementById('roundAnswer').style.display = "none";
   document.getElementById('savedRounds').style.display = "none";
   document.getElementById('displayRounds').style.display = "none";
-  //updatePreview();
 }
 
 function upload() {
@@ -204,13 +198,13 @@ function upload() {
   document.getElementById('previewImage').style.display = "block";
   updatePreview();
   if (imgHeight > imgWidth) {
-    canvas.setZoom(imgHeight / 800);
-    canvas.setWidth(canvas.width * imgHeight / 800);
-    canvas.setHeight(canvas.height * imgHeight / 800);
+    canvas.setZoom(imgHeight / 900);
+    canvas.setWidth(canvas.width * imgHeight / 900);
+    canvas.setHeight(canvas.height * imgHeight / 900);
   } else {
-    canvas.setZoom(imgWidth / 800);
-    canvas.setWidth(canvas.width * imgWidth / 800);
-    canvas.setHeight(canvas.height * imgWidth / 800);
+    canvas.setZoom(imgWidth / 900);
+    canvas.setWidth(canvas.width * imgWidth / 900);
+    canvas.setHeight(canvas.height * imgWidth / 900);
   }
 
   setTimeout(imgurUpload, 250); 
@@ -268,10 +262,11 @@ function copyUrl() {
 function checkRIS() {
   //"Fix" extra popups getting blocked
   var url = document.getElementById("uploadedUrl").value;
-  window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
+  window.open("http://www.tineye.com/search/?url=" + url);
   window.open("http://www.google.com/searchbyimage?image_url=" + url);
   window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
-  window.open("http://www.tineye.com/search/?url=" + url);
+  window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
+
 
 }
 
@@ -286,7 +281,6 @@ function updateOpacity() {
 function updateZoomer() {
   var text = document.getElementById("zoomSliderValue");
   var slider = document.getElementById("zoom");
-  //text.innerText = slider.value;
   maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
   maskImage.set('scaleY', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
   canvas.renderAll();
@@ -334,7 +328,7 @@ function saveImage() {
   var roundTitle = document.getElementById("roundTitle").value;
   var roundAnswer = document.getElementById("roundAnswer").value;
 
-  if (localStorage.getItem('images') == null) {
+  if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
     localStorage.setItem('images', imageURL);
     localStorage.setItem('titles', roundTitle);
     localStorage.setItem('answers', roundAnswer);
@@ -424,9 +418,9 @@ function deleteImage(){
   var answers = localStorage.getItem('answers');
   var answersArray = answers.split(";");
 
-  imagesArray.shift(i);
-  titlesArray.shift(i);
-  answersArray.shift(i);
+  imagesArray.splice(i,1);
+  titlesArray.splice(i,1);
+  answersArray.splice(i,1);
 
   listImages = imagesArray.join(";");
   listTitles = titlesArray.join(";");
