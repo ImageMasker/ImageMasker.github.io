@@ -35,12 +35,6 @@ $("html").on("paste", function (event) {
   }
 });
 
-/*function submitURL(){
-  var pastedURL = document.getElementById("pastedURL");
-  var urlString = pastedURL.value;
-  checkURL(urlString);
-}*/
-
 function addProxyToUrl(baseUrl) {
   return url = "https://cors-anywhere.herokuapp.com/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
 }
@@ -219,7 +213,7 @@ function upload() {
     canvas.setHeight(canvas.height * imgWidth / 800);
   }
 
-  setTimeout(imgurUpload, 500); 
+  setTimeout(imgurUpload, 250); 
   /*I had to set a timeout, otherwise the canvas size change isn't fast enough and the next 
   line doesn't know what to upload.. I'll leave it at 500ms just in case.*/
 
@@ -317,13 +311,11 @@ function getRoundNumber() {
     var roundNumber = text.substr(i + 13, 5);
     var nextRound = parseInt(roundNumber) + 1;
     number = nextRound;
-    //sessionStorage.setItem('round', nextRound);
   }
   request.send();
 }
 
 function postReddit(i) {
-  //var number = sessionStorage.getItem('round');
   var round = "[Round " + number + "] ";
   if (i == 2) {
     var imageLink = document.getElementById("uploadedUrl").value;
