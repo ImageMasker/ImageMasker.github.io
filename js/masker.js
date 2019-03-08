@@ -214,11 +214,11 @@ function upload() {
   var originalHeight = sessionStorage.getItem('height');
   var originalWidth = sessionStorage.getItem('width');
   if (originalHeight > originalWidth) {
-    canvas.setZoom(originalHeight / 800);
+    //canvas.setZoom(originalHeight / 800);
     canvas.setWidth(canvas.width * originalHeight / 800);
     canvas.setHeight(canvas.height * originalHeight / 800);
   } else {
-    canvas.setZoom(originalWidth / 800);
+    //canvas.setZoom(originalWidth / 800);
     canvas.setWidth(canvas.width * originalWidth / 800);
     canvas.setHeight(canvas.height * originalWidth / 800);
   }
