@@ -28,7 +28,7 @@ body {
 	display: block;
 }
 
-br~img, label img, button~img{
+br~img, label img{
 	transition: 0.5s;
 	border-radius: 5%;
 }
