@@ -150,7 +150,7 @@ img:hover{
 }
 
 #uploadbutton{
-	display: block !important;
+	display: none;
 	visibility: hidden;
 }
 
