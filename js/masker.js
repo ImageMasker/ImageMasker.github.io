@@ -177,9 +177,11 @@ function loadMask(selectedMask) {
     maskImage.set('left', canvas.width / 2);
     canvas.add(maskImage);
   });
-
+  
+  document.getElementById('uploadbutton').disabled = false;
   //it would be better to use a class and hide them in one line
-  document.getElementById('uploadbutton').value = "Upload to Imgur";
+  //Update: this isn't even necessary
+  /*document.getElementById('uploadbutton').value = "Upload to Imgur";
   document.getElementById('uploadbutton').disabled = false;
   document.getElementById('uploadedUrl').style.display = "none";
   document.getElementById('copyToClipboard').style.display = "none";
@@ -187,8 +189,9 @@ function loadMask(selectedMask) {
   document.getElementById('PostReddit').style.display = "none";
   document.getElementById('roundTitle').style.display = "none";
   document.getElementById('roundAnswer').style.display = "none";
+  document.getElementById('Save').style.display = "none";
   document.getElementById('savedRounds').style.display = "none";
-  document.getElementById('displayRounds').style.display = "none";
+  document.getElementById('displayRounds').style.display = "none";*/
 }
 
 function upload() {
@@ -256,12 +259,25 @@ function copyUrl() {
 function checkRIS() {
   //"Fix" extra popups getting blocked
   var url = document.getElementById("uploadedUrl").value;
+  window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
   window.open("http://www.tineye.com/search/?url=" + url);
   window.open("http://www.google.com/searchbyimage?image_url=" + url);
   window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
-  window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
-
-
+  
+  document.getElementById("previewImage").style.display = "none";
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * 800 / imgHeight);
+    canvas.setHeight(canvas.height * 800 / imgHeight);
+  } else {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * (1100 / imgWidth));
+    canvas.setHeight(canvas.height * (1100 / imgWidth));
+  }
+  document.getElementById('canvasDiv').style.display = "block";
+  document.getElementById('uploadbutton').style.display = "block";
+  document.getElementById('uploadbutton').disabled = false;
+  document.getElementById('uploadbutton').value = "Reupload";
 }
 
 function updateOpacity() {
