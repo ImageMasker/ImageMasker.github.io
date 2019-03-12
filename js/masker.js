@@ -247,14 +247,9 @@ function checkRIS() {
   var url = document.getElementById("uploadedUrl").value;
   var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if (isSafari) {
-    for (i = 0; i < 3; i++) {
-      var arrayRIS = ["https://www.yandex.com/images/search?rpt=imageview&img_url=",
-        "http://www.tineye.com/search/?url=", "http://www.google.com/searchbyimage?image_url="];
-      setTimeout(openTabs(arrayRIS[i]), 2000);
-      function openTabs(RISurl) {
-        window.open(RISurl + url);
-      }
-    }
+    setTimeout(function(){ window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url) }, 2000);
+    setTimeout(function(){ window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
+    setTimeout(function(){ window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
   } else {
     window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
     var popUp = window.open("http://www.tineye.com/search/?url=" + url);
