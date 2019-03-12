@@ -210,16 +210,7 @@ function upload() {
   setTimeout(imgurUpload, 250);
   function imgurUpload() {
 
-    //var img = document.getElementById('canvas').toDataURL('image/jpeg', 1.0).split(',')[1];
-
-    var ratio = window.devicePixelRatio;
-    var img = canvas.toDataURL(
-      {
-        format: 'png',
-        multiplier: 1,
-        width: imgWidth / ratio,
-        height: imgHeight / ratio
-      });
+    var img = document.getElementById('canvas').toDataURL('image/jpeg', 1.0).split(',')[1];
 
     $.ajax({
       url: 'https://api.imgur.com/3/image',
