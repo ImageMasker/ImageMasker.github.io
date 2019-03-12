@@ -84,28 +84,25 @@ function uploadDragnDrop(file) {
 
 function loadSourceImage(baseUrl, externalImage) {
 
-  var resizeFactor = Math.random() * 0.1 + 0.9;
+  //var resizeFactor = Math.random() * 0.1 + 0.9;
   if (externalImage == true) {
     sourceImageUrl = addProxyToUrl(baseUrl);
     fabric.util.loadImage(sourceImageUrl, function (img) {
       if (img == null) {
         alert("Something went wrong while loading the image.");
       }
-      canvasHeight = img.height * resizeFactor;
-      canvasWidth = img.width * resizeFactor;
       imgHeight = img.height;
       imgWidth = img.width;
 
-      canvas.setHeight(canvasHeight).setWidth(canvasWidth);
+      //canvas.setHeight(canvasHeight).setWidth(canvasWidth);
 
       if (img.height > img.width) {
-        canvas.setWidth(canvasWidth * 800 / img.height);
-        canvas.setHeight(canvasHeight * 800 / img.height);
+        canvas.setWidth((img.width * 800) / img.height);
+        canvas.setHeight(800);
       } else {
-        canvas.setWidth(canvas.width * 1100 / img.width);
-        canvas.setHeight(canvas.height * 1100 / img.width);
+        canvas.setWidth(1100);
+        canvas.setHeight((img.height * 1100) / img.width);
       }
-
 
       canvas.setBackgroundImage(new fabric.Image(img), canvas.renderAll.bind(canvas), {
         scaleX: canvas.width / img.width,
@@ -115,19 +112,25 @@ function loadSourceImage(baseUrl, externalImage) {
   } else {
     sourceImageUrl = baseUrl;
     fabric.Image.fromURL(sourceImageUrl, function (img) {
-      canvasHeight = img.height * resizeFactor;
-      canvasWidth = img.width * resizeFactor;
       imgHeight = img.height;
       imgWidth = img.width;
-      canvas.setHeight(canvasHeight).setWidth(canvasWidth);
 
+      if (img.height > img.width) {
+        canvas.setWidth((img.width * 800) / img.height);
+        canvas.setHeight(800);
+      } else {
+        canvas.setWidth(1100);
+        canvas.setHeight((img.height * 1100) / img.width);
+      }
+
+      /*
       if (img.height > img.width) {
         canvas.setWidth(canvasWidth * 800 / img.height);
         canvas.setHeight(canvasHeight * 800 / img.height);
       } else {
         canvas.setWidth(canvas.width * 1100 / img.width);
         canvas.setHeight(canvas.height * 1100 / img.width);
-      }
+      }*/
 
       canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
         scaleX: canvas.width / img.width,
@@ -308,7 +311,7 @@ function colorSelect() {
   canvas.freeDrawingBrush.color = color.value;
 }
 
-function postReddit(i) {
+function postReddit(oof) {
   var request = new XMLHttpRequest();
   request.open("GET", "https://api.picturegame.co/current", true);
   request.onload = () => {
@@ -317,7 +320,7 @@ function postReddit(i) {
     var roundNumber = text.substr(i + 13, 5);
     var nextRound = parseInt(roundNumber) + 1;
     var round = "[Round " + nextRound + "] ";
-    if (i == 2) {
+    if (oof == 2) {
       var imageLink = document.getElementById("uploadedUrl").value;
       var roundTitle = document.getElementById("roundTitle").value;
     } else {
