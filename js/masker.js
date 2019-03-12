@@ -265,7 +265,6 @@ function checkRIS() {
   window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
   window.open("http://www.google.com/searchbyimage?image_url=" + url);
 
-
   document.getElementById("previewImage").style.display = "none";
   if (imgHeight > imgWidth) {
     canvas.setZoom(1);
