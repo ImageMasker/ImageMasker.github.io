@@ -22,3 +22,9 @@ After you're done masking, everything's ready to upload the final image! Press "
 * "Save Round" button: this button will save the image link, the title and the answer to the localstorage of your browser. Saved rounds will be available through the main screen of the site. Just press "saved rounds" and you will see your rounds ready to be submitted to /r/PictureGame.
 
 The site also has a dark/light theme switch on the top right, your choice will be saved in the localstorage of your browser.
+
+
+Possible issues:
+* On displays that aren't 16:9 (like mobile devices or 4:3 monitors) there might be problems with the layout of the site
+* The size and quality of the output image depends on the zoom of the browser (why?)
+* The "on paste" listener is always on for the entire site, which is good, but it can be a problem if the user wants to add a custom mask. 
