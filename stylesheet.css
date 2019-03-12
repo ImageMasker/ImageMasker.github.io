@@ -63,6 +63,11 @@ img:hover{
 	margin-left: 10px;
 }
 
+#undo{
+	display: inline-block;
+	vertical-align: top;
+}
+
 #alpha, #zoom, #brushSize {
 	display:inline-block;
 	line-height: 0;
@@ -205,7 +210,7 @@ img:hover{
 }
 
 
-#buttons button, #buttons :first-child, #PostReddit2, #delete, #addMask, #clearMasks{
+#buttons button, #buttons :first-child, #PostReddit2, #delete, #addMask, #clearMasks, #undo{
 	background-color: rgb(236, 140, 116);
 	color: white;
 	border: none;
@@ -216,7 +221,7 @@ img:hover{
 	transition: 0.5s;
 }
 
-#buttons button:hover, #buttons :first-child:hover{
+#buttons button:hover, #buttons :first-child:hover, #undo:hover{
 	background-color: rgb(240, 161, 142);
 }
 
@@ -329,11 +334,11 @@ body.night{
 	background-color: rgb(71, 77, 146);
 }
 
-#buttons.night *, #buttons.night :first-child, #addMask.night, #clearMasks.night{
+#buttons.night *, #buttons.night :first-child, #addMask.night, #clearMasks.night, #undo.night{
 	background-color: rgb(53, 44, 95);
 }
 
-#buttons.night button:hover, #buttons.night :first-child:hover, #addMask.night:hover, #clearMasks.night:hover{
+#buttons.night button:hover, #buttons.night :first-child:hover, #addMask.night:hover, #clearMasks.night:hover, #undo.night:hover{
 	background-color: rgb(71, 77, 146);
 }
 

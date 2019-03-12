@@ -475,7 +475,7 @@ function deleteImage() {
 }
 */
 
-function addMask(){
+function addMask() {
   var br = document.getElementById("br");
   var uploadedMask = document.getElementById("customMaskURL").value;
   br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' /> ")
@@ -504,4 +504,12 @@ if (localStorage.getItem('masks') != null || localStorage.getItem('masks') != ""
   for (i = 0; i < masksArray.length; i++) {
     br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' /> ")
   }
-} else{}
+} else { }
+
+function undo() {
+  if (canvas._objects.length > 0) {
+    canvas._objects.pop();
+    canvas.renderAll();
+  }
+
+}
