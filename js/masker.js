@@ -265,6 +265,7 @@ function checkRIS() {
   window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
   window.open("http://www.google.com/searchbyimage?image_url=" + url);
 
+
   document.getElementById("previewImage").style.display = "none";
   if (imgHeight > imgWidth) {
     canvas.setZoom(1);
@@ -477,7 +478,7 @@ function deleteImage() {
 function addMask(){
   var br = document.getElementById("br");
   var uploadedMask = document.getElementById("customMaskURL").value;
-  br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' />")
+  br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' /> ")
 
   if (localStorage.getItem('masks') == null || localStorage.getItem('masks') == "") {
     localStorage.setItem('masks', uploadedMask);
@@ -501,6 +502,6 @@ if (localStorage.getItem('masks') != null || localStorage.getItem('masks') != ""
   var savedMasks = localStorage.getItem("masks");
   var masksArray = savedMasks.split(";");
   for (i = 0; i < masksArray.length; i++) {
-    br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' />")
+    br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' /> ")
   }
 } else{}
