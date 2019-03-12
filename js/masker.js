@@ -195,23 +195,31 @@ function loadMask(selectedMask) {
 
 function upload() {
   document.getElementById('canvasDiv').style.display = "none";
-  //canvas.isDrawingMode = false;
   document.getElementById('previewImage').style.display = "block";
   updatePreview();
   if (imgHeight > imgWidth) {
     canvas.setZoom(imgHeight / 800);
-    canvas.setWidth(canvas.width * imgHeight / 800);
-    canvas.setHeight(canvas.height * imgHeight / 800);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
   } else {
     canvas.setZoom(imgWidth / 1100);
-    canvas.setWidth(canvas.width * imgWidth / 1100);
-    canvas.setHeight(canvas.height * imgWidth / 1100);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
   }
 
   setTimeout(imgurUpload, 250);
   function imgurUpload() {
 
-    var img = document.getElementById('canvas').toDataURL('image/jpeg', 1.0).split(',')[1];
+    //var img = document.getElementById('canvas').toDataURL('image/jpeg', 1.0).split(',')[1];
+
+    var ratio = window.devicePixelRatio;
+    var img = canvas.toDataURL(
+      {
+        format: 'png',
+        multiplier: 1,
+        width: imgWidth / ratio,
+        height: imgHeight / ratio
+      });
 
     $.ajax({
       url: 'https://api.imgur.com/3/image',
