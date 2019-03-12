@@ -26,5 +26,5 @@ The site also has a dark/light theme switch on the top right, your choice will b
 
 Possible issues:
 * On displays that aren't 16:9 (like mobile devices or 4:3 monitors) there might be problems with the layout of the site
-* The size and quality of the output image depends on the zoom of the browser (why?) - If the zoom is less than 100% the output image will be larger. Example: For a 80% zoom, the output seems to be ~148% of the original size. However, this doesn't seem to happen for zoom levels over 100%. (why??)
+* The size and quality of the output image depends on the zoom of the browser (why?) - If the zoom is less than 100% the output image will be larger. Example: For a 80% zoom, the output seems to be ~148% of the original size. However, this doesn't seem to happen for zoom levels over 100%. It only seems to happen with images pasted from the clipboard, not links (why?? It should be exactly the same for both)
 * The "on paste" listener is always on for the entire site, which is good, but it can be a problem if the user wants to add a custom mask. 
