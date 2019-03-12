@@ -84,7 +84,7 @@ function uploadDragnDrop(file) {
 
 function loadSourceImage(baseUrl, externalImage) {
 
-  //var resizeFactor = Math.random() * 0.1 + 0.9;
+  var resizeFactor = Math.random() * 0.05 + 0.95;
   if (externalImage == true) {
     sourceImageUrl = addProxyToUrl(baseUrl);
     fabric.util.loadImage(sourceImageUrl, function (img) {
@@ -110,8 +110,8 @@ function loadSourceImage(baseUrl, externalImage) {
   } else {
     sourceImageUrl = baseUrl;
     fabric.Image.fromURL(sourceImageUrl, function (img) {
-      imgHeight = img.height;
-      imgWidth = img.width;
+      imgHeight = img.height * resizeFactor;
+      imgWidth = img.width * resizeFactor;
 
       if (img.height > img.width) {
         canvas.setWidth((img.width * 800) / img.height);
@@ -249,10 +249,9 @@ function checkRIS() {
   if (isSafari) {
     var arrayRIS = ["https://www.yandex.com/images/search?rpt=imageview&img_url=", "http://www.tineye.com/search/?url=", "https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=", "http://www.google.com/searchbyimage?image_url="]
     for (i=0; i<arrayRIS.length;i++){
-      setTimeout(openRIS(), 2000);
-      function openRIS(){
-        window.open(arrayRIS[i] + url);
-      }
+      setTimeout(function(){
+        window.open(arrayRIS[i] + url)
+      }, 2000);
     }
   } else {
     window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
