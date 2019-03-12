@@ -247,9 +247,10 @@ function checkRIS() {
   var url = document.getElementById("uploadedUrl").value;
   var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if (isSafari) {
-    var arrayRIS = ["https://www.yandex.com/images/search?rpt=imageview&img_url=", "http://www.tineye.com/search/?url=", "https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=", "http://www.google.com/searchbyimage?image_url="]
     for (i=0; i<arrayRIS.length;i++){
       setTimeout(function(){
+        var arrayRIS = ["https://www.yandex.com/images/search?rpt=imageview&img_url=", 
+        "http://www.tineye.com/search/?url=", "https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=", "http://www.google.com/searchbyimage?image_url="];
         window.open(arrayRIS[i] + url)
       }, 2000);
     }
@@ -262,7 +263,7 @@ function checkRIS() {
     else {
       popUp.focus();
     }
-    window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
+    //window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
     window.open("http://www.google.com/searchbyimage?image_url=" + url);
   }
 
@@ -448,33 +449,6 @@ function deleteImage() {
   }
 
 }
-
-/*function addMask(file) {
-  //mostly copied from http://paulrouget.com/miniuploader/
-  if (!file || !file.type.match(/image.*)) return;
-  var fd = new FormData();
-  fd.append("image", file);
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://api.imgur.com/3/image");
-  xhr.onload = function () {
-
-    var gridMasks = document.getElementById("masks");
-    var uploadedMask = JSON.parse(xhr.responseText).data.link;
-    gridMasks.insertAdjacentHTML('beforeend', "<img width='145' height='145' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' />")
-
-    if (localStorage.getItem('masks') == null || localStorage.getItem('masks') == "") {
-      localStorage.setItem('masks', uploadedMask);
-    } else {
-      var masks = localStorage.getItem('masks');
-      masks += ";" + uploadedMask;
-      localStorage.setItem('masks', masks);
-    }
-  }
-  xhr.setRequestHeader('Authorization', 'Client-ID 9c586fafe6ec100');
-  xhr.send(fd);
-
-}
-*/
 
 function addMask() {
   var br = document.getElementById("br");
