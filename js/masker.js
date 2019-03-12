@@ -247,7 +247,7 @@ function checkRIS() {
   var url = document.getElementById("uploadedUrl").value;
   var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if (isSafari) {
-    for (i=0; i<arrayRIS.length;i++){
+    for (i=0; i<4;i++){
       setTimeout(function(){
         var arrayRIS = ["https://www.yandex.com/images/search?rpt=imageview&img_url=", 
         "http://www.tineye.com/search/?url=", "https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=", "http://www.google.com/searchbyimage?image_url="];
