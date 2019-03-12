@@ -165,6 +165,15 @@ img:hover{
 	margin-top: 3em;
 	transform: translate(-50%, -50%);
 	font-size: 1.2em;
+	transition: 0.5s;
+}
+
+#displayRounds:hover{
+	background-color: rgb(233, 187, 144);
+}
+
+#displayRounds:focus{
+	outline:0;
 }
 
 #displayedTitle, #displayedAnswer{
@@ -196,7 +205,7 @@ img:hover{
 }
 
 
-#buttons button, #buttons :first-child, #PostReddit2, #delete{
+#buttons button, #buttons :first-child, #PostReddit2, #delete, #addMask, #clearMasks{
 	background-color: rgb(236, 140, 116);
 	color: white;
 	border: none;
@@ -211,7 +220,7 @@ img:hover{
 	background-color: rgb(240, 161, 142);
 }
 
-#roundTitle, #uploadedUrl, #displayedTitle, #roundAnswer, #displayedAnswer{
+#roundTitle, #uploadedUrl, #displayedTitle, #roundAnswer, #displayedAnswer, #customMaskURL{
 	border: none;
 	background-color: rgb(238, 168, 150);
 	color: white;
@@ -226,7 +235,7 @@ img:hover{
 	margin-top: 10px;
 }
 
-#roundTitle::placeholder, #roundAnswer::placeholder, #displayedTitle::placeholder, #displayedAnswer::placeholder{
+#roundTitle::placeholder, #roundAnswer::placeholder, #displayedTitle::placeholder, #displayedAnswer::placeholder, #customMaskURL::placeholder, #customMaskURL::placeholder{
 	color: rgb(230, 230, 230);
 }
 
@@ -250,50 +259,32 @@ img:hover{
 #previewImage{
 	display: none;
 }
-/*
-#myMasks{
-	display: none;
-	float: right;
-	position: absolute;
-	right: 5vw;
-	top: 10vh;
-	background:  rgb(247, 229, 205);
-	grid-gap: 10px;
-	grid-template-columns: 325px auto;
-}
 
-#myMasks img{
-	padding: 5px;
-	border: none;
-	margin-left: 20px;
-	cursor: pointer;
-}
-
-
-#myMasks input{
-	width: 80%;
-	margin-left: 20px;
-	height: 20px;
-	text-align: center;
-	border: none;
-	color: white;
-	border: none;
-	background-color: rgb(238, 168, 150);
-}
-
-#myMasks button{
-	width: 80%;
-	margin-left: 20px;
+#customMaskURL{
+	width: 92%;
+	margin-bottom: 10px;
 	margin-top: 10px;
-	height: 20px;
-	border: none;
-	background-color: rgb(236, 140, 116);
-	color: white;
-	cursor: pointer;
+}
 
+#addMask{
+	width: 49%;
+	font-size: 95%;
+}
+
+#clearMasks{
+	width: 49%;
+	font-size: 95%;
+}
+
+#addMask, #clearMasks{
+	border-radius: 5px;
+	margin-bottom: 5px;
 
 }
-*/
+
+#addMask:hover, #clearMasks:hover{
+	background-color: rgb(240, 161, 142);
+}
 /*Without this input mobile users can't paste URLs*/
 @media screen and (max-aspect-ratio: 11/16) {
 	#mobilePaste{
@@ -334,19 +325,19 @@ body.night{
 	color: rgb(228, 226, 226);
 }
 
-#uploadlabel.night:hover{
+#uploadlabel.night:hover, #displayRounds.night:hover{
 	background-color: rgb(71, 77, 146);
 }
 
-#buttons.night *, #buttons.night :first-child, #myMasks button.night{
+#buttons.night *, #buttons.night :first-child, #addMask.night, #clearMasks.night{
 	background-color: rgb(53, 44, 95);
 }
 
-#buttons.night button:hover, #buttons.night :first-child:hover{
-	background-color: rgb(53, 44, 95);
+#buttons.night button:hover, #buttons.night :first-child:hover, #addMask.night:hover, #clearMasks.night:hover{
+	background-color: rgb(71, 77, 146);
 }
 
-#displayedTitle.night, #displayedAnswer.night, #buttons.night input, #myMasks input.night, #pastedURL.night{
+#displayedTitle.night, #displayedAnswer.night, #buttons.night input, #myMasks input.night, #pastedURL.night, #customMaskURL.night{
 	background-color: rgb(74, 59, 136);
 }
 

@@ -7,6 +7,9 @@ var canvas = new fabric.Canvas(document.getElementById('canvas'), {
 });
 document.getElementById('container').style.display = "none";
 
+var uploadArea = document.getElementById('uploader');
+uploadArea.ondragover = function (e) { e.preventDefault() }
+uploadArea.ondrop = function (e) { e.preventDefault(); uploadDragnDrop(e.dataTransfer.files[0]); }
 
 canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
@@ -72,6 +75,13 @@ function uploadImage(e) {
   }
 }
 
+function uploadDragnDrop(file) {
+  var url = URL.createObjectURL(file);
+  loadSourceImage(url, false);
+  //it doesn't check, if the file is an image, 
+  //but I'll just assume they know they are uploading an image...
+}
+
 function loadSourceImage(baseUrl, externalImage) {
 
   var resizeFactor = Math.random() * 0.1 + 0.9;
@@ -130,7 +140,6 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('container').style.display = "grid";
   document.getElementById('uploadbutton').style.display = "block";
   document.getElementById('uploadbutton').style.visibility = "visible";
-  //document.getElementById('myMasks').style.display = "grid";
   document.getElementById('savedRounds').style.display = "none";
   document.getElementById('displayRounds').style.display = "none";
 }
@@ -170,28 +179,15 @@ function loadMask(selectedMask) {
     maskImage.set('scaleY', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
 
     maskImage.rotate(Math.random() * 4 - 2);
-    maskImage.set({ transformMatrix: [1, Math.random() / 5, Math.random() / 5, 1, 0, 0] });
+    maskImage.set({ transformMatrix: [1, (Math.random() / 5) - 0.1, (Math.random() / 5) - 0.1, 1, 0, 0] });
     maskImage.set('originX', 'center');
     maskImage.set('originY', 'center');
     maskImage.set('top', canvas.height / 2);
     maskImage.set('left', canvas.width / 2);
     canvas.add(maskImage);
   });
-  
+
   document.getElementById('uploadbutton').disabled = false;
-  //it would be better to use a class and hide them in one line
-  //Update: this isn't even necessary
-  /*document.getElementById('uploadbutton').value = "Upload to Imgur";
-  document.getElementById('uploadbutton').disabled = false;
-  document.getElementById('uploadedUrl').style.display = "none";
-  document.getElementById('copyToClipboard').style.display = "none";
-  document.getElementById('checkForRIS').style.display = "none";
-  document.getElementById('PostReddit').style.display = "none";
-  document.getElementById('roundTitle').style.display = "none";
-  document.getElementById('roundAnswer').style.display = "none";
-  document.getElementById('Save').style.display = "none";
-  document.getElementById('savedRounds').style.display = "none";
-  document.getElementById('displayRounds').style.display = "none";*/
 }
 
 function upload() {
@@ -257,13 +253,19 @@ function copyUrl() {
 }
 
 function checkRIS() {
-  //"Fix" extra popups getting blocked
   var url = document.getElementById("uploadedUrl").value;
   window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
-  window.open("http://www.tineye.com/search/?url=" + url);
-  window.open("http://www.google.com/searchbyimage?image_url=" + url);
+  var popUp = window.open("http://www.tineye.com/search/?url=" + url);
+  if (popUp == null || typeof (popUp) == 'undefined') {
+    alert('The other RIS sites were blocked by the browser. Please allow popups for this site.');
+  }
+  else {
+    popUp.focus();
+  }
   window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
-  
+  window.open("http://www.google.com/searchbyimage?image_url=" + url);
+
+
   document.getElementById("previewImage").style.display = "none";
   if (imgHeight > imgWidth) {
     canvas.setZoom(1);
@@ -445,14 +447,61 @@ function deleteImage() {
   }
 
 }
-/*
+
+/*function addMask(file) {
+  //mostly copied from http://paulrouget.com/miniuploader/
+  if (!file || !file.type.match(/image.*)) return;
+  var fd = new FormData();
+  fd.append("image", file);
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://api.imgur.com/3/image");
+  xhr.onload = function () {
+
+    var gridMasks = document.getElementById("masks");
+    var uploadedMask = JSON.parse(xhr.responseText).data.link;
+    gridMasks.insertAdjacentHTML('beforeend', "<img width='145' height='145' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' />")
+
+    if (localStorage.getItem('masks') == null || localStorage.getItem('masks') == "") {
+      localStorage.setItem('masks', uploadedMask);
+    } else {
+      var masks = localStorage.getItem('masks');
+      masks += ";" + uploadedMask;
+      localStorage.setItem('masks', masks);
+    }
+  }
+  xhr.setRequestHeader('Authorization', 'Client-ID 9c586fafe6ec100');
+  xhr.send(fd);
+
+}
+*/
+
 function addMask(){
   var br = document.getElementById("br");
-  var maskURL = document.getElementById("maskURL");
-  var url = maskURL.value;
-  if (url.substring(0,4) != "http"){
-    url = "https://" + url;
-  }
-  br.insertAdjacentHTML('afterend', "<img width='145' height='145' src=\"" + url + "\" onclick='loadMask(this)' />")
+  var uploadedMask = document.getElementById("customMaskURL").value;
+  br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' />")
 
-}*/
+  if (localStorage.getItem('masks') == null || localStorage.getItem('masks') == "") {
+    localStorage.setItem('masks', uploadedMask);
+  } else {
+    var masks = localStorage.getItem('masks');
+    masks += ";" + uploadedMask;
+    localStorage.setItem('masks', masks);
+  }
+}
+
+function clearMasks() {
+  var removedMasks = document.getElementsByClassName("myMasks");
+  for (i = 0; i < removedMasks.length; i++) {
+    removedMasks[i].style.display = "none";
+  }
+  localStorage.removeItem("masks");
+}
+
+var br = document.getElementById("br");
+if (localStorage.getItem('masks') != null || localStorage.getItem('masks') != "" || localStorage.getItem('masks') != undefined) {
+  var savedMasks = localStorage.getItem("masks");
+  var masksArray = savedMasks.split(";");
+  for (i = 0; i < masksArray.length; i++) {
+    br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' />")
+  }
+} else{}
