@@ -91,8 +91,8 @@ function loadSourceImage(baseUrl, externalImage) {
       if (img == null) {
         alert("Something went wrong while loading the image.");
       }
-      imgHeight = img.height;
-      imgWidth = img.width;
+      imgHeight = img.height * resizeFactor;
+      imgWidth = img.width * resizeFactor;
 
       if (img.height > img.width) {
         canvas.setWidth((img.width * 800) / img.height);
