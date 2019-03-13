@@ -468,19 +468,22 @@ function clearMasks() {
   localStorage.removeItem("masks");
 }
 
-var br = document.getElementById("br");
-if (localStorage.getItem('masks') != null || localStorage.getItem('masks') != "" || localStorage.getItem('masks') != undefined) {
-  var savedMasks = localStorage.getItem("masks");
-  var masksArray = savedMasks.split(";");
-  for (i = 0; i < masksArray.length; i++) {
-    br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' /> ")
-  }
-} else { }
-
 function undo() {
   if (canvas._objects.length > 0) {
     canvas._objects.pop();
     canvas.renderAll();
   }
+}
 
+if (localStorage.getItem('masks') != null || localStorage.getItem('masks') != "" || localStorage.getItem('masks') != undefined) {
+  loadMasks();
+}
+
+function loadMasks(){
+var br = document.getElementById("br");
+  var savedMasks = localStorage.getItem("masks");
+  var masksArray = savedMasks.split(";");
+  for (i = 0; i < masksArray.length; i++) {
+    br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' /> ")
+  }
 }
