@@ -247,9 +247,9 @@ function checkRIS() {
   var url = document.getElementById("uploadedUrl").value;
   var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if (isSafari) {
-    setTimeout(function(){ window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url) }, 2000);
-    setTimeout(function(){ window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
-    setTimeout(function(){ window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
+    setTimeout(function () { window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url) }, 2000);
+    setTimeout(function () { window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
+    setTimeout(function () { window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
   } else {
     window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
     var popUp = window.open("http://www.tineye.com/search/?url=" + url);
@@ -289,7 +289,6 @@ function updateOpacity() {
 }
 
 function updateZoomer() {
-  var text = document.getElementById("zoomSliderValue");
   var slider = document.getElementById("zoom");
   maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
   maskImage.set('scaleY', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
@@ -475,15 +474,70 @@ function undo() {
   }
 }
 
-if (localStorage.getItem('masks') != null || localStorage.getItem('masks') != "" || localStorage.getItem('masks') != undefined) {
+if (localStorage.getItem('masks') === null || localStorage.getItem('masks') === "") { } else {
+  //I don't know why I have to do it like this to avoid triggering loadMasks when masks is empty
   loadMasks();
 }
 
-function loadMasks(){
-var br = document.getElementById("br");
+function loadMasks() {
+  var br = document.getElementById("br");
   var savedMasks = localStorage.getItem("masks");
   var masksArray = savedMasks.split(";");
   for (i = 0; i < masksArray.length; i++) {
     br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' /> ")
   }
 }
+
+//Disable drawing mode while pressing shift (it allows to drag around the mask and doodles)
+$(document).on('keydown', function (e) {
+  if (e.shiftKey) {
+    canvas.isDrawingMode = false;
+  }
+});
+
+$(document).on('keyup', function (e) {
+  if (event.which == 16) {
+    canvas.isDrawingMode = true;
+  }
+});
+
+//undo on CTRL+Z
+$(document).on('keydown', function (e) {
+  if (e.ctrlKey && (e.which === 90)) {
+    undo();
+  }
+});
+
+var opac = 1;
+//Rotate masks with left and right arrows
+//Set opacity of selected object (masks or lines) with up and down arrows
+$(document).on('keydown', function (e) {
+  if (event.which == 37) {
+    var originalAngle = maskImage.get('angle');
+    maskImage.rotate(originalAngle - 2);
+    canvas.renderAll();
+  }
+  if (event.which == 39) {
+    var originalAngle = maskImage.get('angle');
+    maskImage.rotate(originalAngle + 2);
+    canvas.renderAll();
+  }
+  if (event.which == 40) {
+    var obj = canvas._objects[canvas._objects.length - 1];
+    //var obj = canvas.getActiveObject();
+    if (opac > 0.1) {
+      opac = opac - 0.1;
+    }
+    obj.set('opacity', opac);
+    canvas.renderAll();
+  }
+  if (event.which == 38) {
+    var obj = canvas._objects[canvas._objects.length - 1];
+    //var obj = canvas.getActiveObject();
+    if (opac <= 1) {
+      opac = opac + 0.1;
+    }
+    obj.set('opacity', opac);
+    canvas.renderAll();
+  }
+});
