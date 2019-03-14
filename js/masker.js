@@ -137,16 +137,8 @@ function loadSourceImage(baseUrl, externalImage) {
 }
 
 function loadMask(selectedMask) {
-  var url = "";
-  if ('target' in selectedMask) {
-    var filetype = selectedMask.target.files[0].type;
-    url = URL.createObjectURL(selectedMask.target.files[0]);
-    if (filetype != "image/png") {
-      return;
-    }
-  } else {
-    url = selectedMask.src;
-  }
+  thumbURL = selectedMask.src;
+  var url = thumbURL.replace("_thumb","");
 
   alpha = document.getElementById('alpha').value / 100;
 
