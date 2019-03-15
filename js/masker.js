@@ -15,7 +15,7 @@ canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
 
 $("html").on("paste", function (event) {
-  if (event.target.id === 'customMaskURL') {} else {
+  if (event.target.id === 'customMaskURL') { } else {
     if (event.originalEvent.clipboardData) {
       var items = event.originalEvent.clipboardData.items;
       if (items) {
@@ -511,16 +511,24 @@ var opac = 1;
 
 $(document).on('keydown', function (e) {
   if (event.which == 37) {
-    event.preventDefault()
-    var originalAngle = maskImage.get('angle');
-    maskImage.rotate(originalAngle - 2);
-    canvas.renderAll();
+    event.preventDefault();
+    if (document.getElementById("savedRounds").style.display == "block") {
+      displaySavedRounds(1);
+    } else {
+      var originalAngle = maskImage.get('angle');
+      maskImage.rotate(originalAngle - 2);
+      canvas.renderAll();
+    }
   }
   if (event.which == 39) {
     event.preventDefault()
-    var originalAngle = maskImage.get('angle');
-    maskImage.rotate(originalAngle + 2);
-    canvas.renderAll();
+    if (document.getElementById("savedRounds").style.display == "block") {
+      displaySavedRounds(2);
+    } else {
+      var originalAngle = maskImage.get('angle');
+      maskImage.rotate(originalAngle + 2);
+      canvas.renderAll();
+    }
   }
   if (event.which == 40) {
     event.preventDefault()
@@ -562,3 +570,5 @@ $(document).on('keydown', function (e) {
     newPost.innerText = "Post to /r/";
   }
 });
+
+localStorage.setItem("images", "https://i.imgur.com/m4eAYDz.jpg;https://i.imgur.com/jRv2wwV.jpg")
