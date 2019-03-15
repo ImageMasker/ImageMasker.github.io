@@ -9,7 +9,7 @@ ImageMasker can load images in different ways:
 
 Once the image is loaded, it will be displayed on a canvas. You can doodle on the canvas and add masks.
 Masks are slightly rotated and distorted to prevent other people from demasking them easily.
-There are a few default masks that you can choose, but you can also add your own masks and they will be saved in the browser. When adding a custom mask, try to drag and drop the URL into the text input or write it manually, if you paste it, it will be used as the image on the canvas.
+There are a few default masks that you can choose, but you can also add your own masks and they will be saved in the browser.
 You can set the opacity of the mask and change its zoom. You can also change the color and size of the brush.
 If you want to change the image you don't need to reload, just paste a different image and it will replace the old image.
 
@@ -25,8 +25,7 @@ The site also has a dark/light theme switch on the top right, your choice will b
 
 
 #### Possible issues:
-* On displays that aren't 16:9 (like mobile devices or 4:3 monitors) there might be problems with the layout of the site
-* The "on paste" listener is always on for the entire site, which is good, but it can be a problem if the user wants to add a custom mask. 
+* On displays that aren't 16:9 (like mobile devices or 4:3 monitors) there might be problems with the layout of the site (I tried to fix it but looks like each phone and browser might display it differently, so I'm not sure if there's a consistent solution).
 
 #### Extra feature: Keyboard shortcuts
 These keyboard shortcuts are features that weren't important enough to get a UI element, but can still be useful for some people. I didn't want to clutter the site with more tools for stuff that most people won't use. These key listeners shouldn't slow down the site since the events are only triggered when the key is pressed.
