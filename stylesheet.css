@@ -331,7 +331,7 @@ img:hover{
 	#tools, #masks{
 		display: block;
 		position: relative;
-		width:135vw;
+		width:355%;
 		height: 110%;
 		left: 5vw;
 		top: 3vh;
@@ -340,11 +340,8 @@ img:hover{
 	#preview{
 		position: absolute;
 		width: 200vw;
-		top: 49vh;
+		top: 53vh;
 		left: 5vh;
-	}
-	#canvasDiv{
-		top: 7vh;
 	}
 	#alpha, #zoom, #brushSize{
 		height: 50px;

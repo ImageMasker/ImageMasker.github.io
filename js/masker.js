@@ -15,21 +15,23 @@ canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
 
 $("html").on("paste", function (event) {
-  if (event.originalEvent.clipboardData) {
-    var items = event.originalEvent.clipboardData.items;
-    if (items) {
-      for (index in items) {
-        var item = items[index];
-        if (item.kind === 'file') {
-          var blob = item.getAsFile();
-          var source = URL.createObjectURL(blob);
-          loadSourceImage(source, false);
-          return;
-        } else if (item.kind === 'string') {
-          if (item.type == "text/plain") {
-            item.getAsString(function (s) {
-              checkURL(s);
-            });
+  if (event.target.id === 'customMaskURL') {} else {
+    if (event.originalEvent.clipboardData) {
+      var items = event.originalEvent.clipboardData.items;
+      if (items) {
+        for (index in items) {
+          var item = items[index];
+          if (item.kind === 'file') {
+            var blob = item.getAsFile();
+            var source = URL.createObjectURL(blob);
+            loadSourceImage(source, false);
+            return;
+          } else if (item.kind === 'string') {
+            if (item.type == "text/plain") {
+              item.getAsString(function (s) {
+                checkURL(s);
+              });
+            }
           }
         }
       }
@@ -486,9 +488,9 @@ function loadMasks() {
 //Disable drawing mode with SHIFT, enable it again pressing SHIFT
 $(document).on('keydown', function (e) {
   if (e.shiftKey) {
-    if(canvas.isDrawingMode == false){
+    if (canvas.isDrawingMode == false) {
       canvas.isDrawingMode = true;
-    } else{
+    } else {
       canvas.isDrawingMode = false;
     }
   }
@@ -522,9 +524,9 @@ $(document).on('keydown', function (e) {
   }
   if (event.which == 40) {
     event.preventDefault()
-    if (canvas.getActiveObject()){
+    if (canvas.getActiveObject()) {
       var obj = canvas.getActiveObject();
-    } else{
+    } else {
       var obj = canvas._objects[canvas._objects.length - 1];
     }
     if (opac > 0.1) {
@@ -535,9 +537,9 @@ $(document).on('keydown', function (e) {
   }
   if (event.which == 38) {
     event.preventDefault()
-    if (canvas.getActiveObject()){
+    if (canvas.getActiveObject()) {
       var obj = canvas.getActiveObject();
-    } else{
+    } else {
       var obj = canvas._objects[canvas._objects.length - 1];
     }
     if (opac <= 1) {
@@ -557,6 +559,6 @@ $(document).on('keydown', function (e) {
     newSubInput.style.display = "inline-block";
     var newSub = newSubInput.value;
     var newPost = document.getElementById('PostReddit');
-    newPost.innerText="Post to /r/";
+    newPost.innerText = "Post to /r/";
   }
 });
