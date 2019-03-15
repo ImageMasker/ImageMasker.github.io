@@ -570,5 +570,3 @@ $(document).on('keydown', function (e) {
     newPost.innerText = "Post to /r/";
   }
 });
-
-localStorage.setItem("images", "https://i.imgur.com/m4eAYDz.jpg;https://i.imgur.com/jRv2wwV.jpg")
