@@ -24,7 +24,13 @@ After you're done masking, everything's ready to upload the final image! Press "
 The site also has a dark/light theme switch on the top right, your choice will be saved in the localstorage of your browser.
 
 
-Possible issues:
+#### Possible issues:
 * On displays that aren't 16:9 (like mobile devices or 4:3 monitors) there might be problems with the layout of the site
-* The size and quality of the output image depends on the zoom of the browser (why?) - If the zoom is less than 100% the output image will be larger. Example: For a 80% zoom, the output seems to be ~148% of the original size. However, this doesn't seem to happen for zoom levels over 100%. It only seems to happen with images pasted from the clipboard, not links (why?? It should be exactly the same for both)
 * The "on paste" listener is always on for the entire site, which is good, but it can be a problem if the user wants to add a custom mask. 
+
+#### Extra feature: Keyboard shortcuts
+These keyboard shortcuts are features that weren't important enough to get a UI element, but can still be useful for some people. I didn't want to clutter the site with more tools for stuff that most people won't use. These key listeners shouldn't slow down the site since the events are only triggered when the key is pressed.
+* CTRL+Z: Undo (same as the button)
+* Hold SHIFT: Disable drawing mode so elements can be selected, resized and dragged. When SHIFT is released drawing mode is turned on again.
+* Up/down arrow keys: Change the opacity of the last element added to the canvas.
+* Left/right arrow keys: Rotate the mask.
