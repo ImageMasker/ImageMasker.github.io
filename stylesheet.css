@@ -4,6 +4,7 @@ body {
 	background-color:rgb(240, 236, 228);
 }
 
+/*** Top right buttons ***/
 #night, #github{
 	position: absolute;
 	top: 5px;
@@ -36,6 +37,7 @@ body {
 	background-color: rgb(255, 255, 255);
 }
 
+/*** Image upload button ***/ 
 #uploadlabel {
     display: block;
 	text-align: center;
@@ -59,6 +61,83 @@ body {
 	margin: 0 auto;
 	display: block;
 }
+
+/****Saved rounds******/
+#savedRounds{
+	display: none;
+	text-align: center;
+}
+
+#left, #right{
+	display: inline-block;
+	border: none;
+	background-color: rgb(255, 197, 88);
+	padding: 6px;
+	font-size: 1.8em;
+	width: 45px;
+	height: 45px;
+	border-radius: 100%;
+	margin-top: 7%;
+}
+
+#left{
+	float: left;
+	margin-left: 20vw;
+}
+
+#right{
+	float: right;
+	margin-right: 20vw;
+	margin-left: 0;
+}
+
+#displayedImage{
+	display: inline-block;
+	width: 40vw;
+	margin: 0 auto;
+	
+}
+
+#uploadbutton{
+	display: none;
+	visibility: hidden;
+}
+
+#displayRounds{
+	border: none;
+	background-color: rgb(240, 214, 181);
+	color:rgb(63, 63, 63);
+	height: 40px;
+	border-radius: 5px;
+	position: relative;
+	left: 50%;
+	margin-top: 3em;
+	transform: translate(-50%, -50%);
+	font-size: 1.2em;
+	transition: 0.5s;
+}
+
+#displayRounds:hover{
+	background-color: rgb(233, 187, 144);
+}
+
+#displayRounds:focus, #left:focus, #right:focus{
+	outline:0;
+}
+
+#displayedTitle, #displayedAnswer{
+	position: relative;
+	margin: 5px;
+	width: 300px;
+}
+
+#PostReddit2, #delete{
+	position: relative;
+	margin: 5px;
+	width: 200px;
+}
+
+/****Masks and tools****/
 
 br~img, label img{
 	transition: 0.5s;
@@ -150,80 +229,6 @@ img:hover{
 	grid-area: preview;
 }
 
-#savedRounds{
-	display: none;
-	text-align: center;
-}
-
-#left, #right{
-	display: inline-block;
-	border: none;
-	background-color: rgb(255, 197, 88);
-	padding: 6px;
-	font-size: 1.8em;
-	width: 45px;
-	height: 45px;
-	border-radius: 100%;
-	margin-top: 7%;
-}
-
-#left{
-	float: left;
-	margin-left: 20vw;
-}
-
-#right{
-	float: right;
-	margin-right: 20vw;
-	margin-left: 0;
-}
-
-#displayedImage{
-	display: inline-block;
-	width: 40vw;
-	margin: 0 auto;
-	
-}
-
-#uploadbutton{
-	display: none;
-	visibility: hidden;
-}
-
-#displayRounds{
-	border: none;
-	background-color: rgb(240, 214, 181);
-	color:rgb(63, 63, 63);
-	height: 40px;
-	border-radius: 5px;
-	position: relative;
-	left: 50%;
-	margin-top: 3em;
-	transform: translate(-50%, -50%);
-	font-size: 1.2em;
-	transition: 0.5s;
-}
-
-#displayRounds:hover{
-	background-color: rgb(233, 187, 144);
-}
-
-#displayRounds:focus, #left:focus, #right:focus{
-	outline:0;
-}
-
-#displayedTitle, #displayedAnswer{
-	position: relative;
-	margin: 5px;
-	width: 300px;
-}
-
-#PostReddit2, #delete{
-	position: relative;
-	margin: 5px;
-	width: 200px;
-}
-
 #container {
 	display: none;
 	grid-gap: 10px;
@@ -232,6 +237,7 @@ img:hover{
 		"masker preview"
 }
 
+/*****Buttons and inputs displayed after upload*****/
 #buttons {
 	margin-bottom: 5px;
 }
@@ -239,7 +245,6 @@ img:hover{
 #masks img {
     cursor: pointer;
 }
-
 
 #buttons button, #buttons :first-child, #PostReddit2, #delete, #addMask, #clearMasks, #undo{
 	background-color: rgb(236, 140, 116);
@@ -275,26 +280,11 @@ img:hover{
 	color: rgb(230, 230, 230);
 }
 
-#mobilePaste{
-	display: none;
-	text-align: center;
-	padding: 20px;
-}
-
-#mobilePaste input{
-	background-color :rgb(240, 214, 181);
-	border: none;
-	width: 40vw;
-	height: 75px;
-	color:rgb(63, 63, 63);
-	padding: 10px;
-	margin-bottom: 10px;
-	font-size: 150%
-}
-
 #previewImage{
 	display: none;
 }
+
+/*****Custom masks******/
 
 #customMaskURL{
 	width: 92%;
@@ -323,6 +313,24 @@ img:hover{
 }
 
 /*******mobile layout********/
+
+#mobilePaste{
+	display: none;
+	text-align: center;
+	padding: 20px;
+}
+
+#mobilePaste input{
+	background-color :rgb(240, 214, 181);
+	border: none;
+	width: 40vw;
+	height: 75px;
+	color:rgb(63, 63, 63);
+	padding: 10px;
+	margin-bottom: 10px;
+	font-size: 150%
+}
+
 @media screen and (max-aspect-ratio: 11/16) {
 	#mobilePaste{
 		display: block;
@@ -349,10 +357,7 @@ img:hover{
 	}
 }
 
-/*Night mode or: How I learned to stop worrying and added classes to everything.
-Problably not the best way to go about this*/
-
-
+/**********Dark theme**************/
 body.night{
 	background-color: rgb(24, 24, 34);
 	transition: 0.5s;
