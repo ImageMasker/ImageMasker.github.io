@@ -31,6 +31,8 @@ The site also has a dark/light theme switch on the top right, your choice will b
 #### Extra feature: Keyboard shortcuts
 These keyboard shortcuts are features that weren't important enough to get a UI element, but can still be useful for some people. I didn't want to clutter the site with more tools for stuff that most people won't use. These key listeners shouldn't slow down the site since the events are only triggered when the key is pressed.
 * CTRL+Z: Undo (same as the button)
-* Hold SHIFT: Disable drawing mode so elements can be selected, resized and dragged. When SHIFT is released drawing mode is turned on again.
-* Up/down arrow keys: Change the opacity of the last element added to the canvas.
+* SHIFT: Disable drawing mode so elements can be selected, resized and dragged. When SHIFT is pressed again drawing mode is turned off.
+* Up/down arrow keys: Change the opacity of the last element added to the canvas, or the element(s) you selected.
 * Left/right arrow keys: Rotate the mask.
+* Insert: Edit the subreddit to which you'll post the image.
+* Alt: Clone selected object. This can be useful if you need to set a double mask (but it's better if you choose a different image, that's why I didn't put this feature directly in a button). 
