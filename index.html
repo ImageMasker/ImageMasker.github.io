@@ -11,7 +11,8 @@
 </head>
 
 <body class="color">
-  <button id="night" onclick="toggle()">🌙</button>
+    <button id="night" onclick="toggle()">🌙</button>
+  <button id="github" onclick="window.open('https\:\/\/github.com/ImageMasker/ImageMasker.github.io')"></button>
   <script src="js/night.js"></script>
   <div id="uploader">
     <label class="color" id="uploadlabel" for="imageUpload" style="cursor:pointer;">
@@ -30,7 +31,7 @@
     <br>
     <input class="color" id="displayedTitle" placeholder="Round title" type="text"> <br>
     <input class="color" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
-    <button class="color" id="PostReddit2" onclick="postReddit(1)">Submit to /r/PictureGame</button><br>
+    <button class="color" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
     <button class="color" id="delete" onclick="deleteImage()">Delete round</button>
   </div>
   <div id="container">
@@ -58,11 +59,11 @@
       <fieldset class="color" id="masks">
         <legend>Masks</legend>
         <br>
-        <img width='145' height='145' src='images/1.png' onclick='loadMask(this)' />
-        <img width='145' height='145' src='images/2.png' onclick='loadMask(this)' />
-        <img width='145' height='145' src='images/3.png' onclick='loadMask(this)' />
-        <img width='145' height='145' src='images/4.png' onclick='loadMask(this)' />
-        <img width='145' height='145' src='images/5.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/1_thumb.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/2_thumb.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/3_thumb.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/4_thumb.png' onclick='loadMask(this)' />
+        <img width='145' height='145' src='images/5_thumb.png' onclick='loadMask(this)' />
         <br id="br">
         <input type="text" class="color" id="customMaskURL" placeholder="Mask URL (don't paste)">
         <br>
@@ -78,8 +79,9 @@
         <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
         <input type="text" id="roundTitle" placeholder="Round Title">
         <input type="text" id="roundAnswer" placeholder="Round Answer">
-        <button type="button" id="PostReddit" onclick="postReddit(2)" style="display: none;">Submit to
+        <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)" style="display: none;">Submit to
           /r/PictureGame</button>
+        <input type="text" id="newSubInput" placeholder="Subreddit" value="picturegame" style="display: none;">
         <button type="button" id="Save" onclick="saveImage()" style="display: none;">Save round</button>
       </div>
       <div id="previewImage">

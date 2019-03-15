@@ -91,8 +91,8 @@ function loadSourceImage(baseUrl, externalImage) {
       if (img == null) {
         alert("Something went wrong while loading the image.");
       }
-      imgHeight = img.height;
-      imgWidth = img.width;
+      imgHeight = img.height * resizeFactor;
+      imgWidth = img.width * resizeFactor;
 
       if (img.height > img.width) {
         canvas.setWidth((img.width * 800) / img.height);
@@ -134,19 +134,13 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('uploadbutton').style.visibility = "visible";
   document.getElementById('savedRounds').style.display = "none";
   document.getElementById('displayRounds').style.display = "none";
+  document.getElementById('night').style.display = "none";
+  document.getElementById('github').style.display = "none";
 }
 
 function loadMask(selectedMask) {
-  var url = "";
-  if ('target' in selectedMask) {
-    var filetype = selectedMask.target.files[0].type;
-    url = URL.createObjectURL(selectedMask.target.files[0]);
-    if (filetype != "image/png") {
-      return;
-    }
-  } else {
-    url = selectedMask.src;
-  }
+  thumbURL = selectedMask.src;
+  var url = thumbURL.replace("_thumb", "");
 
   alpha = document.getElementById('alpha').value / 100;
 
@@ -247,9 +241,9 @@ function checkRIS() {
   var url = document.getElementById("uploadedUrl").value;
   var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if (isSafari) {
-    setTimeout(function(){ window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url) }, 2000);
-    setTimeout(function(){ window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
-    setTimeout(function(){ window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
+    setTimeout(function () { window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url) }, 2000);
+    setTimeout(function () { window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
+    setTimeout(function () { window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
   } else {
     window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + url);
     var popUp = window.open("http://www.tineye.com/search/?url=" + url);
@@ -289,7 +283,6 @@ function updateOpacity() {
 }
 
 function updateZoomer() {
-  var text = document.getElementById("zoomSliderValue");
   var slider = document.getElementById("zoom");
   maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
   maskImage.set('scaleY', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
@@ -306,7 +299,7 @@ function colorSelect() {
   canvas.freeDrawingBrush.color = color.value;
 }
 
-function postReddit(oof) {
+function postReddit(oof, subreddit) {
   var request = new XMLHttpRequest();
   request.open("GET", "https://api.picturegame.co/current", true);
   request.onload = () => {
@@ -322,7 +315,7 @@ function postReddit(oof) {
       var imageLink = document.getElementById("displayedImage").src;
       var roundTitle = document.getElementById("displayedTitle").value;
     }
-    var redditLink = "http://www.reddit.com/r/picturegame/submit?url=" + imageLink + "&title=" + round + roundTitle;
+    var redditLink = "http://www.reddit.com/r/" + subreddit + "/submit?url=" + imageLink + "&title=" + round + roundTitle;
     window.open(redditLink);
   }
   request.send();
@@ -468,19 +461,102 @@ function clearMasks() {
   localStorage.removeItem("masks");
 }
 
-var br = document.getElementById("br");
-if (localStorage.getItem('masks') != null || localStorage.getItem('masks') != "" || localStorage.getItem('masks') != undefined) {
-  var savedMasks = localStorage.getItem("masks");
-  var masksArray = savedMasks.split(";");
-  for (i = 0; i < masksArray.length; i++) {
-    br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' /> ")
-  }
-} else { }
-
 function undo() {
   if (canvas._objects.length > 0) {
     canvas._objects.pop();
     canvas.renderAll();
   }
-
 }
+
+if (localStorage.getItem('masks') === null || localStorage.getItem('masks') === "") { } else {
+  //I don't know why I have to do it like this to avoid triggering loadMasks when masks is empty
+  loadMasks();
+}
+
+function loadMasks() {
+  var br = document.getElementById("br");
+  var savedMasks = localStorage.getItem("masks");
+  var masksArray = savedMasks.split(";");
+  for (i = 0; i < masksArray.length; i++) {
+    br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' /> ")
+  }
+}
+
+//*****************Keyboard shortcuts *********************/
+//Disable drawing mode with SHIFT, enable it again pressing SHIFT
+$(document).on('keydown', function (e) {
+  if (e.shiftKey) {
+    if(canvas.isDrawingMode == false){
+      canvas.isDrawingMode = true;
+    } else{
+      canvas.isDrawingMode = false;
+    }
+  }
+});
+
+//undo on CTRL+Z
+$(document).on('keydown', function (e) {
+  if (e.ctrlKey && (e.which === 90)) {
+    undo();
+  }
+});
+
+var opac = 1;
+//Rotate masks with left and right arrows
+//Set opacity of selected object (masks or lines) with up and down arrows
+//Clone object with ALT
+//Press "Insert" to choose a custom subreddit
+
+$(document).on('keydown', function (e) {
+  if (event.which == 37) {
+    event.preventDefault()
+    var originalAngle = maskImage.get('angle');
+    maskImage.rotate(originalAngle - 2);
+    canvas.renderAll();
+  }
+  if (event.which == 39) {
+    event.preventDefault()
+    var originalAngle = maskImage.get('angle');
+    maskImage.rotate(originalAngle + 2);
+    canvas.renderAll();
+  }
+  if (event.which == 40) {
+    event.preventDefault()
+    if (canvas.getActiveObject()){
+      var obj = canvas.getActiveObject();
+    } else{
+      var obj = canvas._objects[canvas._objects.length - 1];
+    }
+    if (opac > 0.1) {
+      opac = opac - 0.1;
+    }
+    obj.set('opacity', opac);
+    canvas.renderAll();
+  }
+  if (event.which == 38) {
+    event.preventDefault()
+    if (canvas.getActiveObject()){
+      var obj = canvas.getActiveObject();
+    } else{
+      var obj = canvas._objects[canvas._objects.length - 1];
+    }
+    if (opac <= 1) {
+      opac = opac + 0.1;
+    }
+    obj.set('opacity', opac);
+    canvas.renderAll();
+  }
+  if (event.which == 18) {
+    var object = fabric.util.object.clone(canvas.getActiveObject());
+    object.set("top", object.top + 7);
+    object.set("left", object.left + 7);
+    canvas.add(object);
+  }
+  if (e.which === 45) {
+    var newSubInput = document.getElementById('newSubInput');
+    newSubInput.style.display = "inline-block";
+    var newSub = newSubInput.value;
+    var newPost = document.getElementById('PostReddit');
+    newPost.innerText="Post to /r/";
+  }
+});
