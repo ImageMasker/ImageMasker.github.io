@@ -131,7 +131,12 @@ function loadSourceImage(baseUrl, externalImage) {
   }
   document.getElementById('uploader').style.display = "none";
   document.getElementById('mobilePaste').style.display = "none";
-  document.getElementById('container').style.display = "grid";
+  
+  if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+    document.getElementById('container').style.display = "block";
+   } else{
+    document.getElementById('container').style.display = "grid";
+   }
   document.getElementById('uploadbutton').style.display = "block";
   document.getElementById('uploadbutton').style.visibility = "visible";
   document.getElementById('savedRounds').style.display = "none";
