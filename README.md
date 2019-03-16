@@ -32,6 +32,7 @@ These keyboard shortcuts are features that weren't important enough to get a UI 
 * CTRL+Z: Undo (same as the button)
 * SHIFT: Disable drawing mode so elements can be selected, resized and dragged. When SHIFT is pressed again drawing mode is turned off.
 * Up/down arrow keys: Change the opacity of the last element added to the canvas, or the element(s) you selected.
-* Left/right arrow keys: Rotate the mask.
+* Left/right arrow keys: Rotate the mask. If you're viewing your saved rounds you can use left/right to browse them too.
 * Insert: Edit the subreddit to which you'll post the image.
 * Alt: Clone selected object. This can be useful if you need to set a double mask (but it's better if you choose a different image, that's why I didn't put this feature directly in a button). 
+* Instert: Edit default subreddit to which your image will be submitted (useful in case you want to save your rounds on a private subreddit).
