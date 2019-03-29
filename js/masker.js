@@ -200,7 +200,7 @@ function upload() {
   setTimeout(imgurUpload, 250);
   function imgurUpload() {
 
-    var img = document.getElementById('canvas').toDataURL('image/png', 1.0).split(',')[1];
+    var img = document.getElementById('canvas').toDataURL('image/jpeg', 1.0).split(',')[1];
 
     $.ajax({
       url: 'https://api.imgur.com/3/image',
