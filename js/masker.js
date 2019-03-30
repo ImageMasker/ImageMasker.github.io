@@ -367,6 +367,7 @@ function displaySavedRounds(direction) {
     } else if (direction == 2) {
       i++;
     } else if (direction == 0) {
+      i = 0;
       if (document.getElementById("savedRounds").style.display == "block") {
         document.getElementById("savedRounds").style.display = "none";
         return true;
