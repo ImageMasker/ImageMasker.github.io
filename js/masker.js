@@ -178,7 +178,7 @@ function loadMask(selectedMask) {
     maskImage.set('top', canvas.height / 2);
     maskImage.set('left', canvas.width / 2);
     canvas.add(maskImage);
-  });
+  }, {crossOrigin: 'Anonymous'});
 
   document.getElementById('uploadbutton').disabled = false;
 }
