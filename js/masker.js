@@ -148,8 +148,8 @@ function loadSourceImage(baseUrl, externalImage) {
 function loadMask(selectedMask) {
   thumbURL = selectedMask.src;
   //var url = thumbURL.replace("_thumb", "");
-  var maskArray = ["1", "6", "7", "8", "9"]
-  var url = "images/" + maskArray[Math.floor(Math.random() * 5)] + ".png";
+  var maskArray = ["1", "6", "7", "8", "9", "10"]
+  var url = "images/" + maskArray[Math.floor(Math.random() * 6)] + ".png";
 
   alpha = document.getElementById('alpha').value / 100;
 
