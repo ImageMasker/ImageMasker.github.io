@@ -2,7 +2,7 @@ var maskImage = null;
 var canvasHeight, canvasWidth;
 var imgHeight, imgWidth;
 var mask = null;
-var canvas = new fabric.Canvas(document.getElementById('canvas'), {
+var canvas = new fabric.Canvas('canvas', {
   isDrawingMode: true,
   enableRetinaScaling: false
 });
@@ -147,9 +147,7 @@ function loadSourceImage(baseUrl, externalImage) {
 
 function loadMask(selectedMask) {
   thumbURL = selectedMask.src;
-  //var url = thumbURL.replace("_thumb", "");
-  var maskArray = ["1", "6", "7", "8", "9", "10"]
-  var url = "images/" + maskArray[Math.floor(Math.random() * 6)] + ".png";
+  var url = thumbURL.replace("_thumb", "");
 
   alpha = document.getElementById('alpha').value / 100;
 
