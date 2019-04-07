@@ -44,7 +44,7 @@ function addProxyToUrl(baseUrl) {
 }
 
 function checkURL(url) {
-  if (url.match(/\.(jpeg|jpg|png)/) != null) {
+  if (url.match(/\.(jpeg|jpg|png|gif)/) != null) {
     loadSourceImage(url, true);
   }
 }
@@ -296,10 +296,21 @@ function updateZoomer() {
   canvas.renderAll();
 }
 
-function brushSize() {
+/*function brushSize() {
   var brushSize = document.getElementById("brushSize");
   canvas.freeDrawingBrush.width = brushSize.value;
-}
+}*/
+
+$(document).on('input', '#brushSize', function() {
+  canvas.freeDrawingBrush.width = $(this).val();
+});
+/*var drawingLineWidthEl = $('brushSize');
+if (canvas.freeDrawingBrush) {
+  canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
+};
+drawingLineWidthEl.onchange = function() {
+  canvas.freeDrawingBrush.width = drawingLineWidthEl.value;
+};*/
 
 function colorSelect() {
   var color = document.getElementById("colorSelect");
