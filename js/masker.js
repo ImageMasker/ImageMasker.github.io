@@ -15,7 +15,18 @@ canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
 
 $("html").on("paste", function (event) {
-  if (event.target.id === 'customMaskURL') { } else {
+  if (event.target.id === 'customMaskURL') { }
+  else if (event.target.id === 'mobileRISURL') {
+
+    var items = event.originalEvent.clipboardData.items;
+    var item = items[0];
+    item.getAsString(function (s) {
+      window.open("http://www.tineye.com/search/?url=" + s);
+      window.open("http://www.google.com/searchbyimage?image_url=" + s);
+      window.open("https://www.yandex.com/images/search?rpt=imageview&img_url=" + s);
+    });
+  }
+  else {
     if (event.originalEvent.clipboardData) {
       var items = event.originalEvent.clipboardData.items;
       if (items) {
@@ -131,12 +142,13 @@ function loadSourceImage(baseUrl, externalImage) {
   }
   document.getElementById('uploader').style.display = "none";
   document.getElementById('mobilePaste').style.display = "none";
-  
-  if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+  document.getElementById('mobileRIS').style.display = "none";
+
+  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
     document.getElementById('container').style.display = "block";
-   } else{
+  } else {
     document.getElementById('container').style.display = "grid";
-   }
+  }
   document.getElementById('uploadbutton').style.display = "block";
   document.getElementById('uploadbutton').style.visibility = "visible";
   document.getElementById('savedRounds').style.display = "none";
@@ -178,7 +190,7 @@ function loadMask(selectedMask) {
     maskImage.set('top', canvas.height / 2);
     maskImage.set('left', canvas.width / 2);
     canvas.add(maskImage);
-  }, {crossOrigin: 'Anonymous'});
+  }, { crossOrigin: 'Anonymous' });
 
   document.getElementById('uploadbutton').disabled = false;
 }
@@ -301,7 +313,7 @@ function updateZoomer() {
   canvas.freeDrawingBrush.width = brushSize.value;
 }*/
 
-$(document).on('input', '#brushSize', function() {
+$(document).on('input', '#brushSize', function () {
   canvas.freeDrawingBrush.width = $(this).val();
 });
 /*var drawingLineWidthEl = $('brushSize');
@@ -527,7 +539,10 @@ var opac = 1;
 //Press "Insert" to choose a custom subreddit
 
 $(document).on('keydown', function (e) {
+  var target = $( event.target );
   if (event.which == 37) {
+    if (target.is("input")){}
+    else{
     event.preventDefault();
     if (document.getElementById("savedRounds").style.display == "block") {
       displaySavedRounds(1);
@@ -537,7 +552,11 @@ $(document).on('keydown', function (e) {
       canvas.renderAll();
     }
   }
+
+  }
   if (event.which == 39) {
+    if(target.is("input")){}
+    else{
     event.preventDefault()
     if (document.getElementById("savedRounds").style.display == "block") {
       displaySavedRounds(2);
@@ -546,6 +565,7 @@ $(document).on('keydown', function (e) {
       maskImage.rotate(originalAngle + 2);
       canvas.renderAll();
     }
+  }
   }
   if (event.which == 40) {
     event.preventDefault()
