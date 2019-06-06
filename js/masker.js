@@ -157,11 +157,14 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('github').style.display = "none";
 }
 
-function loadMask(selectedMask) {
+function loadMask(selectedMask,alphaValue) {
   thumbURL = selectedMask.src;
   var url = thumbURL.replace("_thumb", "");
 
-  alpha = document.getElementById('alpha').value / 100;
+  alpha = alphaValue/100;
+  document.getElementById("alpha").value = alphaValue;
+  document.getElementById("sliderValue").innerText = alphaValue;
+  //alpha = document.getElementById('alpha').value / 100;
 
   if (maskImage) {
     canvas.remove(maskImage);
