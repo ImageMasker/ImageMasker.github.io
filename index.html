@@ -55,21 +55,23 @@
         <div id="brush">
           Brush size and color: <br>
           <input type="range" min="1" max="50" value="10" id="brushSize">
-          <input id="colorSelect" type="color" oninput="colorSelect()">
+          <input id="colorSelect" type="color" oninput="colorSelect()"> <br>
+          <button id="invert" class="color" id="invert" type="button">Invert colors</button><br>
         </div>
       </fieldset>
       <br>
       <fieldset class="color" id="masks">
         <legend>Masks</legend>
         <br>
-        <img width='145' height='145' src='images/1_thumb.png' onclick='loadMask(this,75)' />
-        <img width='145' height='145' src='images/2_thumb.png' onclick='loadMask(this,75)' />
-        <img width='145' height='145' src='images/3_thumb.png' onclick='loadMask(this,75)' />
-        <img width='145' height='145' src='images/4_thumb.png' onclick='loadMask(this,45)' />
-        <img width='145' height='145' src='images/5_thumb.png' onclick='loadMask(this,45)' />
-        <img width='145' height='145' src='images/6_thumb.png' onclick='loadMask(this,50)' />
-        <img width='145' height='145' src='images/7_thumb.png' onclick='loadMask(this,50)' />
-        <img width='145' height='145' src='images/8_thumb.png' onclick='loadMask(this,45)' />
+        <img width='95' height='95' src='images/1_thumb.png' onclick='loadMask(this,75)' />
+        <img width='95' height='95' src='images/2_thumb.png' onclick='loadMask(this,75)' />
+        <img width='95' height='95' src='images/3_thumb.png' onclick='loadMask(this,75)' />
+        <img width='95' height='95' src='images/4_thumb.png' onclick='loadMask(this,65)' />
+        <img width='95' height='95' src='images/5_thumb.png' onclick='loadMask(this,65)' />
+        <img width='95' height='95' src='images/6_thumb.png' onclick='loadMask(this,60)' />
+        <img width='95' height='95' src='images/7_thumb.png' onclick='loadMask(this,60)' />
+        <img width='95' height='95' src='images/8_thumb.png' onclick='loadMask(this,65)' />
+        <img width='95' height='95' src='images/9_thumb.png' onclick='loadMask(this,75)' />
         <br id="br">
         <input type="text" class="color" id="customMaskURL" placeholder="Mask URL">
         <br>

@@ -157,11 +157,11 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('github').style.display = "none";
 }
 
-function loadMask(selectedMask,alphaValue) {
+function loadMask(selectedMask, alphaValue) {
   thumbURL = selectedMask.src;
   var url = thumbURL.replace("_thumb", "");
 
-  alpha = alphaValue/100;
+  alpha = alphaValue / 100;
   document.getElementById("alpha").value = alphaValue;
   document.getElementById("sliderValue").innerText = alphaValue;
   //alpha = document.getElementById('alpha').value / 100;
@@ -171,7 +171,9 @@ function loadMask(selectedMask,alphaValue) {
   }
 
   new fabric.Image.fromURL(url, function (mask) {
-    mask.set('opacity', alpha);
+    mask.set({
+      id: 'mask',
+      opacity: alpha});
     maskImage = mask;
     var slider = document.getElementById("zoom");
     if (requiresResize(canvasWidth, mask.width)) {
@@ -502,6 +504,32 @@ function undo() {
   }
 }
 
+var filters = ['grayscale', 'invert', 'remove-color', 'sepia', 'brownie',
+                      'brightness', 'contrast', 'saturation', 'noise', 'vintage',
+                      'pixelate', 'blur', 'sharpen', 'emboss', 'technicolor',
+                      'polaroid', 'blend-color', 'gamma', 'kodachrome',
+                      'blackwhite', 'blend-image', 'hue', 'resize'];
+
+$("#invert").click(function () {
+  //alert("beep boop");
+  ObjectName = 'mask';
+  function selectObject(ObjectName) {
+    canvas.getObjects().forEach(function (o) {
+      if (o.id === ObjectName) {
+        canvas.setActiveObject(o);
+      }
+    })
+  }
+  selectObject(ObjectName);
+  var obj = canvas.getActiveObject();
+  obj.filters[1] = new fabric.Image.filters.Invert();
+  //obj.filter = filter;
+  obj.applyFilters();
+  //canvas.requestRenderAll();
+  canvas.renderAll();
+});
+
+
 if (localStorage.getItem('masks') === null || localStorage.getItem('masks') === "") { } else {
   //I don't know why I have to do it like this to avoid triggering loadMasks when masks is empty
   loadMasks();
@@ -542,33 +570,33 @@ var opac = 1;
 //Press "Insert" to choose a custom subreddit
 
 $(document).on('keydown', function (e) {
-  var target = $( event.target );
+  var target = $(event.target);
   if (event.which == 37) {
-    if (target.is("input")){}
-    else{
-    event.preventDefault();
-    if (document.getElementById("savedRounds").style.display == "block") {
-      displaySavedRounds(1);
-    } else {
-      var originalAngle = maskImage.get('angle');
-      maskImage.rotate(originalAngle - 2);
-      canvas.renderAll();
+    if (target.is("input")) { }
+    else {
+      event.preventDefault();
+      if (document.getElementById("savedRounds").style.display == "block") {
+        displaySavedRounds(1);
+      } else {
+        var originalAngle = maskImage.get('angle');
+        maskImage.rotate(originalAngle - 2);
+        canvas.renderAll();
+      }
     }
-  }
 
   }
   if (event.which == 39) {
-    if(target.is("input")){}
-    else{
-    event.preventDefault()
-    if (document.getElementById("savedRounds").style.display == "block") {
-      displaySavedRounds(2);
-    } else {
-      var originalAngle = maskImage.get('angle');
-      maskImage.rotate(originalAngle + 2);
-      canvas.renderAll();
+    if (target.is("input")) { }
+    else {
+      event.preventDefault()
+      if (document.getElementById("savedRounds").style.display == "block") {
+        displaySavedRounds(2);
+      } else {
+        var originalAngle = maskImage.get('angle');
+        maskImage.rotate(originalAngle + 2);
+        canvas.renderAll();
+      }
     }
-  }
   }
   if (event.which == 40) {
     event.preventDefault()
