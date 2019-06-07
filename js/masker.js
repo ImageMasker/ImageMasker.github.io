@@ -478,7 +478,7 @@ function deleteImage() {
 function addMask() {
   var br = document.getElementById("br");
   var uploadedMask = document.getElementById("customMaskURL").value;
-  br.insertAdjacentHTML('beforeBegin', "<img width='145' height='145' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' /> ")
+  br.insertAdjacentHTML('beforeBegin', "<img width='95' height='95' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' /> ")
 
   if (localStorage.getItem('masks') == null || localStorage.getItem('masks') == "") {
     localStorage.setItem('masks', uploadedMask);
