@@ -478,7 +478,7 @@ function deleteImage() {
 function addMask() {
   var br = document.getElementById("br");
   var uploadedMask = document.getElementById("customMaskURL").value;
-  br.insertAdjacentHTML('beforeBegin', "<img width='95' height='95' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this)' /> ")
+  br.insertAdjacentHTML('beforeBegin', "<img width='95' height='95' class=\"myMasks\" src=\"" + uploadedMask + "\" onclick='loadMask(this,60)' /> ")
 
   if (localStorage.getItem('masks') == null || localStorage.getItem('masks') == "") {
     localStorage.setItem('masks', uploadedMask);
@@ -540,7 +540,7 @@ function loadMasks() {
   var savedMasks = localStorage.getItem("masks");
   var masksArray = savedMasks.split(";");
   for (i = 0; i < masksArray.length; i++) {
-    br.insertAdjacentHTML('beforeBegin', "<img width='95' height='95' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this)' /> ")
+    br.insertAdjacentHTML('beforeBegin', "<img width='95' height='95' class=\"myMasks\" src=\"" + masksArray[i] + "\" onclick='loadMask(this,60)' /> ")
   }
 }
 
