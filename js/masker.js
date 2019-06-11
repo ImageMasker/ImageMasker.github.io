@@ -334,7 +334,7 @@ function colorSelect() {
   canvas.freeDrawingBrush.color = color.value;
 }
 
-function postReddit(oof, subreddit) {
+function postReddit(index, subreddit) {
   var request = new XMLHttpRequest();
   request.open("GET", "https://api.picturegame.co/current", true);
   request.onload = () => {
@@ -343,13 +343,14 @@ function postReddit(oof, subreddit) {
     var roundNumber = text.substr(i + 13, 5);
     var nextRound = parseInt(roundNumber) + 1;
     var round = "[Round " + nextRound + "] ";
-    if (oof == 2) {
+    if (index == 2) {
       var imageLink = document.getElementById("uploadedUrl").value;
       var roundTitle = document.getElementById("roundTitle").value;
     } else {
       var imageLink = document.getElementById("displayedImage").src;
       var roundTitle = document.getElementById("displayedTitle").value;
     }
+    roundTitle = encodeURIComponent(roundTitle);
     var redditLink = "http://www.reddit.com/r/" + subreddit + "/submit?url=" + imageLink + "&title=" + round + roundTitle;
     window.open(redditLink);
   }
