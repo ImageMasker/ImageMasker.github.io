@@ -366,8 +366,8 @@ function saveImage() {
 
   if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
     localStorage.setItem('images', imageURL);
-    localStorage.setItem('titles', roundTitle).replace(/;/g, '\\;');
-    localStorage.setItem('answers', roundAnswer).replace(/;/g, '\\;');
+    localStorage.setItem('titles', roundTitle.replace(/;/g, '\\;'));
+    localStorage.setItem('answers', roundAnswer.replace(/;/g, '\\;'));
   } else {
     var images = localStorage.getItem('images');
     var titles = localStorage.getItem('titles');
