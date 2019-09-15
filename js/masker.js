@@ -366,15 +366,15 @@ function saveImage() {
 
   if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
     localStorage.setItem('images', imageURL);
-    localStorage.setItem('titles', roundTitle);
-    localStorage.setItem('answers', roundAnswer);
+    localStorage.setItem('titles', roundTitle.replace(/;/g, '\\;'));
+    localStorage.setItem('answers', roundAnswer.replace(/;/g, '\\;'));
   } else {
     var images = localStorage.getItem('images');
     var titles = localStorage.getItem('titles');
     var answers = localStorage.getItem('answers');
     images += ";" + imageURL;
-    titles += ";" + roundTitle;
-    answers += ";" + roundAnswer;
+    titles += ";" + roundTitle.replace(/;/g, '\\;');
+    answers += ";" + roundAnswer.replace(/;/g, '\\;');
     localStorage.setItem('images', images);
     localStorage.setItem('titles', titles);
     localStorage.setItem('answers', answers);
@@ -411,14 +411,14 @@ function displaySavedRounds(direction) {
     image.src = imagesArray[i];
 
     var title = document.getElementById("displayedTitle");
-    var titles = localStorage.getItem('titles')
-    var titlesArray = titles.split(";");
-    title.value = titlesArray[i];
+    var titles = localStorage.getItem('titles');
+    var titlesArray = titles.match(/(\\.|[^;])+/g);
+    title.value = titlesArray[i].replace(/\\;/g,';');
 
     var answer = document.getElementById("displayedAnswer");
-    var answers = localStorage.getItem('answers')
-    var answersArray = answers.split(";");
-    answer.value = answersArray[i];
+    var answers = localStorage.getItem('answers');
+    var answersArray = answers.match(/(\\.|[^;])+/g);
+    answer.value = answersArray[i].replace(/\\;/g,';');
 
     if (i <= 0) {
       var left = document.getElementById("left");
@@ -450,10 +450,10 @@ function deleteImage() {
   var imagesArray = images.split(";");
 
   var titles = localStorage.getItem('titles')
-  var titlesArray = titles.split(";");
+  var titlesArray = titles.match(/(\\.|[^;])+/g);
 
   var answers = localStorage.getItem('answers');
-  var answersArray = answers.split(";");
+  var answersArray = answers.match(/(\\.|[^;])+/g);
 
   imagesArray.splice(i, 1);
   titlesArray.splice(i, 1);
