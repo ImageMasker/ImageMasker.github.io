@@ -625,17 +625,6 @@ $(document).on('keydown', function (e) {
     obj.set('opacity', opac);
     canvas.renderAll();
   }
-  if (event.which == 18) {
-    if (canvas.getActiveObject()) {
-      var obj = canvas.getActiveObject();
-    } else {
-      var obj = canvas._objects[canvas._objects.length - 1];
-    }
-    var object = fabric.util.object.clone(obj);
-    object.set("top", object.top + 7);
-    object.set("left", object.left + 7);
-    canvas.add(object);
-  }
   if (e.which === 45) {
     var newSubInput = document.getElementById('newSubInput');
     newSubInput.style.display = "inline-block";
