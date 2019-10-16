@@ -7,6 +7,8 @@ var canvas = new fabric.Canvas('canvas', {
   enableRetinaScaling: false
 });
 
+localStorage.setItem('index', 0);
+
 var uploadArea = document.getElementById('uploader');
 uploadArea.ondragover = function (e) { e.preventDefault() }
 uploadArea.ondrop = function (e) { e.preventDefault(); uploadDragnDrop(e.dataTransfer.files[0]); }
@@ -358,6 +360,14 @@ function postReddit(index, subreddit) {
 
 }
 
+function setIndex(i) {
+  localStorage.setItem('index', i);
+}
+
+function getIndex() {
+  return localStorage.getItem('index');
+}
+
 function saveImage() {
   //Maybe I should use objects instead of saving it as three items in localstorage
   var imageURL = document.getElementById("uploadedUrl").value;
@@ -384,25 +394,27 @@ function saveImage() {
   button.style.backgroundColor = "rgb(175, 211, 161)";
 }
 
-var i = 0;
-//What a mess...
 function displaySavedRounds(direction) {
+  var i = getIndex();
+  var left = document.getElementById("left");
+  var right = document.getElementById("right");
+
   if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
     alert("There are no saved images!");
-  }
-  else {
-    if (direction == 1) {
+  } else {
+    if (direction == -1) {
       i--;
-    } else if (direction == 2) {
+    } else if (direction == 1) {
       i++;
     } else if (direction == 0) {
       i = 0;
       if (document.getElementById("savedRounds").style.display == "block") {
         document.getElementById("savedRounds").style.display = "none";
-        return true;
+        return;
       }
-
     }
+    
+    setIndex(i);
 
     document.getElementById("savedRounds").style.display = "block";
     var image = document.getElementById("displayedImage");
@@ -421,31 +433,27 @@ function displaySavedRounds(direction) {
     answer.value = answersArray[i];
 
     if (i <= 0) {
-      var left = document.getElementById("left");
-      //left.style.display="none";
       left.style.visibility = "hidden";
-      document.getElementById("right").style.visibility = "visible";
+      right.style.visibility = "visible";
     } else if (i > imagesArray.length - 2) {
-      var right = document.getElementById("right");
-      //right.style.display="none";
+      left.style.visibility = "visible";
       right.style.visibility = "hidden";
-      document.getElementById("left").style.visibility = "visible";
     } else {
-      document.getElementById("left").style.visibility = "visible";
-      document.getElementById("right").style.visibility = "visible";
+      left.style.visibility = "visible";
+      right.style.visibility = "visible";
     }
 
     if (imagesArray.length == 1) {
-      document.getElementById("left").style.visibility = "hidden";
-      document.getElementById("right").style.visibility = "hidden";
+      left.style.visibility = "hidden";
+      right.style.visibility = "hidden";
     }
-
   }
-
 }
 
 
 function deleteImage() {
+  var i = getIndex();
+
   var images = localStorage.getItem('images');
   var imagesArray = images.split(";");
 
@@ -470,10 +478,9 @@ function deleteImage() {
   if (imagesArray.length == 0) {
     document.getElementById("savedRounds").style.display = "none";
   } else {
-    i = 0;
-    displaySavedRounds(3);
+    setIndex(0);
+    displaySavedRounds(2);
   }
-
 }
 
 function addMask() {
