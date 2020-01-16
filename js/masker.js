@@ -2,6 +2,7 @@ var maskImage = null;
 var canvasHeight, canvasWidth;
 var imgHeight, imgWidth;
 var mask = null;
+var data_url;
 var canvas = new fabric.Canvas('canvas', {
   isDrawingMode: true,
   enableRetinaScaling: false
@@ -24,7 +25,6 @@ $("html").on("paste", function (event) {
       window.open("http://www.tineye.com/search/?url=" + s);
       window.open("http://www.google.com/searchbyimage?image_url=" + s);
       window.open("https://yandex.com/images/search?img_url=" + s + "&rpt=imageview");
-      window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + s);
     });
   }
   else {
@@ -217,8 +217,15 @@ function upload() {
 
   setTimeout(imgurUpload, 250);
   function imgurUpload() {
+    var format = 'image/jpeg';
+    data_url=canvas.toDataURL("image/png");
+    var head = 'data:image/png;base64,';
+    var imgFileSize = Math.round((data_url.length - head.length)*3/4) ;
+    if(imgFileSize < 3000000){
+      format = 'image/png';
+    }
 
-    var img = document.getElementById('canvas').toDataURL('image/jpeg', 1.0).split(',')[1];
+    var img = document.getElementById('canvas').toDataURL(format, 1.0).split(',')[1];
 
     $.ajax({
       url: 'https://api.imgur.com/3/image',
@@ -269,7 +276,6 @@ function checkRIS() {
     setTimeout(function () { window.open("https://yandex.com/images/search?img_url=" + url + "&rpt=imageview") }, 2000);
     setTimeout(function () { window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
     setTimeout(function () { window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
-    setTimeout(function () { window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url) }, 2000);
   } else {
     window.open("https://yandex.com/images/search?img_url=" + url + "&rpt=imageview");
     var popUp = window.open("http://www.tineye.com/search/?url=" + url);
@@ -279,7 +285,7 @@ function checkRIS() {
     else {
       popUp.focus();
     }
-    window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
+    //window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
     window.open("http://www.google.com/searchbyimage?image_url=" + url);
   }
 
@@ -368,8 +374,8 @@ function saveImage() {
 
   if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
     localStorage.setItem('images', imageURL);
-    localStorage.setItem('titles', roundTitle);
-    localStorage.setItem('answers', roundAnswer);
+    localStorage.setItem('titles', roundTitle.replace(/;/g, '\\;'));
+    localStorage.setItem('answers', roundAnswer.replace(/;/g, '\\;'));
   } else {
     var images = localStorage.getItem('images');
     var titles = localStorage.getItem('titles');
@@ -378,8 +384,8 @@ function saveImage() {
     titles += ";" + roundTitle;
     answers += ";" + roundAnswer;
     localStorage.setItem('images', images);
-    localStorage.setItem('titles', titles);
-    localStorage.setItem('answers', answers);
+    titles += ";" + roundTitle.replace(/;/g, '\\;');
+    answers += ";" + roundAnswer.replace(/;/g, '\\;');
   }
   var button = document.getElementById("Save");
   button.innerText = "Saved!";
@@ -413,14 +419,14 @@ function displaySavedRounds(direction) {
     image.src = imagesArray[i];
 
     var title = document.getElementById("displayedTitle");
-    var titles = localStorage.getItem('titles')
-    var titlesArray = titles.split(";");
-    title.value = titlesArray[i];
+    var titles = localStorage.getItem('titles');
+    var titlesArray = titles.match(/(\\.|[^;])+/g);
+    title.value = titlesArray[i].replace(/\\;/g,';');
 
     var answer = document.getElementById("displayedAnswer");
-    var answers = localStorage.getItem('answers')
-    var answersArray = answers.split(";");
-    answer.value = answersArray[i];
+    var answers = localStorage.getItem('answers');
+    var answersArray = answers.match(/(\\.|[^;])+/g);
+    answer.value = answersArray[i].replace(/\\;/g,';');
 
     if (i <= 0) {
       var left = document.getElementById("left");
@@ -452,10 +458,10 @@ function deleteImage() {
   var imagesArray = images.split(";");
 
   var titles = localStorage.getItem('titles')
-  var titlesArray = titles.split(";");
+  var titlesArray = titles.match(/(\\.|[^;])+/g);
 
   var answers = localStorage.getItem('answers');
-  var answersArray = answers.split(";");
+  var answersArray = answers.match(/(\\.|[^;])+/g);
 
   imagesArray.splice(i, 1);
   titlesArray.splice(i, 1);
