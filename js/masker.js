@@ -174,7 +174,8 @@ function loadMask(selectedMask, alphaValue) {
   new fabric.Image.fromURL(url, function (mask) {
     mask.set({
       id: 'mask',
-      opacity: alpha});
+      opacity: alpha
+    });
     maskImage = mask;
     var slider = document.getElementById("zoom");
     if (requiresResize(canvasWidth, mask.width)) {
@@ -218,10 +219,10 @@ function upload() {
   setTimeout(imgurUpload, 250);
   function imgurUpload() {
     var format = 'image/jpeg';
-    data_url=canvas.toDataURL("image/png");
+    data_url = canvas.toDataURL("image/png");
     var head = 'data:image/png;base64,';
-    var imgFileSize = Math.round((data_url.length - head.length)*3/4) ;
-    if(imgFileSize < 3000000){
+    var imgFileSize = Math.round((data_url.length - head.length) * 3 / 4);
+    if (imgFileSize < 3000000) {
       format = 'image/png';
     }
 
@@ -253,6 +254,7 @@ function upload() {
           document.getElementById('roundTitle').style.display = "inline-block";
           document.getElementById('roundAnswer').style.display = "inline-block";
           document.getElementById('Save').style.display = "inline-block";
+          document.getElementById('Download').style.display = "inline-block";
         } else {
           alert("Failed to upload.");
         }
@@ -392,6 +394,18 @@ function saveImage() {
   button.style.backgroundColor = "rgb(175, 211, 161)";
 }
 
+function downloadImage() {
+  var downloadLink = document.createElement('a');
+  downloadLink.href = canvas.toDataURL("image/png").replace("image/png");
+  var d = new Date();
+  var formattedDate = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + " " + d.getHours() + "-" + d.getMinutes();
+  downloadLink.download = 'round ' + formattedDate + '.png';
+
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+}
+
 var i = 0;
 //What a mess...
 function displaySavedRounds(direction) {
@@ -421,12 +435,12 @@ function displaySavedRounds(direction) {
     var title = document.getElementById("displayedTitle");
     var titles = localStorage.getItem('titles');
     var titlesArray = titles.match(/(\\.|[^;])+/g);
-    title.value = titlesArray[i].replace(/\\;/g,';');
+    title.value = titlesArray[i].replace(/\\;/g, ';');
 
     var answer = document.getElementById("displayedAnswer");
     var answers = localStorage.getItem('answers');
     var answersArray = answers.match(/(\\.|[^;])+/g);
-    answer.value = answersArray[i].replace(/\\;/g,';');
+    answer.value = answersArray[i].replace(/\\;/g, ';');
 
     if (i <= 0) {
       var left = document.getElementById("left");
@@ -514,10 +528,10 @@ function undo() {
 }
 
 var filters = ['grayscale', 'invert', 'remove-color', 'sepia', 'brownie',
-                      'brightness', 'contrast', 'saturation', 'noise', 'vintage',
-                      'pixelate', 'blur', 'sharpen', 'emboss', 'technicolor',
-                      'polaroid', 'blend-color', 'gamma', 'kodachrome',
-                      'blackwhite', 'blend-image', 'hue', 'resize'];
+  'brightness', 'contrast', 'saturation', 'noise', 'vintage',
+  'pixelate', 'blur', 'sharpen', 'emboss', 'technicolor',
+  'polaroid', 'blend-color', 'gamma', 'kodachrome',
+  'blackwhite', 'blend-image', 'hue', 'resize'];
 
 $("#invert").click(function () {
   //alert("beep boop");
@@ -633,7 +647,7 @@ $(document).on('keydown', function (e) {
     obj.set('opacity', opac);
     canvas.renderAll();
   }
-    if (event.which == 220) {
+  if (event.which == 220) {
     if (canvas.getActiveObject()) {
       var obj = canvas.getActiveObject();
     } else {
