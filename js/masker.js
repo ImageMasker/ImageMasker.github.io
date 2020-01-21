@@ -158,6 +158,8 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('displayRounds').style.display = "none";
   document.getElementById('night').style.display = "none";
   document.getElementById('github').style.display = "none";
+
+  document.getElementsByTagName('pre')[0].style.display = "none";
 }
 
 function loadMask(selectedMask, alphaValue) {
@@ -372,24 +374,22 @@ function postReddit(index, subreddit) {
 
 function saveImage() {
   //Maybe I should use objects instead of saving it as three items in localstorage
+  //Future me: that would have been better...
+
   var imageURL = document.getElementById("uploadedUrl").value;
   var roundTitle = document.getElementById("roundTitle").value;
   var roundAnswer = document.getElementById("roundAnswer").value;
+  
+  roundData = [imageURL, roundTitle, roundAnswer];
+  //roundData = ["https://i.redd.it/j0tg5rj4c7c41.png", "roundTitle..., [sds,dsd]blah", "roundAnswer"];
 
-  if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
-    localStorage.setItem('images', imageURL);
-    localStorage.setItem('titles', roundTitle.replace(/;/g, '\\;'));
-    localStorage.setItem('answers', roundAnswer.replace(/;/g, '\\;'));
-  } else {
-    var images = localStorage.getItem('images');
-    var titles = localStorage.getItem('titles');
-    var answers = localStorage.getItem('answers');
-    images += ";" + imageURL;
-    titles += ";" + roundTitle;
-    answers += ";" + roundAnswer;
-    localStorage.setItem('images', images);
-    titles += ";" + roundTitle.replace(/;/g, '\\;');
-    answers += ";" + roundAnswer.replace(/;/g, '\\;');
+  if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == ""){
+    localStorage.setItem('rounds', JSON.stringify([roundData]));
+  }
+  else {
+    var previousRoundData = JSON.parse(localStorage.getItem('rounds'));
+    previousRoundData.push(roundData);
+    localStorage.setItem('rounds', JSON.stringify(previousRoundData));
   }
   var button = document.getElementById("Save");
   button.innerText = "Saved!";
@@ -411,7 +411,7 @@ function downloadImage() {
 var i = 0;
 //What a mess...
 function displaySavedRounds(direction) {
-  if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
+  if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == "") {
     alert("There are no saved images!");
   }
   else {
@@ -427,29 +427,26 @@ function displaySavedRounds(direction) {
       }
 
     }
+    var rounds = JSON.parse(localStorage.getItem('rounds'));
+
 
     document.getElementById("savedRounds").style.display = "block";
+
     var image = document.getElementById("displayedImage");
-    var images = localStorage.getItem('images');
-    var imagesArray = images.split(";");
-    image.src = imagesArray[i];
+    image.src = rounds[i][0];
 
     var title = document.getElementById("displayedTitle");
-    var titles = localStorage.getItem('titles');
-    var titlesArray = titles.match(/(\\.|[^;])+/g);
-    title.value = titlesArray[i].replace(/\\;/g, ';');
+    title.value = rounds[i][1];
 
     var answer = document.getElementById("displayedAnswer");
-    var answers = localStorage.getItem('answers');
-    var answersArray = answers.match(/(\\.|[^;])+/g);
-    answer.value = answersArray[i].replace(/\\;/g, ';');
+    answer.value = rounds[i][2];
 
     if (i <= 0) {
       var left = document.getElementById("left");
       //left.style.display="none";
       left.style.visibility = "hidden";
       document.getElementById("right").style.visibility = "visible";
-    } else if (i > imagesArray.length - 2) {
+    } else if (i > rounds.length - 2) {
       var right = document.getElementById("right");
       //right.style.display="none";
       right.style.visibility = "hidden";
@@ -459,7 +456,7 @@ function displaySavedRounds(direction) {
       document.getElementById("right").style.visibility = "visible";
     }
 
-    if (imagesArray.length == 1) {
+    if (rounds.length == 1) {
       document.getElementById("left").style.visibility = "hidden";
       document.getElementById("right").style.visibility = "hidden";
     }
@@ -470,28 +467,11 @@ function displaySavedRounds(direction) {
 
 
 function deleteImage() {
-  var images = localStorage.getItem('images');
-  var imagesArray = images.split(";");
+  var rounds = JSON.parse(localStorage.getItem('rounds'));
+  roundsAfter = rounds.slice(0, i).concat(rounds.slice(i + 1, rounds.length))
+  localStorage.setItem('rounds', JSON.stringify(roundsAfter));
 
-  var titles = localStorage.getItem('titles')
-  var titlesArray = titles.match(/(\\.|[^;])+/g);
-
-  var answers = localStorage.getItem('answers');
-  var answersArray = answers.match(/(\\.|[^;])+/g);
-
-  imagesArray.splice(i, 1);
-  titlesArray.splice(i, 1);
-  answersArray.splice(i, 1);
-
-  listImages = imagesArray.join(";");
-  listTitles = titlesArray.join(";");
-  listAnswers = answersArray.join(";");
-
-  localStorage.setItem('images', listImages);
-  localStorage.setItem('titles', listTitles);
-  localStorage.setItem('answers', listAnswers);
-
-  if (imagesArray.length == 0) {
+  if (roundsAfter.length == 0) {
     document.getElementById("savedRounds").style.display = "none";
   } else {
     i = 0;
@@ -668,3 +648,13 @@ $(document).on('keydown', function (e) {
     newPost.innerText = "Post to /r/";
   }
 });
+
+
+//Provisional function to retrieve round images under the previous system
+function oldRounds(){
+  if(localStorage.getItem('images') == null || localStorage.getItem('images') == ""){
+    alert("There were no saved images!")
+  } else{
+    alert("Image URLs: " + localStorage.getItem('images'))
+  }
+}
