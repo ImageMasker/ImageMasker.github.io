@@ -4,8 +4,8 @@
 <head>
   <meta charset='UTF-8'>
   <link rel="stylesheet" href="stylesheet.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/2.7.0/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/3.6.1/fabric.min.js"></script>
   <title> Image Masker </title>
   <link rel="icon" href="images/favicon.png">
 </head>
@@ -38,13 +38,14 @@
     <input class="color" id="displayedTitle" placeholder="Round title" type="text"> <br>
     <input class="color" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
     <button class="color" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
+    <button class="color" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
     <button class="color" id="delete" onclick="deleteImage()">Delete round</button>
   </div>
   <div id="container">
     <div id="masker">
       <fieldset class="color" id="tools">
         <legend>Tools</legend>
-        Set Opacity:
+        Set opacity:
         <br>
         <div id="slider">
           <input type="range" min="0" max="100" value="75" id="alpha" oninput="updateOpacity()">
@@ -109,3 +110,7 @@
 </body>
 
 </html>
+
+<!-- TODO: 
+  - Save round from external URL
+  - Button to update Round information-->

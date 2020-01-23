@@ -201,7 +201,7 @@ function loadMask(selectedMask, alphaValue) {
     maskImage.set('top', canvas.height / 2);
     maskImage.set('left', canvas.width / 2);
     canvas.add(maskImage);
-  });
+  }, { crossOrigin: 'Anonymous' });
 
   document.getElementById('uploadbutton').disabled = false;
 }
@@ -333,7 +333,7 @@ function updateZoomer() {
 }*/
 
 $(document).on('input', '#brushSize', function () {
-  canvas.freeDrawingBrush.width = $(this).val();
+  canvas.freeDrawingBrush.width = parseInt($(this).val());
 });
 /*var drawingLineWidthEl = $('brushSize');
 if (canvas.freeDrawingBrush) {
@@ -365,7 +365,12 @@ function postReddit(index, subreddit) {
       var roundTitle = document.getElementById("displayedTitle").value;
     }
     roundTitle = encodeURIComponent(roundTitle);
-    var redditLink = "http://www.reddit.com/r/" + subreddit + "/submit?url=" + imageLink + "&title=" + round + roundTitle;
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      redditURL = "http://old.reddit.com/r/";
+    } else {
+      redditURL = "http://www.reddit.com/r/";
+    }
+    var redditLink = redditURL + subreddit + "/submit?url=" + imageLink + "&title=" + round + roundTitle;
     window.open(redditLink);
   }
   request.send();
@@ -379,11 +384,10 @@ function saveImage() {
   var imageURL = document.getElementById("uploadedUrl").value;
   var roundTitle = document.getElementById("roundTitle").value;
   var roundAnswer = document.getElementById("roundAnswer").value;
-  
-  roundData = [imageURL, roundTitle, roundAnswer];
-  //roundData = ["https://i.redd.it/j0tg5rj4c7c41.png", "roundTitle..., [sds,dsd]blah", "roundAnswer"];
 
-  if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == ""){
+  roundData = [imageURL, roundTitle, roundAnswer];
+
+  if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == "") {
     localStorage.setItem('rounds', JSON.stringify([roundData]));
   }
   else {
@@ -411,6 +415,7 @@ function downloadImage() {
 var i = 0;
 //What a mess...
 function displaySavedRounds(direction) {
+  document.getElementsByTagName('pre')[0].style.display = "none";
   if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == "") {
     alert("There are no saved images!");
   }
@@ -467,15 +472,17 @@ function displaySavedRounds(direction) {
 
 
 function deleteImage() {
-  var rounds = JSON.parse(localStorage.getItem('rounds'));
-  roundsAfter = rounds.slice(0, i).concat(rounds.slice(i + 1, rounds.length))
-  localStorage.setItem('rounds', JSON.stringify(roundsAfter));
+  if (window.confirm("Are you sure you want to delete the round?")) {
+    var rounds = JSON.parse(localStorage.getItem('rounds'));
+    roundsAfter = rounds.slice(0, i).concat(rounds.slice(i + 1, rounds.length))
+    localStorage.setItem('rounds', JSON.stringify(roundsAfter));
 
-  if (roundsAfter.length == 0) {
-    document.getElementById("savedRounds").style.display = "none";
-  } else {
-    i = 0;
-    displaySavedRounds(3);
+    if (roundsAfter.length == 0) {
+      document.getElementById("savedRounds").style.display = "none";
+    } else {
+      i = 0;
+      displaySavedRounds(3);
+    }
   }
 
 }
@@ -651,10 +658,19 @@ $(document).on('keydown', function (e) {
 
 
 //Provisional function to retrieve round images under the previous system
-function oldRounds(){
-  if(localStorage.getItem('images') == null || localStorage.getItem('images') == ""){
+function oldRounds() {
+  if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
     alert("There were no saved images!")
-  } else{
+  } else {
     alert("Image URLs: " + localStorage.getItem('images'))
   }
+}
+
+function updateInfo(){
+  var roundTitle = document.getElementById("displayedTitle").value
+  var roundAnswer = document.getElementById("displayedAnswer").value;
+  rounds = JSON.parse(localStorage.getItem('rounds'))
+  rounds[i][1] = roundTitle;
+  rounds[i][2] = roundAnswer;
+  localStorage.setItem('rounds', JSON.stringify(rounds));
 }
