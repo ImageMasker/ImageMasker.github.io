@@ -419,9 +419,9 @@ function downloadImage() {
 var i = 0;
 //What a mess...
 function displaySavedRounds(direction) {
-  document.getElementById('saveFromURL').style.display = "none";
   if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == "") {
     alert("There are no saved images!");
+    return true;
   }
   else {
     if (direction == 1) {
@@ -441,6 +441,7 @@ function displaySavedRounds(direction) {
       }
 
     }
+    document.getElementById('saveFromURL').style.display = "none";
     var rounds = JSON.parse(localStorage.getItem('rounds'));
 
 
@@ -491,6 +492,8 @@ function deleteImage() {
 
     if (roundsAfter.length == 0) {
       document.getElementById("savedRounds").style.display = "none";
+      document.getElementById('saveFromURL').style.display = "block";
+
     } else {
       i = 0;
       displaySavedRounds(3);
