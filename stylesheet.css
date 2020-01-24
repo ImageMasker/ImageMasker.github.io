@@ -150,7 +150,7 @@ img:hover{
 	grid-area: preview;
 }
 
-#savedRounds{
+#savedRounds, #saveExternalURL{
 	display: none;
 	text-align: center;
 }
@@ -180,7 +180,8 @@ img:hover{
 
 #displayedImage{
 	display: inline-block;
-	width: 40vw;
+	max-width: 40vw;
+	max-height: 50vh;
 	margin: 0 auto;
 	
 }
@@ -190,7 +191,7 @@ img:hover{
 	visibility: hidden;
 }
 
-#displayRounds{
+#displayRounds, #saveFromURL{
 	border: none;
 	background-color: rgb(240, 214, 181);
 	color:rgb(63, 63, 63);
@@ -204,21 +205,25 @@ img:hover{
 	transition: 0.5s;
 }
 
-#displayRounds:hover{
+#saveFromURL{
+	margin-top: 1em !important;
+}
+
+#displayRounds:hover, #saveFromURL:hover{
 	background-color: rgb(233, 187, 144);
 }
 
-#displayRounds:focus, #left:focus, #right:focus{
+#displayRounds:focus, #left:focus, #right:focus, #saveFromURL:focus{
 	outline:0;
 }
 
-#displayedTitle, #displayedAnswer{
+#displayedTitle, #displayedAnswer, #saveFromURLURL, #saveFromURLTitle, #saveFromURLAnswer{
 	position: relative;
 	margin: 5px;
 	width: 300px;
 }
 
-#PostReddit2, #delete, #UpdateInfo{
+#PostReddit2, #delete,  #UpdateInfo, #saveExternal{
 	position: relative;
 	margin: 5px;
 	width: 200px;
@@ -241,7 +246,7 @@ img:hover{
 }
 
 
-#buttons button, #buttons :first-child, #PostReddit2, #UpdateInfo, #delete, #addMask, #clearMasks, #undo, #invert{
+#buttons button, #buttons :first-child, #PostReddit2, #UpdateInfo, #saveExternal, #delete, #addMask, #clearMasks, #undo, #invert{
 	background-color: rgb(236, 140, 116);
 	color: white;
 	border: none;
@@ -256,7 +261,8 @@ img:hover{
 	background-color: rgb(240, 161, 142);
 }
 
-#roundTitle, #uploadedUrl, #displayedTitle, #roundAnswer, #displayedAnswer, #customMaskURL, #newSubInput{
+#roundTitle, #uploadedUrl, #displayedTitle, #roundAnswer, #displayedAnswer, 
+#saveFromURLURL, #saveFromURLTitle, #saveFromURLAnswer, #customMaskURL, #newSubInput{
 	border: none;
 	background-color: rgb(238, 168, 150);
 	color: white;
@@ -271,7 +277,9 @@ img:hover{
 	margin-top: 10px;
 }
 
-#roundTitle::placeholder, #roundAnswer::placeholder, #displayedTitle::placeholder, #displayedAnswer::placeholder, #customMaskURL::placeholder, #customMaskURL::placeholder, #newSubInput::placeholder{
+#roundTitle::placeholder, #roundAnswer::placeholder, #displayedTitle::placeholder,
+ #saveFromURLURL, #saveFromURLTitle, #saveFromURLAnswer,
+#displayedAnswer::placeholder, #customMaskURL::placeholder, #customMaskURL::placeholder, #newSubInput::placeholder{
 	color: rgb(230, 230, 230);
 }
 
@@ -359,12 +367,12 @@ body.night{
 	color: whitesmoke;
 }
 /*gosh this is awful*/
-#uploadlabel.night, #displayRounds.night, #tools.night, #masks.night, #myMasks.night{
+#uploadlabel.night, #displayRounds.night, #saveFromURL.night, #tools.night, #masks.night, #myMasks.night{
 	background-color: rgb(52, 57, 107);
 	color: rgb(228, 226, 226);
 }
 
-#uploadlabel.night:hover, #displayRounds.night:hover{
+#uploadlabel.night:hover, #displayRounds.night:hover, #saveFromURL.night:hover{
 	background-color: rgb(71, 77, 146);
 }
 
@@ -376,10 +384,11 @@ body.night{
 	background-color: rgb(71, 77, 146);
 }
 
-#displayedTitle.night, #displayedAnswer.night, #buttons.night input, #myMasks input.night, #pastedURL.night, #mobileRISURL.night, #customMaskURL.night{
+#displayedTitle.night, #displayedAnswer.night, #buttons.night input, #myMasks input.night, #pastedURL.night,
+#saveFromURLURL.night, #saveFromURLTitle.night, #saveFromURLAnswer.night, #mobileRISURL.night, #customMaskURL.night{
 	background-color: rgb(74, 59, 136);
 }
 
-#PostReddit2.night, #UpdateInfo.night, #delete.night, #right.night, #left.night{
+#PostReddit2.night, #UpdateInfo.night, #delete.night, #UpdateInfo.night, #saveExternal.night, #right.night, #left.night{
 	background-color: rgb(37, 30, 70);
 }

@@ -27,12 +27,9 @@
     <input class="color" id="mobileRISURL" type="url" placeholder="Paste an URL here to check for RIS">
   </div>
   <button class="color" id="displayRounds" type="button" onclick="displaySavedRounds(0)">Saved rounds</button>
-  <pre style="text-align: center; color: gray; font-family: Arial, Helvetica, sans-serif">PSA: The internal structure of saved rounds has changed.
-    <a style="color: white;" onclick="oldRounds()" href="#">Click here</a> to retrieve your old rounds (if you had any under the previous system)
-  </pre> 
   <div id="savedRounds">
     <button class="color" id="left" onclick="displaySavedRounds(1)"> ◀ </button>
-    <img id="displayedImage">
+    <a id="displayedImagelink" target="_blank"><img id="displayedImage"></a>
     <button class="color" id="right" onclick="displaySavedRounds(2)"> ▶ </button>
     <br>
     <input class="color" id="displayedTitle" placeholder="Round title" type="text"> <br>
@@ -40,6 +37,14 @@
     <button class="color" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
     <button class="color" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
     <button class="color" id="delete" onclick="deleteImage()">Delete round</button>
+  </div>
+  <br>
+  <button class="color" id="saveFromURL" type="button" onclick="displaySaveURL()">Save from URL</button>
+  <div id="saveExternalURL">
+    <input class="color" id="saveFromURLURL" placeholder="Image URL" type="text"> <br>
+    <input class="color" id="saveFromURLTitle" placeholder="Round title" type="text"> <br>
+    <input class="color" id="saveFromURLAnswer" placeholder="Round answer" type="text"> <br>
+    <button class="color" id="saveExternal" onclick="saveImage(2)">Save round</button>
   </div>
   <div id="container">
     <div id="masker">
@@ -77,7 +82,7 @@
         <img width='95' height='95' src='images/8_thumb.png' onclick='loadMask(this,65)' />
         <img width='95' height='95' src='images/9_thumb.png' onclick='loadMask(this,75)' />
         <br id="br">
-        <input type="text" class="color" id="customMaskURL" placeholder="Mask URL">
+        <input type="text" class="color" id="customMaskURL" placeholder="Mask URL (Imgur)">
         <br>
         <button type="button" class="color" id="addMask" onclick="addMask()">Submit mask</button>
         <button class="color" id="clearMasks" type="button" onclick="clearMasks()">Delete masks</button>
@@ -94,7 +99,7 @@
         <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)" style="display: none;">Submit to
           /r/PictureGame</button>
         <input type="text" id="newSubInput" placeholder="Subreddit" value="picturegame" style="display: none;">
-        <button type="button" id="Save" onclick="saveImage()" style="display: none;">Save round</button>
+        <button type="button" id="Save" onclick="saveImage(1)" style="display: none;">Save round</button>
         <button type="button" id="Download" onclick="downloadImage()">Download image</button>
       </div>
       <div id="previewImage">

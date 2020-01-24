@@ -16,7 +16,7 @@ canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
 
 $("html").on("paste", function (event) {
-  if (event.target.id === 'customMaskURL') { }
+  if (event.target.id === 'customMaskURL' || event.target.id === 'saveFromURLURL') { }
   else if (event.target.id === 'mobileRISURL') {
 
     var items = event.originalEvent.clipboardData.items;
@@ -156,10 +156,9 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('Download').style.visibility = "visible";
   document.getElementById('savedRounds').style.display = "none";
   document.getElementById('displayRounds').style.display = "none";
+  document.getElementById('saveFromURL').style.display = "none";
   document.getElementById('night').style.display = "none";
   document.getElementById('github').style.display = "none";
-
-  document.getElementsByTagName('pre')[0].style.display = "none";
 }
 
 function loadMask(selectedMask, alphaValue) {
@@ -377,13 +376,17 @@ function postReddit(index, subreddit) {
 
 }
 
-function saveImage() {
-  //Maybe I should use objects instead of saving it as three items in localstorage
-  //Future me: that would have been better...
+function saveImage(mode) {
 
-  var imageURL = document.getElementById("uploadedUrl").value;
-  var roundTitle = document.getElementById("roundTitle").value;
-  var roundAnswer = document.getElementById("roundAnswer").value;
+  if (mode == 1) {
+    var imageURL = document.getElementById("uploadedUrl").value;
+    var roundTitle = document.getElementById("roundTitle").value;
+    var roundAnswer = document.getElementById("roundAnswer").value;
+  } else{
+    var imageURL = document.getElementById("saveFromURLURL").value;
+    var roundTitle = document.getElementById("saveFromURLTitle").value;
+    var roundAnswer = document.getElementById("saveFromURLAnswer").value;
+  }
 
   roundData = [imageURL, roundTitle, roundAnswer];
 
@@ -395,7 +398,8 @@ function saveImage() {
     previousRoundData.push(roundData);
     localStorage.setItem('rounds', JSON.stringify(previousRoundData));
   }
-  var button = document.getElementById("Save");
+  var saveElement = mode==1 ? "Save" : "saveExternal";
+  var button = document.getElementById(saveElement);
   button.innerText = "Saved!";
   button.style.backgroundColor = "rgb(175, 211, 161)";
 }
@@ -415,7 +419,7 @@ function downloadImage() {
 var i = 0;
 //What a mess...
 function displaySavedRounds(direction) {
-  document.getElementsByTagName('pre')[0].style.display = "none";
+  document.getElementById('saveFromURL').style.display = "none";
   if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == "") {
     alert("There are no saved images!");
   }
@@ -424,11 +428,16 @@ function displaySavedRounds(direction) {
       i--;
     } else if (direction == 2) {
       i++;
-    } else if (direction == 0) {
+    } else if (direction == 0) { 
       i = 0;
       if (document.getElementById("savedRounds").style.display == "block") {
         document.getElementById("savedRounds").style.display = "none";
+        document.getElementById('saveFromURL').style.display = "block";
         return true;
+      } else{ 
+        setTimeout(function(){
+          window.scrollTo(0,document.body.scrollHeight);
+      }, 100);
       }
 
     }
@@ -436,6 +445,9 @@ function displaySavedRounds(direction) {
 
 
     document.getElementById("savedRounds").style.display = "block";
+
+    var imageLink = document.getElementById("displayedImagelink");
+    imageLink.setAttribute('href', rounds[i][0]);
 
     var image = document.getElementById("displayedImage");
     image.src = rounds[i][0];
@@ -657,20 +669,32 @@ $(document).on('keydown', function (e) {
 });
 
 
-//Provisional function to retrieve round images under the previous system
-function oldRounds() {
-  if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
-    alert("There were no saved images!")
-  } else {
-    alert("Image URLs: " + localStorage.getItem('images'))
+//Retrieve round images under the previous system
+if ((localStorage.getItem('images') != null || localStorage.getItem('images') != "") && localStorage.getItem('transferred') == null) {
+  var images = localStorage.getItem('images').split(";");
+  var rounds = JSON.parse(localStorage.getItem('rounds'))
+  for (i = 0; i < images.length; i++) {
+    rounds.push([images[i], "", ""])
   }
+  localStorage.setItem('rounds', JSON.stringify(rounds));
+  localStorage.setItem('transferred', "a");
 }
 
-function updateInfo(){
+function updateInfo() {
   var roundTitle = document.getElementById("displayedTitle").value
   var roundAnswer = document.getElementById("displayedAnswer").value;
   rounds = JSON.parse(localStorage.getItem('rounds'))
   rounds[i][1] = roundTitle;
   rounds[i][2] = roundAnswer;
   localStorage.setItem('rounds', JSON.stringify(rounds));
+}
+
+function displaySaveURL() {
+  if (document.getElementById("displayRounds").style.display != "none") {
+    document.getElementById("displayRounds").style.display = "none";
+    document.getElementById("saveExternalURL").style.display = "block";
+  } else {
+    document.getElementById("displayRounds").style.display = "block";
+    document.getElementById("saveExternalURL").style.display = "none";
+  }
 }
