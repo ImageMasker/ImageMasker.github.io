@@ -281,6 +281,7 @@ function checkRIS() {
     setTimeout(function () { window.open("https://yandex.com/images/search?img_url=" + url + "&rpt=imageview") }, 2000);
     setTimeout(function () { window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
     setTimeout(function () { window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
+    setTimeout(function () { window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url) }, 2000);
   } else {
     window.open("https://yandex.com/images/search?img_url=" + url + "&rpt=imageview");
     var popUp = window.open("http://www.tineye.com/search/?url=" + url);
@@ -290,7 +291,7 @@ function checkRIS() {
     else {
       popUp.focus();
     }
-    //window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
+    window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
     window.open("http://www.google.com/searchbyimage?image_url=" + url);
   }
 
