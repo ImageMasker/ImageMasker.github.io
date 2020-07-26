@@ -32,7 +32,7 @@
     <a id="displayedImagelink" target="_blank"><img id="displayedImage"></a>
     <button class="color" id="right" onclick="displaySavedRounds(2)"> ▶ </button>
     <br>
-    <input class="color" id="displayedTitle" placeholder="Round title" type="text"> <br>
+    <input class="color" id="displayedTitle" placeholder="Round title" type="text" maxlength="285"> <br>
     <input class="color" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
     <button class="color" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
     <button class="color" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
@@ -42,7 +42,7 @@
   <button class="color" id="saveFromURL" type="button" onclick="displaySaveURL()">Save from URL</button>
   <div id="saveExternalURL">
     <input class="color" id="saveFromURLURL" placeholder="Image URL" type="text"> <br>
-    <input class="color" id="saveFromURLTitle" placeholder="Round title" type="text"> <br>
+    <input class="color" id="saveFromURLTitle" placeholder="Round title" type="text" maxlength="285"> <br>
     <input class="color" id="saveFromURLAnswer" placeholder="Round answer" type="text"> <br>
     <button class="color" id="saveExternal" onclick="saveImage(2)">Save round</button>
   </div>
@@ -94,7 +94,7 @@
         <input type="text" id="uploadedUrl" style="display: none;">
         <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
         <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
-        <input type="text" id="roundTitle" placeholder="Round Title">
+        <input type="text" id="roundTitle" placeholder="Round Title" maxlength="285">
         <input type="text" id="roundAnswer" placeholder="Round Answer">
         <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)" style="display: none;">Submit to
           /r/PictureGame</button>
