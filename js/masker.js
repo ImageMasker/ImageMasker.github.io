@@ -50,11 +50,6 @@ $("html").on("paste", function (event) {
     }
   }
 });
-
-function addProxyToUrl(baseUrl) {
-  return url = "https://cors-anywhere.herokuapp.com/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
-}
-
 function checkURL(url) {
   if (url.match(/\.(jpeg|jpg|png|gif)/) != null) {
     loadSourceImage(url, true);
@@ -100,7 +95,7 @@ function loadSourceImage(baseUrl, externalImage) {
 
   var resizeFactor = Math.random() * 0.05 + 0.95;
   if (externalImage == true) {
-    sourceImageUrl = addProxyToUrl(baseUrl);
+    sourceImageUrl = baseUrl;
     fabric.util.loadImage(sourceImageUrl, function (img) {
       if (img == null) {
         alert("Something went wrong while loading the image.");
