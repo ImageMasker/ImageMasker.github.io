@@ -50,6 +50,11 @@ $("html").on("paste", function (event) {
     }
   }
 });
+
+function addProxyToUrl(baseUrl) {
+  return url = "https://cors.bridged.cc/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
+}
+
 function checkURL(url) {
   if (url.match(/\.(jpeg|jpg|png|gif)/) != null) {
     loadSourceImage(url, true);
@@ -95,7 +100,7 @@ function loadSourceImage(baseUrl, externalImage) {
 
   var resizeFactor = Math.random() * 0.05 + 0.95;
   if (externalImage == true) {
-    sourceImageUrl = baseUrl;
+    sourceImageUrl = addProxyToUrl(baseUrl);
     fabric.util.loadImage(sourceImageUrl, function (img) {
       if (img == null) {
         alert("Something went wrong while loading the image.");
@@ -156,9 +161,14 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('github').style.display = "none";
 }
 
-function loadMask(selectedMask, alphaValue) {
-  thumbURL = selectedMask.src;
-  var url = thumbURL.replace("_thumb", "");
+function loadMask(selectedMask, alphaValue, origin,zoom, deform) {
+  if(origin == "country"){
+    url = selectedMask;
+  }else{
+    thumbURL = selectedMask.src;
+    var url = thumbURL.replace("_thumb", "");
+  }
+
 
   alpha = alphaValue / 100;
   document.getElementById("alpha").value = alphaValue;
@@ -185,11 +195,17 @@ function loadMask(selectedMask, alphaValue) {
     if (requiresMinimize(canvasWidth, mask.width) || requiresMinimize(canvasHeight, mask.height)) {
       slider.value = 40;
     }
+    if(zoom != null){
+      slider.value = zoom;
+    }
     maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
     maskImage.set('scaleY', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
 
-    maskImage.rotate(Math.random() * 4 - 2);
-    maskImage.set({ transformMatrix: [1, (Math.random() / 5) - 0.1, (Math.random() / 5) - 0.1, 1, 0, 0] });
+    if(deform != false){
+      maskImage.rotate(Math.random() * 4 - 2);
+      maskImage.set({ transformMatrix: [1, (Math.random() / 5) - 0.1, (Math.random() / 5) - 0.1, 1, 0, 0] });
+    }
+
     maskImage.set('originX', 'center');
     maskImage.set('originY', 'center');
     maskImage.set('top', canvas.height / 2);
@@ -668,17 +684,6 @@ $(document).on('keydown', function (e) {
 });
 
 
-//Retrieve round images under the previous system
-if ((localStorage.getItem('images') != null || localStorage.getItem('images') != "") && localStorage.getItem('transferred') == null) {
-  var images = localStorage.getItem('images').split(";");
-  var rounds = JSON.parse(localStorage.getItem('rounds'))
-  for (i = 0; i < images.length; i++) {
-    rounds.push([images[i], "", ""])
-  }
-  localStorage.setItem('rounds', JSON.stringify(rounds));
-  localStorage.setItem('transferred', "a");
-}
-
 function updateInfo() {
   var roundTitle = document.getElementById("displayedTitle").value
   var roundAnswer = document.getElementById("displayedAnswer").value;
@@ -697,3 +702,10 @@ function displaySaveURL() {
     document.getElementById("saveExternalURL").style.display = "none";
   }
 }
+
+
+
+
+$("#country").on('change', function() {
+  loadMask(this.value, 75, "country", 25, false);
+});
