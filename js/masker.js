@@ -14,6 +14,7 @@ uploadArea.ondrop = function (e) { e.preventDefault(); uploadDragnDrop(e.dataTra
 
 canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
+fabric.textureSize = 4096;
 
 $("html").on("paste", function (event) {
   if (event.target.id === 'customMaskURL' || event.target.id === 'saveFromURLURL') { }
@@ -25,6 +26,7 @@ $("html").on("paste", function (event) {
       window.open("http://www.tineye.com/search/?url=" + s);
       window.open("http://www.google.com/searchbyimage?image_url=" + s);
       window.open("https://yandex.com/images/search?url=" + s + "&rpt=imageview");
+      window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + s);
     });
   }
   else {
@@ -560,11 +562,10 @@ $("#invert").click(function () {
     })
   }
   selectObject(ObjectName);
-  var obj = canvas.getActiveObject();
-  obj.filters[1] = new fabric.Image.filters.Invert();
-  //obj.filter = filter;
-  obj.applyFilters();
-  //canvas.requestRenderAll();
+  var object = canvas.getActiveObject();
+  var filter = new fabric.Image.filters.Invert();
+  object.filters.push(filter);
+  object.applyFilters();
   canvas.renderAll();
 });
 

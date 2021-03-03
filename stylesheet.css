@@ -330,6 +330,12 @@ img:hover{
 	background-color: rgb(240, 161, 142);
 }
 
+
+#country{
+	background-color:rgb(236, 212, 192);
+	height: 150%;
+}
+
 /*******mobile layout********/
 @media screen and (max-aspect-ratio: 11/16) {
 	#mobilePaste, #mobileRIS{
@@ -367,7 +373,7 @@ body.night{
 	color: whitesmoke;
 }
 /*gosh this is awful*/
-#uploadlabel.night, #displayRounds.night, #saveFromURL.night, #tools.night, #masks.night, #myMasks.night{
+#uploadlabel.night, #displayRounds.night, #saveFromURL.night, #tools.night, #masks.night, #myMasks.night,#country.night{
 	background-color: rgb(52, 57, 107);
 	color: rgb(228, 226, 226);
 }

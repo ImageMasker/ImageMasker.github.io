@@ -5,7 +5,7 @@
   <meta charset='UTF-8'>
   <link rel="stylesheet" href="stylesheet.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/3.6.1/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.3.1/fabric.min.js"></script>
   <title> Image Masker </title>
   <link rel="icon" href="images/favicon.png">
 </head>
@@ -67,8 +67,19 @@
           <input id="colorSelect" type="color" oninput="colorSelect()"> <br>
           <button id="invert" class="color" id="invert" type="button">Invert colors</button><br>
         </div>
+
+       
+      </fieldset>
+      <br>
+      <fieldset class="color" id="masks">
+        <legend>Masks</legend>
+        <br>
         Flag mask selector: <br>
-        <select id="country" name="country">
+        <select id="country" name="country" class="color">
+          <option value=""></option>
+          <option value="https://i.imgur.com/xIfZjb9.png">EU</option>
+          <option value="https://i.imgur.com/fSp3ttA.png">Republic of Gay</option>
+          <option value="https://i.imgur.com/xZ7lQpP.png">Transnistria</option>
           <option value="https://i.imgur.com/9Tqi0Mg.png">Afghanistan</option>
           <option value="https://i.imgur.com/NRbhJ9k.png">Albania</option>
           <option value="https://i.imgur.com/KHLKBTz.png">Algeria</option>
@@ -125,6 +136,7 @@
           <option value="https://i.imgur.com/SbhokB3.png">Ecuador</option>
           <option value="https://i.imgur.com/MkUb02T.png">Egypt</option>
           <option value="https://i.imgur.com/iAS5kAx.png">El Salvador</option>
+          <option value="https://i.imgur.com/9gKVOaT.png">England</option>
           <option value="https://i.imgur.com/bNUIyaX.png">Equatorial Guinea</option>
           <option value="https://i.imgur.com/wjDgRbJ.png">Eritrea</option>
           <option value="https://i.imgur.com/28dXcBw.png">Estonia</option>
@@ -199,7 +211,8 @@
           <option value="https://i.imgur.com/lEMF3me.png">Nicaragua</option>
           <option value="https://i.imgur.com/rhSMg4U.png">Niger</option>
           <option value="https://i.imgur.com/kUjvrre.png">Nigeria</option>
-          <option value="https://i.imgur.com/70Nzzlv.png">Korea North</option>
+          <option value="https://i.imgur.com/70Nzzlv.png">North Korea</option>
+          <option value="https://i.imgur.com/pQjzbFi.png">Northern Ireland</option>
           <option value="https://i.imgur.com/JFElS6h.png">Norway</option>
           <option value="https://i.imgur.com/A6MNfFW.png">Oman</option>
           <option value="https://i.imgur.com/PAWxGmO.png">Pakistan</option>
@@ -223,6 +236,7 @@
           <option value="https://i.imgur.com/ywJwxJm.png">San Marino</option>
           <option value="https://i.imgur.com/hh6ANKX.png">Sao Tome & Principe</option>
           <option value="https://i.imgur.com/kSUb3D3.png">Saudi Arabia</option>
+          <option value="https://i.imgur.com/IZZLSF0.png">Scotland</option>
           <option value="https://i.imgur.com/Za8hJmy.png">Senegal</option>
           <option value="https://i.imgur.com/WyCRWeS.png">Serbia</option>
           <option value="https://i.imgur.com/wQ8UxEN.png">Seychelles</option>
@@ -233,7 +247,7 @@
           <option value="https://i.imgur.com/MmFQ0f0.png">Solomon Islands</option>
           <option value="https://i.imgur.com/C6ErNWv.png">Somalia</option>
           <option value="https://i.imgur.com/Nn8jQcY.png">South Africa</option>
-          <option value="https://i.imgur.com/PkOdH1q.png">Korea South</option>
+          <option value="https://i.imgur.com/PkOdH1q.png">South Korea</option>
           <option value="https://i.imgur.com/F8iaICi.png">South Sudan</option>
           <option value="https://i.imgur.com/1Zmv5Xj.png">Spain</option>
           <option value="https://i.imgur.com/eni0DCA.png">Sri Lanka</option>
@@ -265,16 +279,12 @@
           <option value="https://i.imgur.com/nYYdfBC.png">Vatican City</option>
           <option value="https://i.imgur.com/yLRtWjc.png">Venezuela</option>
           <option value="https://i.imgur.com/xHOu6oJ.png">Vietnam</option>
+          <option value="https://i.imgur.com/gLS5SoL.png">Wales</option>
           <option value="https://i.imgur.com/fNyi0qd.png">Yemen</option>
           <option value="https://i.imgur.com/C3bDpnJ.png">Zambia</option>
           <option value="https://i.imgur.com/ph2XHfz.png">Zimbabwe</option>
        </select>
-       
-      </fieldset>
-      <br>
-      <fieldset class="color" id="masks">
-        <legend>Masks</legend>
-        <br>
+       <br><br>
         <img width='95' height='95' src='images/1_thumb.png' onclick='loadMask(this,75)' />
         <img width='95' height='95' src='images/2_thumb.png' onclick='loadMask(this,75)' />
         <img width='95' height='95' src='images/3_thumb.png' onclick='loadMask(this,75)' />
