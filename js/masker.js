@@ -100,7 +100,8 @@ function uploadDragnDrop(file) {
 
 function loadSourceImage(baseUrl, externalImage) {
 
-  var resizeFactor = Math.random() * 0.05 + 0.95;
+  //var resizeFactor = Math.random() * 0.05 + 0.95;
+  var resizeFactor = 1;
   if (externalImage == true) {
     sourceImageUrl = addProxyToUrl(baseUrl);
     fabric.util.loadImage(sourceImageUrl, function (img) {
@@ -156,6 +157,8 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('uploadbutton').style.visibility = "visible";
   document.getElementById('Download').style.visibility = "inline-block";
   document.getElementById('Download').style.visibility = "visible";
+  document.getElementById('Copy').style.visibility = "inline-block";
+  document.getElementById('Copy').style.visibility = "visible";
   document.getElementById('savedRounds').style.display = "none";
   document.getElementById('displayRounds').style.display = "none";
   document.getElementById('saveFromURL').style.display = "none";
@@ -271,6 +274,7 @@ function upload() {
           document.getElementById('roundAnswer').style.display = "inline-block";
           document.getElementById('Save').style.display = "inline-block";
           document.getElementById('Download').style.display = "inline-block";
+          document.getElementById('Copy').style.display = "inline-block";
         } else {
           alert("Failed to upload.");
         }
@@ -419,6 +423,19 @@ function saveImage(mode) {
 }
 
 function downloadImage() {
+
+
+  updatePreview();
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(imgHeight / 800);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
+  } else {
+    canvas.setZoom(imgWidth / 1100);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
+  }
+
   var downloadLink = document.createElement('a');
   downloadLink.href = canvas.toDataURL("image/png").replace("image/png");
   var d = new Date();
@@ -428,6 +445,76 @@ function downloadImage() {
   document.body.appendChild(downloadLink);
   downloadLink.click();
   document.body.removeChild(downloadLink);
+
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * 800 / imgHeight);
+    canvas.setHeight(canvas.height * 800 / imgHeight);
+  } else {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * (1100 / imgWidth));
+    canvas.setHeight(canvas.height * (1100 / imgWidth));
+  }
+  updatePreview();
+
+}
+
+
+
+function copyImage() {
+
+
+  updatePreview();
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(imgHeight / 800);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
+  } else {
+    canvas.setZoom(imgWidth / 1100);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
+  }
+
+  blob = dataURItoBlob(canvas.toDataURL("image/png"));
+  const item = new ClipboardItem({ "image/png": blob });
+  navigator.clipboard.write([item]); 
+
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * 800 / imgHeight);
+    canvas.setHeight(canvas.height * 800 / imgHeight);
+  } else {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * (1100 / imgWidth));
+    canvas.setHeight(canvas.height * (1100 / imgWidth));
+  }
+  updatePreview();
+
+}
+
+function dataURItoBlob(dataURI) {
+  // convert base64 to raw binary data held in a string
+  // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+  var byteString = atob(dataURI.split(',')[1]);
+
+  // separate out the mime component
+  var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+  // write the bytes of the string to an ArrayBuffer
+  var ab = new ArrayBuffer(byteString.length);
+
+  // create a view into the buffer
+  var ia = new Uint8Array(ab);
+
+  // set the bytes of the buffer to the correct values
+  for (var i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+  }
+
+  // write the ArrayBuffer to a blob, and you're done
+  var blob = new Blob([ab], {type: mimeString});
+  return blob;
+
 }
 
 var i = 0;
@@ -703,8 +790,6 @@ function displaySaveURL() {
     document.getElementById("saveExternalURL").style.display = "none";
   }
 }
-
-
 
 
 $("#country").on('change', function() {

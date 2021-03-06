@@ -11,13 +11,14 @@
 </head>
 
 <body class="color">
-    <button id="night" onclick="toggle()">🌙</button>
-  <button id="github" onclick="window.open('https\:\/\/github.com/ImageMasker/ImageMasker.github.io')"></button>
   <script src="js/night.js"></script>
+  <button id="night" onclick="toggle()">🌙</button>
+  <button id="github" onclick="window.open('https\:\/\/github.com/ImageMasker/ImageMasker.github.io')"></button>
   <div id="uploader">
     <label class="color" id="uploadlabel" for="imageUpload" style="cursor:pointer;">
       Paste, drag & drop or click here to upload an image
     </label>
+    <script src="js/night.js"></script>
     <input type="file" id="imageUpload" style="display: none;" onchange="uploadImage(event)">
   </div>
   <div id="mobilePaste">
@@ -46,6 +47,7 @@
     <input class="color" id="saveFromURLAnswer" placeholder="Round answer" type="text"> <br>
     <button class="color" id="saveExternal" onclick="saveImage(2)">Save round</button>
   </div>
+  <script src="js/night.js"></script>
   <div id="container">
     <div id="masker">
       <fieldset class="color" id="tools">
@@ -68,7 +70,7 @@
           <button id="invert" class="color" id="invert" type="button">Invert colors</button><br>
         </div>
 
-       
+
       </fieldset>
       <br>
       <fieldset class="color" id="masks">
@@ -81,6 +83,7 @@
           <option value="https://i.imgur.com/fSp3ttA.png">Republic of Gay</option>
           <option value="https://i.imgur.com/xZ7lQpP.png">Transnistria</option>
           <option value="https://i.imgur.com/9Tqi0Mg.png">Afghanistan</option>
+          <option value="https://i.imgur.com/PkCsu2J.png">Africa</option>
           <option value="https://i.imgur.com/NRbhJ9k.png">Albania</option>
           <option value="https://i.imgur.com/KHLKBTz.png">Algeria</option>
           <option value="https://i.imgur.com/EVF0Q4S.png">Andorra</option>
@@ -132,6 +135,7 @@
           <option value="https://i.imgur.com/kBRrzRa.png">Djibouti</option>
           <option value="https://i.imgur.com/1tIKmLz.png">Dominica</option>
           <option value="https://i.imgur.com/2iH24KZ.png">Dominican Republic</option>
+          <option value="https://i.imgur.com/fOna9ap.png">Dreamland</option>
           <option value="https://i.imgur.com/wwj1SAU.png">East Timor</option>
           <option value="https://i.imgur.com/SbhokB3.png">Ecuador</option>
           <option value="https://i.imgur.com/MkUb02T.png">Egypt</option>
@@ -150,6 +154,7 @@
           <option value="https://i.imgur.com/T8q5cWo.png">Germany</option>
           <option value="https://i.imgur.com/WLY3BGB.png">Ghana</option>
           <option value="https://i.imgur.com/eYILUsO.png">Greece</option>
+          <option value="https://i.imgur.com/yMeH14o.png">Greenland</option>
           <option value="https://i.imgur.com/e4T9geL.png">Grenada</option>
           <option value="https://i.imgur.com/79A3lAD.png">Guatemala</option>
           <option value="https://i.imgur.com/yQGCM9J.png">Guinea-Bissau</option>
@@ -157,6 +162,7 @@
           <option value="https://i.imgur.com/2tMzuek.png">Guyana</option>
           <option value="https://i.imgur.com/qJdGHkT.png">Haiti</option>
           <option value="https://i.imgur.com/wo6jwZu.png">Honduras</option>
+          <option value="https://i.imgur.com/iKLcALr.png">Hong Kong</option>
           <option value="https://i.imgur.com/zB0FoxA.png">Hungary</option>
           <option value="https://i.imgur.com/5OymiMb.png">Iceland</option>
           <option value="https://i.imgur.com/RNwllsf.png">India</option>
@@ -208,12 +214,14 @@
           <option value="https://i.imgur.com/MphvCLj.png">Nepal</option>
           <option value="https://i.imgur.com/YGSNLg4.png">Netherlands</option>
           <option value="https://i.imgur.com/zGGkv5O.png">New Zealand</option>
+          <option value="https://i.imgur.com/LinkwBP.png">New Zealand (better)</option>
           <option value="https://i.imgur.com/lEMF3me.png">Nicaragua</option>
           <option value="https://i.imgur.com/rhSMg4U.png">Niger</option>
           <option value="https://i.imgur.com/kUjvrre.png">Nigeria</option>
           <option value="https://i.imgur.com/70Nzzlv.png">North Korea</option>
           <option value="https://i.imgur.com/pQjzbFi.png">Northern Ireland</option>
           <option value="https://i.imgur.com/JFElS6h.png">Norway</option>
+          <option value="https://i.imgur.com/P6OTakk.png">Ohio</option>
           <option value="https://i.imgur.com/A6MNfFW.png">Oman</option>
           <option value="https://i.imgur.com/PAWxGmO.png">Pakistan</option>
           <option value="https://i.imgur.com/y4WD4qQ.png">Palau</option>
@@ -225,6 +233,7 @@
           <option value="https://i.imgur.com/Z60mNV7.png">Philippines</option>
           <option value="https://i.imgur.com/2G6pAs9.png">Poland</option>
           <option value="https://i.imgur.com/EOiaV1O.png">Portugal</option>
+          <option value="https://i.imgur.com/Q6j1qf8.png">Puerto Rico</option>
           <option value="https://i.imgur.com/elbCKhA.png">Qatar</option>
           <option value="https://i.imgur.com/BmLOx8T.png">Romania</option>
           <option value="https://i.imgur.com/5lfqBkU.png">Russia</option>
@@ -283,8 +292,8 @@
           <option value="https://i.imgur.com/fNyi0qd.png">Yemen</option>
           <option value="https://i.imgur.com/C3bDpnJ.png">Zambia</option>
           <option value="https://i.imgur.com/ph2XHfz.png">Zimbabwe</option>
-       </select>
-       <br><br>
+        </select>
+        <br><br>
         <img width='95' height='95' src='images/1_thumb.png' onclick='loadMask(this,75)' />
         <img width='95' height='95' src='images/2_thumb.png' onclick='loadMask(this,75)' />
         <img width='95' height='95' src='images/3_thumb.png' onclick='loadMask(this,75)' />
@@ -303,17 +312,20 @@
     </div>
     <div id="preview">
       <div class="color" id="buttons">
-        <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur"/>
+        <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" />
         <input type="text" id="uploadedUrl" style="display: none;">
         <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
         <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
         <input type="text" id="roundTitle" placeholder="Round Title" maxlength="285">
         <input type="text" id="roundAnswer" placeholder="Round Answer">
-        <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)" style="display: none;">Submit to
+        <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)"
+          style="display: none;">Submit to
           /r/PictureGame</button>
         <input type="text" id="newSubInput" placeholder="Subreddit" value="picturegame" style="display: none;">
         <button type="button" id="Save" onclick="saveImage(1)" style="display: none;">Save round</button>
-        <button type="button" id="Download" onclick="downloadImage()">Download image</button>
+        <button type="button" id="Copy" onclick="copyImage()">Copy to clipboard (HQ)</button>
+        <button type="button" id="Download" onclick="downloadImage()">Download image (HQ)</button>
+
       </div>
       <div id="previewImage">
         <img id='imagePreview'>
@@ -328,7 +340,3 @@
 </body>
 
 </html>
-
-<!-- TODO: 
-  - Save round from external URL
-  - Button to update Round information-->

@@ -186,7 +186,7 @@ img:hover{
 	
 }
 
-#uploadbutton, #Download{
+#uploadbutton, #Download, #Copy{
 	display: none;
 	visibility: hidden;
 }
