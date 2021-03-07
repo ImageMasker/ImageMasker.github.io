@@ -166,10 +166,10 @@ function loadSourceImage(baseUrl, externalImage) {
   document.getElementById('github').style.display = "none";
 }
 
-function loadMask(selectedMask, alphaValue, origin,zoom, deform) {
-  if(origin == "country"){
+function loadMask(selectedMask, alphaValue, origin, zoom, deform) {
+  if (origin == "country") {
     url = selectedMask;
-  }else{
+  } else {
     thumbURL = selectedMask.src;
     var url = thumbURL.replace("_thumb", "");
   }
@@ -200,13 +200,13 @@ function loadMask(selectedMask, alphaValue, origin,zoom, deform) {
     if (requiresMinimize(canvasWidth, mask.width) || requiresMinimize(canvasHeight, mask.height)) {
       slider.value = 40;
     }
-    if(zoom != null){
+    if (zoom != null) {
       slider.value = zoom;
     }
     maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
     maskImage.set('scaleY', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
 
-    if(deform != false){
+    if (deform != false) {
       maskImage.rotate(Math.random() * 4 - 2);
       maskImage.set({ transformMatrix: [1, (Math.random() / 5) - 0.1, (Math.random() / 5) - 0.1, 1, 0, 0] });
     }
@@ -400,7 +400,7 @@ function saveImage(mode) {
     var imageURL = document.getElementById("uploadedUrl").value;
     var roundTitle = document.getElementById("roundTitle").value;
     var roundAnswer = document.getElementById("roundAnswer").value;
-  } else{
+  } else {
     var imageURL = document.getElementById("saveFromURLURL").value;
     var roundTitle = document.getElementById("saveFromURLTitle").value;
     var roundAnswer = document.getElementById("saveFromURLAnswer").value;
@@ -416,7 +416,7 @@ function saveImage(mode) {
     previousRoundData.push(roundData);
     localStorage.setItem('rounds', JSON.stringify(previousRoundData));
   }
-  var saveElement = mode==1 ? "Save" : "saveExternal";
+  var saveElement = mode == 1 ? "Save" : "saveExternal";
   var button = document.getElementById(saveElement);
   button.innerText = "Saved!";
   button.style.backgroundColor = "rgb(175, 211, 161)";
@@ -474,10 +474,14 @@ function copyImage() {
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   }
-
-  blob = dataURItoBlob(canvas.toDataURL("image/png"));
-  const item = new ClipboardItem({ "image/png": blob });
-  navigator.clipboard.write([item]); 
+  try{
+    
+    blob = dataURItoBlob(canvas.toDataURL("image/png"));
+    const item = new ClipboardItem({ "image/png": blob });
+    navigator.clipboard.write([item]);
+  }catch(err){
+    alert("This feature isn't supported on Firefox by default. Set dom.events.asyncClipboard.clipboardItem to true (FF 87 or more required)");
+  }
 
   if (imgHeight > imgWidth) {
     canvas.setZoom(1);
@@ -508,11 +512,11 @@ function dataURItoBlob(dataURI) {
 
   // set the bytes of the buffer to the correct values
   for (var i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
+    ia[i] = byteString.charCodeAt(i);
   }
 
   // write the ArrayBuffer to a blob, and you're done
-  var blob = new Blob([ab], {type: mimeString});
+  var blob = new Blob([ab], { type: mimeString });
   return blob;
 
 }
@@ -529,16 +533,16 @@ function displaySavedRounds(direction) {
       i--;
     } else if (direction == 2) {
       i++;
-    } else if (direction == 0) { 
+    } else if (direction == 0) {
       i = 0;
       if (document.getElementById("savedRounds").style.display == "block") {
         document.getElementById("savedRounds").style.display = "none";
         document.getElementById('saveFromURL').style.display = "block";
         return true;
-      } else{ 
-        setTimeout(function(){
-          window.scrollTo(0,document.body.scrollHeight);
-      }, 100);
+      } else {
+        setTimeout(function () {
+          window.scrollTo(0, document.body.scrollHeight);
+        }, 100);
       }
 
     }
@@ -792,6 +796,6 @@ function displaySaveURL() {
 }
 
 
-$("#country").on('change', function() {
+$("#country").on('change', function () {
   loadMask(this.value, 75, "country", 25, false);
 });
