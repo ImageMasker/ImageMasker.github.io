@@ -10,47 +10,49 @@
   <link rel="icon" href="images/favicon.png">
 </head>
 
-<body class="color">
-  <script src="js/night.js"></script>
+<body class="color night">
+  <script>
+    if(localStorage.Night){
+      document.body.style.backgroundColor = "rgb(24, 24, 34)";
+    }
+  </script>
   <button id="night" onclick="toggle()">🌙</button>
   <button id="github" onclick="window.open('https\:\/\/github.com/ImageMasker/ImageMasker.github.io')"></button>
   <div id="uploader">
-    <label class="color" id="uploadlabel" for="imageUpload" style="cursor:pointer;">
+    <label class="color night" id="uploadlabel" for="imageUpload" style="cursor:pointer;">
       Paste, drag & drop or click here to upload an image
     </label>
-    <script src="js/night.js"></script>
     <input type="file" id="imageUpload" style="display: none;" onchange="uploadImage(event)">
   </div>
   <div id="mobilePaste">
-    <input class="color" id="pastedURL" type="url" placeholder="Or paste the image URL here...">
+    <input class="color night" id="pastedURL" type="url" placeholder="Or paste the image URL here...">
   </div>
   <div id="mobileRIS">
-    <input class="color" id="mobileRISURL" type="url" placeholder="Paste an URL here to check for RIS">
+    <input class="color night" id="mobileRISURL" type="url" placeholder="Paste an URL here to check for RIS">
   </div>
-  <button class="color" id="displayRounds" type="button" onclick="displaySavedRounds(0)">Saved rounds</button>
+  <button class="color night" id="displayRounds" type="button" onclick="displaySavedRounds(0)">Saved rounds</button>
   <div id="savedRounds">
-    <button class="color" id="left" onclick="displaySavedRounds(1)"> ◀ </button>
+    <button class="color night" id="left" onclick="displaySavedRounds(1)"> ◀ </button>
     <a id="displayedImagelink" target="_blank"><img id="displayedImage"></a>
-    <button class="color" id="right" onclick="displaySavedRounds(2)"> ▶ </button>
+    <button class="color night" id="right" onclick="displaySavedRounds(2)"> ▶ </button>
     <br>
-    <input class="color" id="displayedTitle" placeholder="Round title" type="text" maxlength="285"> <br>
-    <input class="color" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
-    <button class="color" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
-    <button class="color" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
-    <button class="color" id="delete" onclick="deleteImage()">Delete round</button>
+    <input class="color night" id="displayedTitle" placeholder="Round title" type="text" maxlength="285"> <br>
+    <input class="color night" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
+    <button class="color night" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
+    <button class="color night" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
+    <button class="color night" id="delete" onclick="deleteImage()">Delete round</button>
   </div>
   <br>
-  <button class="color" id="saveFromURL" type="button" onclick="displaySaveURL()">Save from URL</button>
+  <button class="color night" id="saveFromURL" type="button" onclick="displaySaveURL()">Save from URL</button>
   <div id="saveExternalURL">
-    <input class="color" id="saveFromURLURL" placeholder="Image URL" type="text"> <br>
-    <input class="color" id="saveFromURLTitle" placeholder="Round title" type="text" maxlength="285"> <br>
-    <input class="color" id="saveFromURLAnswer" placeholder="Round answer" type="text"> <br>
-    <button class="color" id="saveExternal" onclick="saveImage(2)">Save round</button>
+    <input class="color night" id="saveFromURLURL" placeholder="Image URL" type="text"> <br>
+    <input class="color night" id="saveFromURLTitle" placeholder="Round title" type="text" maxlength="285"> <br>
+    <input class="color night" id="saveFromURLAnswer" placeholder="Round answer" type="text"> <br>
+    <button class="color night" id="saveExternal" onclick="saveImage(2)">Save round</button>
   </div>
-  <script src="js/night.js"></script>
   <div id="container">
     <div id="masker">
-      <fieldset class="color" id="tools">
+      <fieldset class="color night" id="tools">
         <legend>Tools</legend>
         Set opacity:
         <br>
@@ -61,23 +63,23 @@
         <div id="zoomSlider">
           Set mask zoom: <br>
           <input type="range" min="0" max="100" value="50" id="zoom" oninput="updateZoomer()">
-          <button type="button" class="color" id="undo" onclick="undo()">Undo</button>
+          <button type="button" class="color night" id="undo" onclick="undo()">Undo</button>
         </div>
         <div id="brush">
           Brush size and color: <br>
           <input type="range" min="1" max="50" value="10" id="brushSize">
-          <input id="colorSelect" type="color" oninput="colorSelect()"> <br>
-          <button id="invert" class="color" id="invert" type="button">Invert colors</button><br>
+          <input id="colorSelect" type="color night" oninput="colorSelect()"> <br>
+          <button id="invert" class="color night" id="invert" type="button">Invert colors</button><br>
         </div>
 
 
       </fieldset>
       <br>
-      <fieldset class="color" id="masks">
+      <fieldset class="color night" id="masks">
         <legend>Masks</legend>
         <br>
         Flag mask selector: <br>
-        <select id="country" name="country" class="color">
+        <select id="country" name="country" class="color night">
           <option value=""></option>
           <option value="https://i.imgur.com/xIfZjb9.png">EU</option>
           <option value="https://i.imgur.com/fSp3ttA.png">Republic of Gay</option>
@@ -304,14 +306,14 @@
         <img width='95' height='95' src='images/8_thumb.png' onclick='loadMask(this,65)' />
         <img width='95' height='95' src='images/9_thumb.png' onclick='loadMask(this,75)' />
         <br id="br">
-        <input type="text" class="color" id="customMaskURL" placeholder="Mask URL (Imgur)">
+        <input type="text" class="color night" id="customMaskURL" placeholder="Mask URL (Imgur)">
         <br>
-        <button type="button" class="color" id="addMask" onclick="addMask()">Submit mask</button>
-        <button class="color" id="clearMasks" type="button" onclick="clearMasks()">Delete masks</button>
+        <button type="button" class="color night" id="addMask" onclick="addMask()">Submit mask</button>
+        <button class="color night" id="clearMasks" type="button" onclick="clearMasks()">Delete masks</button>
       </fieldset>
     </div>
     <div id="preview">
-      <div class="color" id="buttons">
+      <div class="color night" id="buttons">
         <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" />
         <input type="text" id="uploadedUrl" style="display: none;">
         <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
