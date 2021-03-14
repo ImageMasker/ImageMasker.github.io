@@ -17,7 +17,7 @@ canvas.freeDrawingBrush.width = 10;
 fabric.textureSize = 4096;
 
 $("html").on("paste", function (event) {
-  if (event.target.id === 'customMaskURL' || event.target.id === 'saveFromURLURL') { }
+  if (event.target.id === 'customMaskURL' || event.target.id === 'saveFromURLURL' || event.target.id == "copyToClipboard") { }
   else if (event.target.id === 'mobileRISURL') {
 
     var items = event.originalEvent.clipboardData.items;
@@ -261,11 +261,35 @@ function upload() {
         alert("Error uploading to Imgur. Reason: " + response.responseJSON.data.error);
         document.getElementById('uploadbutton').value = "Upload to Imgur";
         document.getElementById('uploadbutton').disabled = false;
+        document.getElementById('canvasDiv').style.display = "block";
+        document.getElementById('previewImage').style.display = "none";
+        if (imgHeight > imgWidth) {
+          canvas.setZoom(1);
+          canvas.setWidth(canvas.width * 800 / imgHeight);
+          canvas.setHeight(canvas.height * 800 / imgHeight);
+        } else {
+          canvas.setZoom(1);
+          canvas.setWidth(canvas.width * (1100 / imgWidth));
+          canvas.setHeight(canvas.height * (1100 / imgWidth));
+        }
       },
       success: function (response) {
+        document.getElementById('canvasDiv').style.display = "block";
+        document.getElementById('previewImage').style.display = "none";
+        document.getElementById('uploadbutton').disabled = false;
+        if (imgHeight > imgWidth) {
+          canvas.setZoom(1);
+          canvas.setWidth(canvas.width * 800 / imgHeight);
+          canvas.setHeight(canvas.height * 800 / imgHeight);
+        } else {
+          canvas.setZoom(1);
+          canvas.setWidth(canvas.width * (1100 / imgWidth));
+          canvas.setHeight(canvas.height * (1100 / imgWidth));
+        }
         if (response.success) {
           document.getElementById('uploadedUrl').value = response.data.link;
-          document.getElementById('uploadbutton').style.display = "none";
+          //document.getElementById('uploadbutton').style.display = "none";
+          document.getElementById('uploadbutton').value = "Reupload";
           document.getElementById('uploadedUrl').style.display = "inline-block";
           document.getElementById('copyToClipboard').style.display = "inline-block";
           document.getElementById('checkForRIS').style.display = "inline-block";
@@ -344,21 +368,9 @@ function updateZoomer() {
   canvas.renderAll();
 }
 
-/*function brushSize() {
-  var brushSize = document.getElementById("brushSize");
-  canvas.freeDrawingBrush.width = brushSize.value;
-}*/
-
 $(document).on('input', '#brushSize', function () {
   canvas.freeDrawingBrush.width = parseInt($(this).val());
 });
-/*var drawingLineWidthEl = $('brushSize');
-if (canvas.freeDrawingBrush) {
-  canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
-};
-drawingLineWidthEl.onchange = function() {
-  canvas.freeDrawingBrush.width = drawingLineWidthEl.value;
-};*/
 
 function colorSelect() {
   var color = document.getElementById("colorSelect");
@@ -474,12 +486,12 @@ function copyImage() {
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   }
-  try{
-    
+  try {
+
     blob = dataURItoBlob(canvas.toDataURL("image/png"));
     const item = new ClipboardItem({ "image/png": blob });
     navigator.clipboard.write([item]);
-  }catch(err){
+  } catch (err) {
     alert("This feature isn't supported on Firefox by default. Set dom.events.asyncClipboard.clipboardItem to true (FF 87 or more required)");
   }
 
