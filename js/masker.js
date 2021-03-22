@@ -367,7 +367,7 @@ function postReddit(index, subreddit) {
   request.onload = () => {
     var textResponse = request.responseText;
     var jsonResponse = JSON.parse(textResponse);
-    var roundNumber = jsonResponse.roundNumber;
+    var roundNumber = jsonResponse["roundNumber"];
     var nextRound = parseInt(roundNumber) + 1;
     var round = "[Round " + nextRound + "] ";
     if (index == 2) {
