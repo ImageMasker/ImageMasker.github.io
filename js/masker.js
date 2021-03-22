@@ -365,7 +365,8 @@ function postReddit(index, subreddit) {
   var request = new XMLHttpRequest();
   request.open("GET", "https://api.picturegame.co/current", true);
   request.onload = () => {
-    var jsonResponse = request.responseJSON;
+    var textResponse = request.responseText;
+    var jsonResponse = JSON.parse(textResponse);
     var roundNumber = jsonResponse.roundNumber;
     var nextRound = parseInt(roundNumber) + 1;
     var round = "[Round " + nextRound + "] ";
