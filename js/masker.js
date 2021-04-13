@@ -345,6 +345,35 @@ function updateOpacity() {
   canvas.renderAll();
 }
 
+function updateHue() {
+  var firstHue = true;
+  var hueIndex;
+  var slider = document.getElementById("hue");
+
+  if(maskImage.filters.length > 0){
+    for(var i = 0; i < maskImage.filters.length; i++){
+      if(maskImage.filters[i].hasOwnProperty("rotation")){
+          firstHue = false;
+          hueIndex = i;
+      }
+    }
+  }
+  if (maskImage.filters.length == 0 || firstHue){
+    var filter = new fabric.Image.filters.HueRotation({rotation: slider.value,});
+    maskImage.filters.push(filter);
+  }else{
+    maskImage.filters[hueIndex]["rotation"] = slider.value;
+  }  
+  maskImage.applyFilters();
+  canvas.renderAll();
+}
+  
+function resetHue() {
+  var slider = document.getElementById("hue");
+  slider.value = 0;
+  updateHue();
+}
+
 function updateZoomer() {
   var slider = document.getElementById("zoom");
   maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
