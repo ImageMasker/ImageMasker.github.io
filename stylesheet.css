@@ -99,7 +99,7 @@ img:hover{
 	vertical-align: top;
 }
 
-#alpha, #zoom, #brushSize {
+#alpha, #zoom, #brushSize, #hue{
 	display:inline-block;
 	line-height: 0;
 
@@ -115,11 +115,11 @@ img:hover{
 	transition: 0.5s;
 }
 
-#alpha:hover, #zoom:hover, #brushSize:hover{
+#alpha:hover, #zoom:hover, #brushSize:hover, #hue:hover{
 	background-color:rgb(236, 212, 192);
 }
 
-#alpha::-webkit-slider-thumb, #zoom::-webkit-slider-thumb, #brushSize::-webkit-slider-thumb{
+#alpha::-webkit-slider-thumb, #zoom::-webkit-slider-thumb, #brushSize::-webkit-slider-thumb, #hue::-webkit-slider-thumb{
 	-webkit-appearance: none;
 	appearance: none;
 	background: rgb(224, 146, 82);
