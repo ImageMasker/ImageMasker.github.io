@@ -367,12 +367,6 @@ function updateHue() {
   maskImage.applyFilters();
   canvas.renderAll();
 }
-  
-function resetHue() {
-  var slider = document.getElementById("hue");
-  slider.value = 0;
-  updateHue();
-}
 
 function updateZoomer() {
   var slider = document.getElementById("zoom");
