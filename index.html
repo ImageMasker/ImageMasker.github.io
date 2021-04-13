@@ -60,10 +60,6 @@
           <input type="range" min="0" max="100" value="75" id="alpha" oninput="updateOpacity()">
           <span id="sliderValue">75</span>
         </div>
-        <div id="hueSlider">
-          Set mask hue: <br>
-          <input type="range" min="0" max="2" value="0" step="0.002" id="hue" oninput="updateHue()">
-        </div>
         <div id="zoomSlider">
           Set mask zoom: <br>
           <input type="range" min="0" max="100" value="50" id="zoom" oninput="updateZoomer()">
@@ -73,7 +69,12 @@
           Brush size and color: <br>
           <input type="range" min="1" max="50" value="10" id="brushSize">
           <input id="colorSelect" type="color" oninput="colorSelect()"> <br>
-          <button id="invert" class="color night" id="invert" type="button">Invert colors</button><br>
+          
+        </div>
+        <div id="hueSlider">
+          Set mask hue: <br>
+          <input type="range" min="0" max="2" value="0" step="0.002" id="hue" oninput="updateHue()">
+          <button type="button" class="color night" id="undo" onclick="invert()">Invert</button>
         </div>
 
 

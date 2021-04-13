@@ -661,8 +661,7 @@ var filters = ['grayscale', 'invert', 'remove-color', 'sepia', 'brownie',
   'polaroid', 'blend-color', 'gamma', 'kodachrome',
   'blackwhite', 'blend-image', 'hue', 'resize'];
 
-$("#invert").click(function () {
-  //alert("beep boop");
+function invert(){
   ObjectName = 'mask';
   function selectObject(ObjectName) {
     canvas.getObjects().forEach(function (o) {
@@ -677,7 +676,7 @@ $("#invert").click(function () {
   object.filters.push(filter);
   object.applyFilters();
   canvas.renderAll();
-});
+}
 
 
 if (localStorage.getItem('masks') === null || localStorage.getItem('masks') === "") { } else {
