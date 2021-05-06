@@ -819,16 +819,26 @@ $("#country").on('change', function () {
   loadMask(this.value, 75, "country", 25, false);
 });
 
-function copyYml() {
-  var roundTitle = document.getElementById("displayedTitle").value;
-  var roundAnswer = document.getElementById("displayedAnswer").value;
-  var imageLink = document.getElementById("displayedImagelink").href;
+function copyYml(index) {
+  var roundTitle;
+  var roundAnswer;
+  var imageLink;
 
+  if (index == 2) {
+    roundTitle = document.getElementById("roundTitle").value;
+    roundAnswer = document.getElementById("roundAnswer").value;
+    imageLink = document.getElementById("uploadedUrl").value;
+  } else {
+    roundTitle = document.getElementById("displayedTitle").value;
+    roundAnswer = document.getElementById("displayedAnswer").value;
+    imageLink = document.getElementById("displayedImagelink").href;
+  }
+  
   var text = 
 `masker_round_${Date.now()}:
   title: ${roundTitle}
-  answer: ${roundAnswer}
   url: ${imageLink}
+  answer: ${roundAnswer}
 `;
 
   var el = document.createElement('textarea');

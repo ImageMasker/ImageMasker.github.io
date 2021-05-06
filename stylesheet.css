@@ -395,6 +395,6 @@ body.night{
 	background-color: rgb(74, 59, 136);
 }
 
-#PostReddit2.night, #UpdateInfo.night, #delete.night, #UpdateInfo.night, #saveExternal.night, #right.night, #left.night{
+#PostReddit2.night, #UpdateInfo.night, #delete.night, #UpdateInfo.night, #saveExternal.night, #right.night, #left.night, #export.night{
 	background-color: rgb(37, 30, 70);
 }
