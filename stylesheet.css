@@ -223,7 +223,7 @@ img:hover{
 	width: 300px;
 }
 
-#PostReddit2, #delete,  #UpdateInfo, #saveExternal{
+#PostReddit2, #delete,  #UpdateInfo, #saveExternal, #export{
 	position: relative;
 	margin: 5px;
 	width: 200px;
@@ -246,7 +246,7 @@ img:hover{
 }
 
 
-#buttons button, #buttons :first-child, #PostReddit2, #UpdateInfo, #saveExternal, #delete, #addMask, #clearMasks, #undo, #invert{
+#buttons button, #buttons :first-child, #PostReddit2, #UpdateInfo, #saveExternal, #delete, #addMask, #clearMasks, #undo, #invert, #export{
 	background-color: rgb(236, 140, 116);
 	color: white;
 	border: none;
@@ -395,6 +395,6 @@ body.night{
 	background-color: rgb(74, 59, 136);
 }
 
-#PostReddit2.night, #UpdateInfo.night, #delete.night, #UpdateInfo.night, #saveExternal.night, #right.night, #left.night{
+#PostReddit2.night, #UpdateInfo.night, #delete.night, #UpdateInfo.night, #saveExternal.night, #right.night, #left.night, #export.night{
 	background-color: rgb(37, 30, 70);
 }

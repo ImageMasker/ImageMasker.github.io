@@ -40,7 +40,8 @@
     <input class="color night" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
     <button class="color night" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
     <button class="color night" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
-    <button class="color night" id="delete" onclick="deleteImage()">Delete round</button>
+    <button class="color night" id="delete" onclick="deleteImage()">Delete round</button><br>
+    <button class="color night" id="export" onclick="copyYml(1)">Copy YML</button>
   </div>
   <br>
   <button class="color night" id="saveFromURL" type="button" onclick="displaySaveURL()">Save from URL</button>
@@ -334,6 +335,7 @@
         <button type="button" id="Save" onclick="saveImage(1)" style="display: none;">Save round</button>
         <button type="button" id="Copy" onclick="copyImage()">Copy to clipboard (HQ)</button>
         <button type="button" id="Download" onclick="downloadImage()" style="margin-top: 5px;">Download image (HQ)</button>
+        <button type="button" id="Export" onclick="copyYml(2)" style="display: none;">Copy YML</button>
 
       </div>
       <div id="previewImage">

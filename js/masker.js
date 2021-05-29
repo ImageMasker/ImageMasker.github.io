@@ -299,6 +299,7 @@ function upload() {
           document.getElementById('Save').style.display = "inline-block";
           document.getElementById('Download').style.display = "inline-block";
           document.getElementById('Copy').style.display = "inline-block";
+          document.getElementById('Export').style.display = "inline-block";
         } else {
           alert("Failed to upload.");
         }
@@ -817,3 +818,44 @@ function displaySaveURL() {
 $("#country").on('change', function () {
   loadMask(this.value, 75, "country", 25, false);
 });
+
+function copyYml(index) {
+  var roundTitle;
+  var roundAnswer;
+  var imageLink;
+
+  if (index == 2) {
+    roundTitle = document.getElementById("roundTitle").value;
+    roundAnswer = document.getElementById("roundAnswer").value;
+    imageLink = document.getElementById("uploadedUrl").value;
+  } else {
+    roundTitle = document.getElementById("displayedTitle").value;
+    roundAnswer = document.getElementById("displayedAnswer").value;
+    imageLink = document.getElementById("displayedImagelink").href;
+  }
+  
+  var text = 
+`masker_round_${Date.now()}:
+  title: ${roundTitle}
+  url: ${imageLink}
+  answer: ${roundAnswer}
+`;
+
+  var el = document.createElement('textarea');
+  // Set value (string to be copied)
+  el.value = text;
+  
+  // Set non-editable to avoid focus and move outside of view
+  el.setAttribute('readonly', '');
+  el.style = {position: 'absolute', left: '-9999px'};
+  document.body.appendChild(el);
+
+  // Select text inside element
+  el.select();
+  
+  // Copy text to clipboard
+  document.execCommand('copy');
+  
+  // Remove temporary element
+  document.body.removeChild(el);
+}
