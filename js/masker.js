@@ -836,7 +836,8 @@ function copyYml(index) {
   
   var text = 
 `masker_round_${Date.now()}:
-  title: ${roundTitle}
+  title: |
+    ${roundTitle}
   url: ${imageLink}
   answer: ${roundAnswer}
 `;
