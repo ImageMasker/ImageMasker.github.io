@@ -20,6 +20,8 @@ After you're done masking, everything's ready to upload the final image! Press "
 * "Round title" and "Round Answer" text inputs. These are optional, they will be used for the "Save round" and "Submit" features.
 * "Submit to /r/PictureGame" button: This button will call the picturegame.co API to get the round number and create a link with the round submission. A new tab will be opened, and if you're approved to post on /r/PictureGame you'll see that the URL for the image and the round title (if you set a title) will be already filled in, so all you need to do is submit the post!
 * "Save Round" button: this button will save the image link, the title and the answer to the localstorage of your browser. Saved rounds will be available through the main screen of the site. Just press "saved rounds" and you will see your rounds ready to be submitted to /r/PictureGame.
+* "Copy to clipboard": Copies the image currently displayed on the canvas to your clipboard. Sadly it doesn't work in Firefox yet.
+* "Download": Downloads the image to your PC.
 
 The site also has a dark/light theme switch on the top right, your choice will be saved in the localstorage of your browser.
 
@@ -30,8 +32,8 @@ The site also has a dark/light theme switch on the top right, your choice will b
 #### Extra feature: Keyboard shortcuts
 These keyboard shortcuts are features that weren't important enough to get a UI element, but can still be useful for some people. I didn't want to clutter the site with more tools for stuff that most people won't use. These key listeners shouldn't slow down the site since the events are only triggered when the key is pressed.
 * CTRL+Z: Undo (same as the button)
-* SHIFT: Disable drawing mode so elements can be selected, resized and dragged. When SHIFT is pressed again drawing mode is turned off.
+* SHIFT: Disable drawing mode so elements can be selected, resized and dragged. When SHIFT is pressed again drawing mode is turned back on.
 * Up/down arrow keys: Change the opacity of the last element added to the canvas, or the element(s) you selected.
 * Backslash: Clone selected object(s) (or last object added). This can be useful if you need to set a double mask (but it's better if you choose a different image).
 * Left/right arrow keys: Rotate the mask. If you're viewing your saved rounds you can use left/right to browse them too.
-* Instert: Edit default subreddit to which your image will be submitted (useful in case you want to save your rounds on a private subreddit).
+* Insert: Edit default subreddit to which your image will be submitted (useful in case you want to save your rounds on a private subreddit).

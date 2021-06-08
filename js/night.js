@@ -1,7 +1,9 @@
 var isNight;
-var toggleState = localStorage.getItem('Night');
-if(toggleState == "true"){
+if(localStorage.Night == "true"){
     isNight = false;
+    toggle();
+}else{
+    isNight = true;
     toggle();
 }
 function toggle() {
@@ -13,6 +15,7 @@ function toggle() {
 }
 
 function night() {
+    document.body.style.backgroundColor = "rgb(24, 24, 34)";
     localStorage.setItem("Night", true);
     var night = document.getElementsByClassName("color");
     for (i=0; i<night.length;i++) {
@@ -25,6 +28,7 @@ function night() {
 }
 function day() {
     localStorage.setItem('Night', false);
+    document.body.style.backgroundColor = "rgb(240, 236, 228)";
     var day = document.getElementsByClassName("color");
     for (i=0; i<day.length;i++) {
         day[i].classList.remove("night");

@@ -2,6 +2,7 @@ var maskImage = null;
 var canvasHeight, canvasWidth;
 var imgHeight, imgWidth;
 var mask = null;
+var data_url;
 var canvas = new fabric.Canvas('canvas', {
   isDrawingMode: true,
   enableRetinaScaling: false
@@ -13,9 +14,10 @@ uploadArea.ondrop = function (e) { e.preventDefault(); uploadDragnDrop(e.dataTra
 
 canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
+fabric.textureSize = 4096;
 
 $("html").on("paste", function (event) {
-  if (event.target.id === 'customMaskURL') { }
+  if (event.target.id === 'customMaskURL' || event.target.id === 'saveFromURLURL' || event.target.id == "copyToClipboard") { }
   else if (event.target.id === 'mobileRISURL') {
 
     var items = event.originalEvent.clipboardData.items;
@@ -23,7 +25,8 @@ $("html").on("paste", function (event) {
     item.getAsString(function (s) {
       window.open("http://www.tineye.com/search/?url=" + s);
       window.open("http://www.google.com/searchbyimage?image_url=" + s);
-      window.open("https://yandex.com/images/search?img_url=" + s + "&rpt=imageview");
+      window.open("https://yandex.com/images/search?url=" + s + "&rpt=imageview");
+      window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + s);
     });
   }
   else {
@@ -51,7 +54,7 @@ $("html").on("paste", function (event) {
 });
 
 function addProxyToUrl(baseUrl) {
-  return url = "https://cors-anywhere.herokuapp.com/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
+  return url = "https://cors.bridged.cc/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
 }
 
 function checkURL(url) {
@@ -97,7 +100,8 @@ function uploadDragnDrop(file) {
 
 function loadSourceImage(baseUrl, externalImage) {
 
-  var resizeFactor = Math.random() * 0.05 + 0.95;
+  //var resizeFactor = Math.random() * 0.05 + 0.95;
+  var resizeFactor = 1;
   if (externalImage == true) {
     sourceImageUrl = addProxyToUrl(baseUrl);
     fabric.util.loadImage(sourceImageUrl, function (img) {
@@ -149,17 +153,27 @@ function loadSourceImage(baseUrl, externalImage) {
   } else {
     document.getElementById('container').style.display = "grid";
   }
-  document.getElementById('uploadbutton').style.display = "block";
+  document.getElementById('uploadbutton').style.display = "inline-block";
   document.getElementById('uploadbutton').style.visibility = "visible";
+  document.getElementById('Download').style.visibility = "inline-block";
+  document.getElementById('Download').style.visibility = "visible";
+  document.getElementById('Copy').style.visibility = "inline-block";
+  document.getElementById('Copy').style.visibility = "visible";
   document.getElementById('savedRounds').style.display = "none";
   document.getElementById('displayRounds').style.display = "none";
+  document.getElementById('saveFromURL').style.display = "none";
   document.getElementById('night').style.display = "none";
   document.getElementById('github').style.display = "none";
 }
 
-function loadMask(selectedMask, alphaValue) {
-  thumbURL = selectedMask.src;
-  var url = thumbURL.replace("_thumb", "");
+function loadMask(selectedMask, alphaValue, origin, zoom, deform) {
+  if (origin == "country") {
+    url = selectedMask;
+  } else {
+    thumbURL = selectedMask.src;
+    var url = thumbURL.replace("_thumb", "");
+  }
+
 
   alpha = alphaValue / 100;
   document.getElementById("alpha").value = alphaValue;
@@ -173,7 +187,8 @@ function loadMask(selectedMask, alphaValue) {
   new fabric.Image.fromURL(url, function (mask) {
     mask.set({
       id: 'mask',
-      opacity: alpha});
+      opacity: alpha
+    });
     maskImage = mask;
     var slider = document.getElementById("zoom");
     if (requiresResize(canvasWidth, mask.width)) {
@@ -185,11 +200,17 @@ function loadMask(selectedMask, alphaValue) {
     if (requiresMinimize(canvasWidth, mask.width) || requiresMinimize(canvasHeight, mask.height)) {
       slider.value = 40;
     }
+    if (zoom != null) {
+      slider.value = zoom;
+    }
     maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
     maskImage.set('scaleY', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
 
-    maskImage.rotate(Math.random() * 4 - 2);
-    maskImage.set({ transformMatrix: [1, (Math.random() / 5) - 0.1, (Math.random() / 5) - 0.1, 1, 0, 0] });
+    if (deform != false) {
+      maskImage.rotate(Math.random() * 4 - 2);
+      maskImage.set({ transformMatrix: [1, (Math.random() / 5) - 0.1, (Math.random() / 5) - 0.1, 1, 0, 0] });
+    }
+
     maskImage.set('originX', 'center');
     maskImage.set('originY', 'center');
     maskImage.set('top', canvas.height / 2);
@@ -216,8 +237,15 @@ function upload() {
 
   setTimeout(imgurUpload, 250);
   function imgurUpload() {
+    var format = 'image/jpeg';
+    data_url = canvas.toDataURL("image/png");
+    var head = 'data:image/png;base64,';
+    var imgFileSize = Math.round((data_url.length - head.length) * 3 / 4);
+    if (imgFileSize < 3000000) {
+      format = 'image/png';
+    }
 
-    var img = document.getElementById('canvas').toDataURL('image/jpeg', 1.0).split(',')[1];
+    var img = document.getElementById('canvas').toDataURL(format, 1.0).split(',')[1];
 
     $.ajax({
       url: 'https://api.imgur.com/3/image',
@@ -233,11 +261,35 @@ function upload() {
         alert("Error uploading to Imgur. Reason: " + response.responseJSON.data.error);
         document.getElementById('uploadbutton').value = "Upload to Imgur";
         document.getElementById('uploadbutton').disabled = false;
+        document.getElementById('canvasDiv').style.display = "block";
+        document.getElementById('previewImage').style.display = "none";
+        if (imgHeight > imgWidth) {
+          canvas.setZoom(1);
+          canvas.setWidth(canvas.width * 800 / imgHeight);
+          canvas.setHeight(canvas.height * 800 / imgHeight);
+        } else {
+          canvas.setZoom(1);
+          canvas.setWidth(canvas.width * (1100 / imgWidth));
+          canvas.setHeight(canvas.height * (1100 / imgWidth));
+        }
       },
       success: function (response) {
+        document.getElementById('canvasDiv').style.display = "block";
+        document.getElementById('previewImage').style.display = "none";
+        document.getElementById('uploadbutton').disabled = false;
+        if (imgHeight > imgWidth) {
+          canvas.setZoom(1);
+          canvas.setWidth(canvas.width * 800 / imgHeight);
+          canvas.setHeight(canvas.height * 800 / imgHeight);
+        } else {
+          canvas.setZoom(1);
+          canvas.setWidth(canvas.width * (1100 / imgWidth));
+          canvas.setHeight(canvas.height * (1100 / imgWidth));
+        }
         if (response.success) {
           document.getElementById('uploadedUrl').value = response.data.link;
-          document.getElementById('uploadbutton').style.display = "none";
+          //document.getElementById('uploadbutton').style.display = "none";
+          document.getElementById('uploadbutton').value = "Reupload";
           document.getElementById('uploadedUrl').style.display = "inline-block";
           document.getElementById('copyToClipboard').style.display = "inline-block";
           document.getElementById('checkForRIS').style.display = "inline-block";
@@ -245,6 +297,9 @@ function upload() {
           document.getElementById('roundTitle').style.display = "inline-block";
           document.getElementById('roundAnswer').style.display = "inline-block";
           document.getElementById('Save').style.display = "inline-block";
+          document.getElementById('Download').style.display = "inline-block";
+          document.getElementById('Copy').style.display = "inline-block";
+          document.getElementById('Export').style.display = "inline-block";
         } else {
           alert("Failed to upload.");
         }
@@ -265,11 +320,12 @@ function checkRIS() {
   var url = document.getElementById("uploadedUrl").value;
   var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if (isSafari) {
-    setTimeout(function () { window.open("https://yandex.com/images/search?img_url=" + url + "&rpt=imageview") }, 2000);
+    setTimeout(function () { window.open("https://yandex.com/images/search?url=" + url + "&rpt=imageview") }, 2000);
     setTimeout(function () { window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
     setTimeout(function () { window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
+    setTimeout(function () { window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url) }, 2000);
   } else {
-    window.open("https://yandex.com/images/search?img_url=" + url + "&rpt=imageview");
+    window.open("https://yandex.com/images/search?url=" + url + "&rpt=imageview");
     var popUp = window.open("http://www.tineye.com/search/?url=" + url);
     if (popUp == null || typeof (popUp) == 'undefined') {
       alert('The other RIS sites were blocked by the browser. Please allow popups for this site.');
@@ -277,25 +333,9 @@ function checkRIS() {
     else {
       popUp.focus();
     }
-    //window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
+    window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
     window.open("http://www.google.com/searchbyimage?image_url=" + url);
   }
-
-
-  document.getElementById("previewImage").style.display = "none";
-  if (imgHeight > imgWidth) {
-    canvas.setZoom(1);
-    canvas.setWidth(canvas.width * 800 / imgHeight);
-    canvas.setHeight(canvas.height * 800 / imgHeight);
-  } else {
-    canvas.setZoom(1);
-    canvas.setWidth(canvas.width * (1100 / imgWidth));
-    canvas.setHeight(canvas.height * (1100 / imgWidth));
-  }
-  document.getElementById('canvasDiv').style.display = "block";
-  document.getElementById('uploadbutton').style.display = "block";
-  document.getElementById('uploadbutton').disabled = false;
-  document.getElementById('uploadbutton').value = "Reupload";
 }
 
 function updateOpacity() {
@@ -306,6 +346,29 @@ function updateOpacity() {
   canvas.renderAll();
 }
 
+function updateHue() {
+  var firstHue = true;
+  var hueIndex;
+  var slider = document.getElementById("hue");
+
+  if(maskImage.filters.length > 0){
+    for(var i = 0; i < maskImage.filters.length; i++){
+      if(maskImage.filters[i].hasOwnProperty("rotation")){
+          firstHue = false;
+          hueIndex = i;
+      }
+    }
+  }
+  if (maskImage.filters.length == 0 || firstHue){
+    var filter = new fabric.Image.filters.HueRotation({rotation: slider.value,});
+    maskImage.filters.push(filter);
+  }else{
+    maskImage.filters[hueIndex]["rotation"] = slider.value;
+  }  
+  maskImage.applyFilters();
+  canvas.renderAll();
+}
+
 function updateZoomer() {
   var slider = document.getElementById("zoom");
   maskImage.set('scaleX', 0.25 * Math.pow(Math.E, 0.0277 * slider.value));
@@ -313,21 +376,9 @@ function updateZoomer() {
   canvas.renderAll();
 }
 
-/*function brushSize() {
-  var brushSize = document.getElementById("brushSize");
-  canvas.freeDrawingBrush.width = brushSize.value;
-}*/
-
 $(document).on('input', '#brushSize', function () {
-  canvas.freeDrawingBrush.width = $(this).val();
+  canvas.freeDrawingBrush.width = parseInt($(this).val());
 });
-/*var drawingLineWidthEl = $('brushSize');
-if (canvas.freeDrawingBrush) {
-  canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
-};
-drawingLineWidthEl.onchange = function() {
-  canvas.freeDrawingBrush.width = drawingLineWidthEl.value;
-};*/
 
 function colorSelect() {
   var color = document.getElementById("colorSelect");
@@ -338,9 +389,9 @@ function postReddit(index, subreddit) {
   var request = new XMLHttpRequest();
   request.open("GET", "https://api.picturegame.co/current", true);
   request.onload = () => {
-    var text = request.responseText
-    var i = text.search("roundNumber\":");
-    var roundNumber = text.substr(i + 13, 5);
+    var textResponse = request.responseText;
+    var jsonResponse = JSON.parse(textResponse);
+    var roundNumber = jsonResponse["round"]["roundNumber"];
     var nextRound = parseInt(roundNumber) + 1;
     var round = "[Round " + nextRound + "] ";
     if (index == 2) {
@@ -351,44 +402,151 @@ function postReddit(index, subreddit) {
       var roundTitle = document.getElementById("displayedTitle").value;
     }
     roundTitle = encodeURIComponent(roundTitle);
-    var redditLink = "http://www.reddit.com/r/" + subreddit + "/submit?url=" + imageLink + "&title=" + round + roundTitle;
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      redditURL = "http://old.reddit.com/r/";
+    } else {
+      redditURL = "http://www.reddit.com/r/";
+    }
+    var redditLink = redditURL + subreddit + "/submit?url=" + imageLink + "&title=" + round + roundTitle;
     window.open(redditLink);
   }
   request.send();
 
 }
 
-function saveImage() {
-  //Maybe I should use objects instead of saving it as three items in localstorage
-  var imageURL = document.getElementById("uploadedUrl").value;
-  var roundTitle = document.getElementById("roundTitle").value;
-  var roundAnswer = document.getElementById("roundAnswer").value;
+function saveImage(mode) {
 
-  if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
-    localStorage.setItem('images', imageURL);
-    localStorage.setItem('titles', roundTitle);
-    localStorage.setItem('answers', roundAnswer);
+  if (mode == 1) {
+    var imageURL = document.getElementById("uploadedUrl").value;
+    var roundTitle = document.getElementById("roundTitle").value;
+    var roundAnswer = document.getElementById("roundAnswer").value;
   } else {
-    var images = localStorage.getItem('images');
-    var titles = localStorage.getItem('titles');
-    var answers = localStorage.getItem('answers');
-    images += ";" + imageURL;
-    titles += ";" + roundTitle;
-    answers += ";" + roundAnswer;
-    localStorage.setItem('images', images);
-    localStorage.setItem('titles', titles);
-    localStorage.setItem('answers', answers);
+    var imageURL = document.getElementById("saveFromURLURL").value;
+    var roundTitle = document.getElementById("saveFromURLTitle").value;
+    var roundAnswer = document.getElementById("saveFromURLAnswer").value;
   }
-  var button = document.getElementById("Save");
+
+  roundData = [imageURL, roundTitle, roundAnswer];
+
+  if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == "") {
+    localStorage.setItem('rounds', JSON.stringify([roundData]));
+  }
+  else {
+    var previousRoundData = JSON.parse(localStorage.getItem('rounds'));
+    previousRoundData.push(roundData);
+    localStorage.setItem('rounds', JSON.stringify(previousRoundData));
+  }
+  var saveElement = mode == 1 ? "Save" : "saveExternal";
+  var button = document.getElementById(saveElement);
   button.innerText = "Saved!";
   button.style.backgroundColor = "rgb(175, 211, 161)";
+}
+
+function downloadImage() {
+
+
+  updatePreview();
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(imgHeight / 800);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
+  } else {
+    canvas.setZoom(imgWidth / 1100);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
+  }
+
+  var downloadLink = document.createElement('a');
+  downloadLink.href = canvas.toDataURL("image/png").replace("image/png");
+  var d = new Date();
+  var formattedDate = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + " " + d.getHours() + "-" + d.getMinutes();
+  downloadLink.download = 'round ' + formattedDate + '.png';
+
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * 800 / imgHeight);
+    canvas.setHeight(canvas.height * 800 / imgHeight);
+  } else {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * (1100 / imgWidth));
+    canvas.setHeight(canvas.height * (1100 / imgWidth));
+  }
+  updatePreview();
+
+}
+
+
+
+function copyImage() {
+
+
+  updatePreview();
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(imgHeight / 800);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
+  } else {
+    canvas.setZoom(imgWidth / 1100);
+    canvas.setWidth(imgWidth);
+    canvas.setHeight(imgHeight);
+  }
+  try {
+
+    blob = dataURItoBlob(canvas.toDataURL("image/png"));
+    const item = new ClipboardItem({ "image/png": blob });
+    navigator.clipboard.write([item]);
+  } catch (err) {
+    alert("This feature isn't supported on Firefox by default. Set dom.events.asyncClipboard.clipboardItem to true (FF 87 or more required)");
+  }
+
+  if (imgHeight > imgWidth) {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * 800 / imgHeight);
+    canvas.setHeight(canvas.height * 800 / imgHeight);
+  } else {
+    canvas.setZoom(1);
+    canvas.setWidth(canvas.width * (1100 / imgWidth));
+    canvas.setHeight(canvas.height * (1100 / imgWidth));
+  }
+  updatePreview();
+
+}
+
+function dataURItoBlob(dataURI) {
+  // convert base64 to raw binary data held in a string
+  // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+  var byteString = atob(dataURI.split(',')[1]);
+
+  // separate out the mime component
+  var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+  // write the bytes of the string to an ArrayBuffer
+  var ab = new ArrayBuffer(byteString.length);
+
+  // create a view into the buffer
+  var ia = new Uint8Array(ab);
+
+  // set the bytes of the buffer to the correct values
+  for (var i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+
+  // write the ArrayBuffer to a blob, and you're done
+  var blob = new Blob([ab], { type: mimeString });
+  return blob;
+
 }
 
 var i = 0;
 //What a mess...
 function displaySavedRounds(direction) {
-  if (localStorage.getItem('images') == null || localStorage.getItem('images') == "") {
+  if (JSON.parse(localStorage.getItem('rounds')) == null || JSON.parse(localStorage.getItem('rounds')) == "") {
     alert("There are no saved images!");
+    return true;
   }
   else {
     if (direction == 1) {
@@ -399,33 +557,39 @@ function displaySavedRounds(direction) {
       i = 0;
       if (document.getElementById("savedRounds").style.display == "block") {
         document.getElementById("savedRounds").style.display = "none";
+        document.getElementById('saveFromURL').style.display = "block";
         return true;
+      } else {
+        setTimeout(function () {
+          window.scrollTo(0, document.body.scrollHeight);
+        }, 100);
       }
 
     }
+    document.getElementById('saveFromURL').style.display = "none";
+    var rounds = JSON.parse(localStorage.getItem('rounds'));
+
 
     document.getElementById("savedRounds").style.display = "block";
+
+    var imageLink = document.getElementById("displayedImagelink");
+    imageLink.setAttribute('href', rounds[i][0]);
+
     var image = document.getElementById("displayedImage");
-    var images = localStorage.getItem('images');
-    var imagesArray = images.split(";");
-    image.src = imagesArray[i];
+    image.src = rounds[i][0];
 
     var title = document.getElementById("displayedTitle");
-    var titles = localStorage.getItem('titles')
-    var titlesArray = titles.split(";");
-    title.value = titlesArray[i];
+    title.value = rounds[i][1];
 
     var answer = document.getElementById("displayedAnswer");
-    var answers = localStorage.getItem('answers')
-    var answersArray = answers.split(";");
-    answer.value = answersArray[i];
+    answer.value = rounds[i][2];
 
     if (i <= 0) {
       var left = document.getElementById("left");
       //left.style.display="none";
       left.style.visibility = "hidden";
       document.getElementById("right").style.visibility = "visible";
-    } else if (i > imagesArray.length - 2) {
+    } else if (i > rounds.length - 2) {
       var right = document.getElementById("right");
       //right.style.display="none";
       right.style.visibility = "hidden";
@@ -435,7 +599,7 @@ function displaySavedRounds(direction) {
       document.getElementById("right").style.visibility = "visible";
     }
 
-    if (imagesArray.length == 1) {
+    if (rounds.length == 1) {
       document.getElementById("left").style.visibility = "hidden";
       document.getElementById("right").style.visibility = "hidden";
     }
@@ -446,32 +610,19 @@ function displaySavedRounds(direction) {
 
 
 function deleteImage() {
-  var images = localStorage.getItem('images');
-  var imagesArray = images.split(";");
+  if (window.confirm("Are you sure you want to delete the round?")) {
+    var rounds = JSON.parse(localStorage.getItem('rounds'));
+    roundsAfter = rounds.slice(0, i).concat(rounds.slice(i + 1, rounds.length))
+    localStorage.setItem('rounds', JSON.stringify(roundsAfter));
 
-  var titles = localStorage.getItem('titles')
-  var titlesArray = titles.split(";");
+    if (roundsAfter.length == 0) {
+      document.getElementById("savedRounds").style.display = "none";
+      document.getElementById('saveFromURL').style.display = "block";
 
-  var answers = localStorage.getItem('answers');
-  var answersArray = answers.split(";");
-
-  imagesArray.splice(i, 1);
-  titlesArray.splice(i, 1);
-  answersArray.splice(i, 1);
-
-  listImages = imagesArray.join(";");
-  listTitles = titlesArray.join(";");
-  listAnswers = answersArray.join(";");
-
-  localStorage.setItem('images', listImages);
-  localStorage.setItem('titles', listTitles);
-  localStorage.setItem('answers', listAnswers);
-
-  if (imagesArray.length == 0) {
-    document.getElementById("savedRounds").style.display = "none";
-  } else {
-    i = 0;
-    displaySavedRounds(3);
+    } else {
+      i = 0;
+      displaySavedRounds(3);
+    }
   }
 
 }
@@ -506,13 +657,12 @@ function undo() {
 }
 
 var filters = ['grayscale', 'invert', 'remove-color', 'sepia', 'brownie',
-                      'brightness', 'contrast', 'saturation', 'noise', 'vintage',
-                      'pixelate', 'blur', 'sharpen', 'emboss', 'technicolor',
-                      'polaroid', 'blend-color', 'gamma', 'kodachrome',
-                      'blackwhite', 'blend-image', 'hue', 'resize'];
+  'brightness', 'contrast', 'saturation', 'noise', 'vintage',
+  'pixelate', 'blur', 'sharpen', 'emboss', 'technicolor',
+  'polaroid', 'blend-color', 'gamma', 'kodachrome',
+  'blackwhite', 'blend-image', 'hue', 'resize'];
 
-$("#invert").click(function () {
-  //alert("beep boop");
+function invert(){
   ObjectName = 'mask';
   function selectObject(ObjectName) {
     canvas.getObjects().forEach(function (o) {
@@ -522,13 +672,12 @@ $("#invert").click(function () {
     })
   }
   selectObject(ObjectName);
-  var obj = canvas.getActiveObject();
-  obj.filters[1] = new fabric.Image.filters.Invert();
-  //obj.filter = filter;
-  obj.applyFilters();
-  //canvas.requestRenderAll();
+  var object = canvas.getActiveObject();
+  var filter = new fabric.Image.filters.Invert();
+  object.filters.push(filter);
+  object.applyFilters();
   canvas.renderAll();
-});
+}
 
 
 if (localStorage.getItem('masks') === null || localStorage.getItem('masks') === "") { } else {
@@ -625,7 +774,7 @@ $(document).on('keydown', function (e) {
     obj.set('opacity', opac);
     canvas.renderAll();
   }
-    if (event.which == 220) {
+  if (event.which == 220) {
     if (canvas.getActiveObject()) {
       var obj = canvas.getActiveObject();
     } else {
@@ -644,3 +793,70 @@ $(document).on('keydown', function (e) {
     newPost.innerText = "Post to /r/";
   }
 });
+
+
+function updateInfo() {
+  var roundTitle = document.getElementById("displayedTitle").value
+  var roundAnswer = document.getElementById("displayedAnswer").value;
+  rounds = JSON.parse(localStorage.getItem('rounds'))
+  rounds[i][1] = roundTitle;
+  rounds[i][2] = roundAnswer;
+  localStorage.setItem('rounds', JSON.stringify(rounds));
+}
+
+function displaySaveURL() {
+  if (document.getElementById("displayRounds").style.display != "none") {
+    document.getElementById("displayRounds").style.display = "none";
+    document.getElementById("saveExternalURL").style.display = "block";
+  } else {
+    document.getElementById("displayRounds").style.display = "block";
+    document.getElementById("saveExternalURL").style.display = "none";
+  }
+}
+
+
+$("#country").on('change', function () {
+  loadMask(this.value, 75, "country", 25, false);
+});
+
+function copyYml(index) {
+  var roundTitle;
+  var roundAnswer;
+  var imageLink;
+
+  if (index == 2) {
+    roundTitle = document.getElementById("roundTitle").value;
+    roundAnswer = document.getElementById("roundAnswer").value;
+    imageLink = document.getElementById("uploadedUrl").value;
+  } else {
+    roundTitle = document.getElementById("displayedTitle").value;
+    roundAnswer = document.getElementById("displayedAnswer").value;
+    imageLink = document.getElementById("displayedImagelink").href;
+  }
+  
+  var text = 
+`masker_round_${Date.now()}:
+  title: |
+    ${roundTitle}
+  url: ${imageLink}
+  answer: ${roundAnswer}
+`;
+
+  var el = document.createElement('textarea');
+  // Set value (string to be copied)
+  el.value = text;
+  
+  // Set non-editable to avoid focus and move outside of view
+  el.setAttribute('readonly', '');
+  el.style = {position: 'absolute', left: '-9999px'};
+  document.body.appendChild(el);
+
+  // Select text inside element
+  el.select();
+  
+  // Copy text to clipboard
+  document.execCommand('copy');
+  
+  // Remove temporary element
+  document.body.removeChild(el);
+}

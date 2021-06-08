@@ -4,44 +4,58 @@
 <head>
   <meta charset='UTF-8'>
   <link rel="stylesheet" href="stylesheet.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/2.7.0/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.3.1/fabric.min.js"></script>
   <title> Image Masker </title>
   <link rel="icon" href="images/favicon.png">
 </head>
 
-<body class="color">
-    <button id="night" onclick="toggle()">🌙</button>
+<body class="color night">
+  <script>
+    if(localStorage.Night){
+      document.body.style.backgroundColor = "rgb(24, 24, 34)";
+    }
+  </script>
+  <button id="night" onclick="toggle()">🌙</button>
   <button id="github" onclick="window.open('https\:\/\/github.com/ImageMasker/ImageMasker.github.io')"></button>
-  <script src="js/night.js"></script>
   <div id="uploader">
-    <label class="color" id="uploadlabel" for="imageUpload" style="cursor:pointer;">
+    <label class="color night" id="uploadlabel" for="imageUpload" style="cursor:pointer;">
       Paste, drag & drop or click here to upload an image
     </label>
     <input type="file" id="imageUpload" style="display: none;" onchange="uploadImage(event)">
   </div>
   <div id="mobilePaste">
-    <input class="color" id="pastedURL" type="url" placeholder="Or paste the image URL here...">
+    <input class="color night" id="pastedURL" type="url" placeholder="Or paste the image URL here...">
   </div>
   <div id="mobileRIS">
-    <input class="color" id="mobileRISURL" type="url" placeholder="Paste an URL here to check for RIS">
+    <input class="color night" id="mobileRISURL" type="url" placeholder="Paste an URL here to check for RIS">
   </div>
-  <button class="color" id="displayRounds" type="button" onclick="displaySavedRounds(0)">Saved rounds</button>
+  <button class="color night" id="displayRounds" type="button" onclick="displaySavedRounds(0)">Saved rounds</button>
   <div id="savedRounds">
-    <button class="color" id="left" onclick="displaySavedRounds(1)"> ◀ </button>
-    <img id="displayedImage">
-    <button class="color" id="right" onclick="displaySavedRounds(2)"> ▶ </button>
+    <button class="color night" id="left" onclick="displaySavedRounds(1)"> ◀ </button>
+    <a id="displayedImagelink" target="_blank"><img id="displayedImage"></a>
+    <button class="color night" id="right" onclick="displaySavedRounds(2)"> ▶ </button>
     <br>
-    <input class="color" id="displayedTitle" placeholder="Round title" type="text"> <br>
-    <input class="color" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
-    <button class="color" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
-    <button class="color" id="delete" onclick="deleteImage()">Delete round</button>
+    <input class="color night" id="displayedTitle" placeholder="Round title" type="text" maxlength="285"> <br>
+    <input class="color night" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
+    <button class="color night" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
+    <button class="color night" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
+    <button class="color night" id="delete" onclick="deleteImage()">Delete round</button><br>
+    <button class="color night" id="export" onclick="copyYml(1)">Copy YML</button>
+  </div>
+  <br>
+  <button class="color night" id="saveFromURL" type="button" onclick="displaySaveURL()">Save from URL</button>
+  <div id="saveExternalURL">
+    <input class="color night" id="saveFromURLURL" placeholder="Image URL" type="text"> <br>
+    <input class="color night" id="saveFromURLTitle" placeholder="Round title" type="text" maxlength="285"> <br>
+    <input class="color night" id="saveFromURLAnswer" placeholder="Round answer" type="text"> <br>
+    <button class="color night" id="saveExternal" onclick="saveImage(2)">Save round</button>
   </div>
   <div id="container">
     <div id="masker">
-      <fieldset class="color" id="tools">
+      <fieldset class="color night" id="tools">
         <legend>Tools</legend>
-        Set Opacity:
+        Set opacity:
         <br>
         <div id="slider">
           <input type="range" min="0" max="100" value="75" id="alpha" oninput="updateOpacity()">
@@ -50,19 +64,246 @@
         <div id="zoomSlider">
           Set mask zoom: <br>
           <input type="range" min="0" max="100" value="50" id="zoom" oninput="updateZoomer()">
-          <button type="button" class="color" id="undo" onclick="undo()">Undo</button>
+          <button type="button" class="color night" id="undo" onclick="undo()">Undo</button>
         </div>
         <div id="brush">
           Brush size and color: <br>
           <input type="range" min="1" max="50" value="10" id="brushSize">
           <input id="colorSelect" type="color" oninput="colorSelect()"> <br>
-          <button id="invert" class="color" id="invert" type="button">Invert colors</button><br>
+          
         </div>
+        <div id="hueSlider">
+          Set mask hue: <br>
+          <input type="range" min="0" max="2" value="0" step="0.002" id="hue" oninput="updateHue()">
+          <button type="button" class="color night" id="undo" onclick="invert()">Invert</button>
+        </div>
+
+
       </fieldset>
       <br>
-      <fieldset class="color" id="masks">
+      <fieldset class="color night" id="masks">
         <legend>Masks</legend>
         <br>
+        Flag mask selector: <br>
+        <select id="country" name="country" class="color night">
+          <option value=""></option>
+          <option value="https://i.imgur.com/xIfZjb9.png">EU</option>
+          <option value="https://i.imgur.com/fSp3ttA.png">Republic of Gay</option>
+          <option value="https://i.imgur.com/xZ7lQpP.png">Transnistria</option>
+          <option value="https://i.imgur.com/9Tqi0Mg.png">Afghanistan</option>
+          <option value="https://i.imgur.com/PkCsu2J.png">Africa</option>
+          <option value="https://i.imgur.com/NRbhJ9k.png">Albania</option>
+          <option value="https://i.imgur.com/KHLKBTz.png">Algeria</option>
+          <option value="https://i.imgur.com/EVF0Q4S.png">Andorra</option>
+          <option value="https://i.imgur.com/1lCFEWG.png">Angola</option>
+          <option value="https://i.imgur.com/ow0UiT6.png">Antigua & Barbuda</option>
+          <option value="https://i.imgur.com/comK2Gu.png">Argentina</option>
+          <option value="https://i.imgur.com/BmSpKIO.png">Armenia</option>
+          <option value="https://i.imgur.com/ZlFFoRk.png">Australia</option>
+          <option value="https://i.imgur.com/2zafteF.png">Austria</option>
+          <option value="https://i.imgur.com/FKs1YXF.png">Azerbaijan</option>
+          <option value="https://i.imgur.com/LeyMl3h.png">Bahamas</option>
+          <option value="https://i.imgur.com/2kwLMcI.png">Bahrain</option>
+          <option value="https://i.imgur.com/UyB5Teq.png">Bangladesh</option>
+          <option value="https://i.imgur.com/lf6zgVx.png">Barbados</option>
+          <option value="https://i.imgur.com/x7Kq3Tv.png">Belarus</option>
+          <option value="https://i.imgur.com/1DHrq0f.png">Belgium</option>
+          <option value="https://i.imgur.com/paPMJPr.png">Belize</option>
+          <option value="https://i.imgur.com/fMUKL9C.png">Benin</option>
+          <option value="https://i.imgur.com/JRbUeYV.png">Bhutan</option>
+          <option value="https://i.imgur.com/tQEJTIt.png">Bolivia</option>
+          <option value="https://i.imgur.com/Y1eL6e8.png">Bosnia & Herzegovina</option>
+          <option value="https://i.imgur.com/1ZTzRGv.png">Botswana</option>
+          <option value="https://i.imgur.com/cIqGjoC.png">Brazil</option>
+          <option value="https://i.imgur.com/I8FJn8q.png">Brunei</option>
+          <option value="https://i.imgur.com/y4phBaw.png">Bulgaria</option>
+          <option value="https://i.imgur.com/ZV4EqF3.png">Burkina Faso</option>
+          <option value="https://i.imgur.com/6Cv9uFx.png">Burundi</option>
+          <option value="https://i.imgur.com/ZGwYOW2.png">Cambodia</option>
+          <option value="https://i.imgur.com/rBt2PO4.png">Cameroon</option>
+          <option value="https://i.imgur.com/j46e31u.png">Canada</option>
+          <option value="https://i.imgur.com/uxolmSa.png">Cape Verde</option>
+          <option value="https://i.imgur.com/ZL2pEzi.png">Catalonia</option>
+          <option value="https://i.imgur.com/vjXeQ9k.png">Catalonia (big)</option>
+          <option value="https://i.imgur.com/Be651gm.png">Central African Republic</option>
+          <option value="https://i.imgur.com/r0GxuPe.png">Chad</option>
+          <option value="https://i.imgur.com/1piXwlq.png">Chile</option>
+          <option value="https://i.imgur.com/BlBlNeS.png">China</option>
+          <option value="https://i.imgur.com/TkSBRpC.png">Colombia</option>
+          <option value="https://i.imgur.com/0CaPhmR.png">Comoros</option>
+          <option value="https://i.imgur.com/VbvUV1x.png">Congo (Democratic)</option>
+          <option value="https://i.imgur.com/JU61FXP.png">Congo (Republican)</option>
+          <option value="https://i.imgur.com/4l0OjZy.png">Costa Rica</option>
+          <option value="https://i.imgur.com/DgfCcmd.png">Cote DIvoire</option>
+          <option value="https://i.imgur.com/xFxSvaT.png">Croatia</option>
+          <option value="https://i.imgur.com/UNT2iCn.png">Cuba</option>
+          <option value="https://i.imgur.com/o4eQ70t.png">Cyprus</option>
+          <option value="https://i.imgur.com/CyOdJNG.png">Czech Republic</option>
+          <option value="https://i.imgur.com/WMQoP5F.png">Denmark</option>
+          <option value="https://i.imgur.com/kBRrzRa.png">Djibouti</option>
+          <option value="https://i.imgur.com/1tIKmLz.png">Dominica</option>
+          <option value="https://i.imgur.com/2iH24KZ.png">Dominican Republic</option>
+          <option value="https://i.imgur.com/fOna9ap.png">Dreamland</option>
+          <option value="https://i.imgur.com/wwj1SAU.png">East Timor</option>
+          <option value="https://i.imgur.com/SbhokB3.png">Ecuador</option>
+          <option value="https://i.imgur.com/MkUb02T.png">Egypt</option>
+          <option value="https://i.imgur.com/iAS5kAx.png">El Salvador</option>
+          <option value="https://i.imgur.com/9gKVOaT.png">England</option>
+          <option value="https://i.imgur.com/bNUIyaX.png">Equatorial Guinea</option>
+          <option value="https://i.imgur.com/wjDgRbJ.png">Eritrea</option>
+          <option value="https://i.imgur.com/28dXcBw.png">Estonia</option>
+          <option value="https://i.imgur.com/YtzTzGl.png">Ethiopia</option>
+          <option value="https://i.imgur.com/fOAmFaN.png">Fiji</option>
+          <option value="https://i.imgur.com/rzgDst5.png">Finland</option>
+          <option value="https://i.imgur.com/Lmf8i6X.png">France</option>
+          <option value="https://i.imgur.com/5CmVBeq.png">Funwaa</option>
+          <option value="https://i.imgur.com/rBeWJMy.png">Gabon</option>
+          <option value="https://i.imgur.com/5Cojiqp.png">Gambia</option>
+          <option value="https://i.imgur.com/fTnz8Di.png">Georgia</option>
+          <option value="https://i.imgur.com/T8q5cWo.png">Germany</option>
+          <option value="https://i.imgur.com/WLY3BGB.png">Ghana</option>
+          <option value="https://i.imgur.com/eYILUsO.png">Greece</option>
+          <option value="https://i.imgur.com/yMeH14o.png">Greenland</option>
+          <option value="https://i.imgur.com/e4T9geL.png">Grenada</option>
+          <option value="https://i.imgur.com/79A3lAD.png">Guatemala</option>
+          <option value="https://i.imgur.com/yQGCM9J.png">Guinea-Bissau</option>
+          <option value="https://i.imgur.com/WN9skfu.png">Guinea</option>
+          <option value="https://i.imgur.com/2tMzuek.png">Guyana</option>
+          <option value="https://i.imgur.com/qJdGHkT.png">Haiti</option>
+          <option value="https://i.imgur.com/wo6jwZu.png">Honduras</option>
+          <option value="https://i.imgur.com/iKLcALr.png">Hong Kong</option>
+          <option value="https://i.imgur.com/zB0FoxA.png">Hungary</option>
+          <option value="https://i.imgur.com/5OymiMb.png">Iceland</option>
+          <option value="https://i.imgur.com/RNwllsf.png">India</option>
+          <option value="https://i.imgur.com/YzATo37.png">Indonesia</option>
+          <option value="https://i.imgur.com/lFT1fSI.png">Iran</option>
+          <option value="https://i.imgur.com/XNaAcrn.png">Iraq</option>
+          <option value="https://i.imgur.com/pQjzbFi.png">Ireland</option>
+          <option value="https://i.imgur.com/WZex2Mc.png">Israel</option>
+          <option value="https://i.imgur.com/fjY9096.png">Italy</option>
+          <option value="https://i.imgur.com/svg1YtJ.png">Jamaica</option>
+          <option value="https://i.imgur.com/qGCPaX6.png">Japan</option>
+          <option value="https://i.imgur.com/nAvIjKo.png">Jordan</option>
+          <option value="https://i.imgur.com/kk8UmpE.png">Kazakhstan</option>
+          <option value="https://i.imgur.com/b3DCf8L.png">Kenya</option>
+          <option value="https://i.imgur.com/NaEKKvw.png">Kiribati</option>
+          <option value="https://i.imgur.com/cjOG0Sv.png">Kosovo</option>
+          <option value="https://i.imgur.com/GaUSfyg.png">Kuwait</option>
+          <option value="https://i.imgur.com/yfA0u7f.png">Kyrgyzstan</option>
+          <option value="https://i.imgur.com/tBC2Ke6.png">Laos</option>
+          <option value="https://i.imgur.com/CueVZQt.png">Latvia</option>
+          <option value="https://i.imgur.com/qf490S0.png">Lebanon</option>
+          <option value="https://i.imgur.com/6FYfLPP.png">Lesotho</option>
+          <option value="https://i.imgur.com/993R7Nc.png">Liberia</option>
+          <option value="https://i.imgur.com/thWIlc4.png">Libya</option>
+          <option value="https://i.imgur.com/WnMzG82.png">Liechtenstein</option>
+          <option value="https://i.imgur.com/912UGBH.png">Lithuania</option>
+          <option value="https://i.imgur.com/5ieDRFv.png">Luxembourg</option>
+          <option value="https://i.imgur.com/4X0cTjU.png">Macedonia</option>
+          <option value="https://i.imgur.com/2X7wIZ7.png">Madagascar</option>
+          <option value="https://i.imgur.com/IjXQVkU.png">Malawi</option>
+          <option value="https://i.imgur.com/OXdfUO1.png">Malaysia</option>
+          <option value="https://i.imgur.com/rJceNRt.png">Maldives</option>
+          <option value="https://i.imgur.com/cqVQ4as.png">Mali</option>
+          <option value="https://i.imgur.com/xQnLZoV.png">Malta</option>
+          <option value="https://i.imgur.com/h8yPOd3.png">Marshall Islands</option>
+          <option value="https://i.imgur.com/KHOAIa9.png">Mauritania</option>
+          <option value="https://i.imgur.com/FAXH92J.png">Mauritius</option>
+          <option value="https://i.imgur.com/y5bCPET.png">Mexico</option>
+          <option value="https://i.imgur.com/cE2H6G2.png">Micronesia</option>
+          <option value="https://i.imgur.com/NC7Kw8Z.png">Moldova</option>
+          <option value="https://i.imgur.com/jcQFE2r.png">Monaco</option>
+          <option value="https://i.imgur.com/ydbE2rT.png">Mongolia</option>
+          <option value="https://i.imgur.com/crypmYT.png">Montenegro</option>
+          <option value="https://i.imgur.com/Mzs8Jt8.png">Morocco</option>
+          <option value="https://i.imgur.com/fNABXNy.png">Mozambique</option>
+          <option value="https://i.imgur.com/GAen6QM.png">Myanmar</option>
+          <option value="https://i.imgur.com/eiAu86c.png">Namibia</option>
+          <option value="https://i.imgur.com/SS2hI29.png">Nauru</option>
+          <option value="https://i.imgur.com/MphvCLj.png">Nepal</option>
+          <option value="https://i.imgur.com/YGSNLg4.png">Netherlands</option>
+          <option value="https://i.imgur.com/zGGkv5O.png">New Zealand</option>
+          <option value="https://i.imgur.com/LinkwBP.png">New Zealand (better)</option>
+          <option value="https://i.imgur.com/lEMF3me.png">Nicaragua</option>
+          <option value="https://i.imgur.com/rhSMg4U.png">Niger</option>
+          <option value="https://i.imgur.com/kUjvrre.png">Nigeria</option>
+          <option value="https://i.imgur.com/70Nzzlv.png">North Korea</option>
+          <option value="https://i.imgur.com/pQjzbFi.png">Northern Ireland</option>
+          <option value="https://i.imgur.com/JFElS6h.png">Norway</option>
+          <option value="https://i.imgur.com/P6OTakk.png">Ohio</option>
+          <option value="https://i.imgur.com/A6MNfFW.png">Oman</option>
+          <option value="https://i.imgur.com/PAWxGmO.png">Pakistan</option>
+          <option value="https://i.imgur.com/y4WD4qQ.png">Palau</option>
+          <option value="https://i.imgur.com/j2Cxtt1.png">Palestine</option>
+          <option value="https://i.imgur.com/fMRUnuU.png">Panama</option>
+          <option value="https://i.imgur.com/FmGja4s.png">Papua New Guinea</option>
+          <option value="https://i.imgur.com/LfF1pOc.png">Paraguay</option>
+          <option value="https://i.imgur.com/YBd252A.png">Peru</option>
+          <option value="https://i.imgur.com/oIM6111.png">PictureGame</option>
+          <option value="https://i.imgur.com/Z60mNV7.png">Philippines</option>
+          <option value="https://i.imgur.com/2G6pAs9.png">Poland</option>
+          <option value="https://i.imgur.com/EOiaV1O.png">Portugal</option>
+          <option value="https://i.imgur.com/Q6j1qf8.png">Puerto Rico</option>
+          <option value="https://i.imgur.com/elbCKhA.png">Qatar</option>
+          <option value="https://i.imgur.com/BmLOx8T.png">Romania</option>
+          <option value="https://i.imgur.com/5lfqBkU.png">Russia</option>
+          <option value="https://i.imgur.com/HaGkFUN.png">Rwanda</option>
+          <option value="https://i.imgur.com/wbJJRBS.png">St Kitts-Nevis</option>
+          <option value="https://i.imgur.com/V1LKEXd.png">St Lucia</option>
+          <option value="https://i.imgur.com/6zxFFQw.png">St Vincent & Grenadines</option>
+          <option value="https://i.imgur.com/Sjwyep5.png">Samoa</option>
+          <option value="https://i.imgur.com/ywJwxJm.png">San Marino</option>
+          <option value="https://i.imgur.com/hh6ANKX.png">Sao Tome & Principe</option>
+          <option value="https://i.imgur.com/kSUb3D3.png">Saudi Arabia</option>
+          <option value="https://i.imgur.com/IZZLSF0.png">Scotland</option>
+          <option value="https://i.imgur.com/Za8hJmy.png">Senegal</option>
+          <option value="https://i.imgur.com/WyCRWeS.png">Serbia</option>
+          <option value="https://i.imgur.com/wQ8UxEN.png">Seychelles</option>
+          <option value="https://i.imgur.com/LKx69SH.png">Sierra Leone</option>
+          <option value="https://i.imgur.com/S1gvbku.png">Singapore</option>
+          <option value="https://i.imgur.com/JvQAnUk.png">Slovakia</option>
+          <option value="https://i.imgur.com/dJDUDCx.png">Slovenia</option>
+          <option value="https://i.imgur.com/MmFQ0f0.png">Solomon Islands</option>
+          <option value="https://i.imgur.com/C6ErNWv.png">Somalia</option>
+          <option value="https://i.imgur.com/Nn8jQcY.png">South Africa</option>
+          <option value="https://i.imgur.com/PkOdH1q.png">South Korea</option>
+          <option value="https://i.imgur.com/F8iaICi.png">South Sudan</option>
+          <option value="https://i.imgur.com/1Zmv5Xj.png">Spain</option>
+          <option value="https://i.imgur.com/eni0DCA.png">Sri Lanka</option>
+          <option value="https://i.imgur.com/hNt6aAM.png">Sudan</option>
+          <option value="https://i.imgur.com/aDyqyLp.png">Suriname</option>
+          <option value="https://i.imgur.com/VQMZfG4.png">Swaziland</option>
+          <option value="https://i.imgur.com/iyo7eDX.png">Sweden</option>
+          <option value="https://i.imgur.com/lzzcsUF.png">Switzerland</option>
+          <option value="https://i.imgur.com/qbEO7EB.png">Syria</option>
+          <option value="https://i.imgur.com/ZlZQwMx.png">Taiwan</option>
+          <option value="https://i.imgur.com/X6vOmym.png">Tajikistan</option>
+          <option value="https://i.imgur.com/ykA0dTf.png">Tanzania</option>
+          <option value="https://i.imgur.com/hs7G5b2.png">Thailand</option>
+          <option value="https://i.imgur.com/vyoUaMI.png">Togo</option>
+          <option value="https://i.imgur.com/aK7gHXR.png">Tonga</option>
+          <option value="https://i.imgur.com/pgZQDa0.png">Trinidad & Tobago</option>
+          <option value="https://i.imgur.com/IjKnfAI.png">Tunisia</option>
+          <option value="https://i.imgur.com/825qUAL.png">Turkey</option>
+          <option value="https://i.imgur.com/20PjZm8.png">Turkmenistan</option>
+          <option value="https://i.imgur.com/31GCSvX.png">Tuvalu</option>
+          <option value="https://i.imgur.com/0s3EMIZ.png">Uganda</option>
+          <option value="https://i.imgur.com/yJVJLLK.png">Ukraine</option>
+          <option value="https://i.imgur.com/xmMonNg.png">United Arab Emirates</option>
+          <option value="https://i.imgur.com/hE6aLqj.png">United Kingdom</option>
+          <option value="https://i.imgur.com/uJLF7Sn.png">United States</option>
+          <option value="https://i.imgur.com/eiIxCwV.png">Uruguay</option>
+          <option value="https://i.imgur.com/MwlvpLr.png">Uzbekistan</option>
+          <option value="https://i.imgur.com/Y8eJqLj.png">Vanuatu</option>
+          <option value="https://i.imgur.com/nYYdfBC.png">Vatican City</option>
+          <option value="https://i.imgur.com/yLRtWjc.png">Venezuela</option>
+          <option value="https://i.imgur.com/xHOu6oJ.png">Vietnam</option>
+          <option value="https://i.imgur.com/gLS5SoL.png">Wales</option>
+          <option value="https://i.imgur.com/fNyi0qd.png">Yemen</option>
+          <option value="https://i.imgur.com/C3bDpnJ.png">Zambia</option>
+          <option value="https://i.imgur.com/ph2XHfz.png">Zimbabwe</option>
+        </select>
+        <br><br>
         <img width='95' height='95' src='images/1_thumb.png' onclick='loadMask(this,75)' />
         <img width='95' height='95' src='images/2_thumb.png' onclick='loadMask(this,75)' />
         <img width='95' height='95' src='images/3_thumb.png' onclick='loadMask(this,75)' />
@@ -73,24 +314,29 @@
         <img width='95' height='95' src='images/8_thumb.png' onclick='loadMask(this,65)' />
         <img width='95' height='95' src='images/9_thumb.png' onclick='loadMask(this,75)' />
         <br id="br">
-        <input type="text" class="color" id="customMaskURL" placeholder="Mask URL">
+        <input type="text" class="color night" id="customMaskURL" placeholder="Mask URL (Imgur)">
         <br>
-        <button type="button" class="color" id="addMask" onclick="addMask()">Submit mask</button>
-        <button class="color" id="clearMasks" type="button" onclick="clearMasks()">Delete masks</button>
+        <button type="button" class="color night" id="addMask" onclick="addMask()">Submit mask</button>
+        <button class="color night" id="clearMasks" type="button" onclick="clearMasks()">Delete masks</button>
       </fieldset>
     </div>
     <div id="preview">
-      <div class="color" id="buttons">
-        <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur"/>
+      <div class="color night" id="buttons">
+        <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" />
         <input type="text" id="uploadedUrl" style="display: none;">
         <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
         <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
-        <input type="text" id="roundTitle" placeholder="Round Title">
+        <input type="text" id="roundTitle" placeholder="Round Title" maxlength="285">
         <input type="text" id="roundAnswer" placeholder="Round Answer">
-        <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)" style="display: none;">Submit to
+        <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)"
+          style="display: none;">Submit to
           /r/PictureGame</button>
         <input type="text" id="newSubInput" placeholder="Subreddit" value="picturegame" style="display: none;">
-        <button type="button" id="Save" onclick="saveImage()" style="display: none;">Save round</button>
+        <button type="button" id="Save" onclick="saveImage(1)" style="display: none;">Save round</button>
+        <button type="button" id="Copy" onclick="copyImage()">Copy to clipboard (HQ)</button>
+        <button type="button" id="Download" onclick="downloadImage()" style="margin-top: 5px;">Download image (HQ)</button>
+        <button type="button" id="Export" onclick="copyYml(2)" style="display: none;">Copy YML</button>
+
       </div>
       <div id="previewImage">
         <img id='imagePreview'>
