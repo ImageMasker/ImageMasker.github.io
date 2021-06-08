@@ -112,11 +112,11 @@ function loadSourceImage(baseUrl, externalImage) {
       imgWidth = img.width * resizeFactor;
 
       if (img.height > img.width) {
-        canvas.setWidth((img.width * 800) / img.height);
-        canvas.setHeight(800);
+        canvas.setWidth((img.width * 1300) / img.height);
+        canvas.setHeight(1300);
       } else {
-        canvas.setWidth(1100);
-        canvas.setHeight((img.height * 1100) / img.width);
+        canvas.setWidth(2000);
+        canvas.setHeight((img.height * 2000) / img.width);
       }
 
       canvas.setBackgroundImage(new fabric.Image(img), canvas.renderAll.bind(canvas), {
@@ -131,11 +131,11 @@ function loadSourceImage(baseUrl, externalImage) {
       imgWidth = img.width * resizeFactor;
 
       if (img.height > img.width) {
-        canvas.setWidth((img.width * 800) / img.height);
-        canvas.setHeight(800);
+        canvas.setWidth((img.width * 1300) / img.height);
+        canvas.setHeight(1300);
       } else {
-        canvas.setWidth(1100);
-        canvas.setHeight((img.height * 1100) / img.width);
+        canvas.setWidth(2000);
+        canvas.setHeight((img.height * 2000) / img.width);
       }
 
       canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
@@ -226,11 +226,11 @@ function upload() {
   document.getElementById('previewImage').style.display = "block";
   updatePreview();
   if (imgHeight > imgWidth) {
-    canvas.setZoom(imgHeight / 800);
+    canvas.setZoom(imgHeight / 1300);
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   } else {
-    canvas.setZoom(imgWidth / 1100);
+    canvas.setZoom(imgWidth / 2000);
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   }
@@ -265,12 +265,12 @@ function upload() {
         document.getElementById('previewImage').style.display = "none";
         if (imgHeight > imgWidth) {
           canvas.setZoom(1);
-          canvas.setWidth(canvas.width * 800 / imgHeight);
-          canvas.setHeight(canvas.height * 800 / imgHeight);
+          canvas.setWidth(canvas.width * 1300 / imgHeight);
+          canvas.setHeight(canvas.height * 1300 / imgHeight);
         } else {
           canvas.setZoom(1);
-          canvas.setWidth(canvas.width * (1100 / imgWidth));
-          canvas.setHeight(canvas.height * (1100 / imgWidth));
+          canvas.setWidth(canvas.width * (2000 / imgWidth));
+          canvas.setHeight(canvas.height * (2000 / imgWidth));
         }
       },
       success: function (response) {
@@ -279,12 +279,12 @@ function upload() {
         document.getElementById('uploadbutton').disabled = false;
         if (imgHeight > imgWidth) {
           canvas.setZoom(1);
-          canvas.setWidth(canvas.width * 800 / imgHeight);
-          canvas.setHeight(canvas.height * 800 / imgHeight);
+          canvas.setWidth(canvas.width * 1300 / imgHeight);
+          canvas.setHeight(canvas.height * 1300 / imgHeight);
         } else {
           canvas.setZoom(1);
-          canvas.setWidth(canvas.width * (1100 / imgWidth));
-          canvas.setHeight(canvas.height * (1100 / imgWidth));
+          canvas.setWidth(canvas.width * (2000 / imgWidth));
+          canvas.setHeight(canvas.height * (2000 / imgWidth));
         }
         if (response.success) {
           document.getElementById('uploadedUrl').value = response.data.link;
@@ -447,11 +447,11 @@ function downloadImage() {
 
   updatePreview();
   if (imgHeight > imgWidth) {
-    canvas.setZoom(imgHeight / 800);
+    canvas.setZoom(imgHeight / 1300);
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   } else {
-    canvas.setZoom(imgWidth / 1100);
+    canvas.setZoom(imgWidth / 2000);
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   }
@@ -468,12 +468,12 @@ function downloadImage() {
 
   if (imgHeight > imgWidth) {
     canvas.setZoom(1);
-    canvas.setWidth(canvas.width * 800 / imgHeight);
-    canvas.setHeight(canvas.height * 800 / imgHeight);
+    canvas.setWidth(canvas.width * 1300 / imgHeight);
+    canvas.setHeight(canvas.height * 1300 / imgHeight);
   } else {
     canvas.setZoom(1);
-    canvas.setWidth(canvas.width * (1100 / imgWidth));
-    canvas.setHeight(canvas.height * (1100 / imgWidth));
+    canvas.setWidth(canvas.width * (2000 / imgWidth));
+    canvas.setHeight(canvas.height * (2000 / imgWidth));
   }
   updatePreview();
 
@@ -486,11 +486,11 @@ function copyImage() {
 
   updatePreview();
   if (imgHeight > imgWidth) {
-    canvas.setZoom(imgHeight / 800);
+    canvas.setZoom(imgHeight / 1300);
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   } else {
-    canvas.setZoom(imgWidth / 1100);
+    canvas.setZoom(imgWidth / 2000);
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   }
@@ -505,12 +505,12 @@ function copyImage() {
 
   if (imgHeight > imgWidth) {
     canvas.setZoom(1);
-    canvas.setWidth(canvas.width * 800 / imgHeight);
-    canvas.setHeight(canvas.height * 800 / imgHeight);
+    canvas.setWidth(canvas.width * 1300 / imgHeight);
+    canvas.setHeight(canvas.height * 1300 / imgHeight);
   } else {
     canvas.setZoom(1);
-    canvas.setWidth(canvas.width * (1100 / imgWidth));
-    canvas.setHeight(canvas.height * (1100 / imgWidth));
+    canvas.setWidth(canvas.width * (2000 / imgWidth));
+    canvas.setHeight(canvas.height * (2000 / imgWidth));
   }
   updatePreview();
 
