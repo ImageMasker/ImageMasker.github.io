@@ -269,6 +269,14 @@ img:hover{
 	padding: 10px;
 }
 
+#roundTitle{
+	width: 600px;
+}
+
+#roundAnswer{
+	width: 330px;
+}
+
 #roundTitle, #roundAnswer, #uploadedUrl{
 	display: none;
 }
