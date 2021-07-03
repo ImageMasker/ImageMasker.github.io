@@ -246,7 +246,7 @@ img:hover{
 }
 
 
-#buttons button, #buttons :first-child, #PostReddit2, #UpdateInfo, #saveExternal, #delete, #addMask, #clearMasks, #undo, #invert, #export, #addZak {
+#buttons button, #buttons :first-child, #PostReddit2, #UpdateInfo, #saveExternal, #delete, #addMask, #clearMasks, #undo, #invert, #export, #addCutout {
 	background-color: rgb(236, 140, 116);
 	color: white;
 	border: none;
@@ -257,7 +257,7 @@ img:hover{
 	transition: 0.5s;
 }
 
-#buttons button:hover, #buttons :first-child:hover, #undo:hover, #invert:hover, #addZak:hover {
+#buttons button:hover, #buttons :first-child:hover, #undo:hover, #invert:hover, #addCutout:hover {
 	background-color: rgb(240, 161, 142);
 }
 
@@ -390,11 +390,11 @@ body.night{
 	background-color: rgb(71, 77, 146);
 }
 
-#buttons.night *, #buttons.night :first-child, #addMask.night, #clearMasks.night, #undo.night, #invert.night, #addZak.night {
+#buttons.night *, #buttons.night :first-child, #addMask.night, #clearMasks.night, #undo.night, #invert.night, #addCutout.night {
 	background-color: rgb(53, 44, 95);
 }
 
-#buttons.night button:hover, #buttons.night :first-child:hover, #addMask.night:hover, #clearMasks.night:hover, #undo.night:hover, #invert.night:hover, #addZak.night:hover {
+#buttons.night button:hover, #buttons.night :first-child:hover, #addMask.night:hover, #clearMasks.night:hover, #undo.night:hover, #invert.night:hover, #addCutout.night:hover {
 	background-color: rgb(71, 77, 146);
 }
 

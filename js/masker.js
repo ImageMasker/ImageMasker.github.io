@@ -883,13 +883,13 @@ function copyYml(index) {
     document.body.removeChild(el);
 }
 
-function addZak() {
-    new fabric.Image.fromURL("https://i.imgur.com/93eWFwN.png", function(zak) {
-        zak.set({
-            id: 'zak',
+function addCutout(url) {
+    new fabric.Image.fromURL(url, function(cutout) {
+        cutout.set({
+            id: 'cutout',
         });
-        zakOverlay = zak;
-        canvas.add(zakOverlay);
+        cutoutOverlay = cutout;
+        canvas.add(cutoutOverlay);
     }, {
         crossOrigin: 'Anonymous'
     });
