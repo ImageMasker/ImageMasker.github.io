@@ -37,3 +37,4 @@ These keyboard shortcuts are features that weren't important enough to get a UI 
 * Backslash: Clone selected object(s) (or last object added). This can be useful if you need to set a double mask (but it's better if you choose a different image).
 * Left/right arrow keys: Rotate the mask. If you're viewing your saved rounds you can use left/right to browse them too.
 * Insert: Edit default subreddit to which your image will be submitted (useful in case you want to save your rounds on a private subreddit).
+* R: Update Preview to reorder objects with smallest objects in the front.

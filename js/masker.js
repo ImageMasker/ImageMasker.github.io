@@ -80,8 +80,20 @@ function requiresMinimize(id, md) {
         return false;
 }
 
+
+fabric.Canvas.prototype.orderObjects = function(compare) {
+    this._objects.sort(compare);
+    this.renderAll();
+}
+
+function compare(x,y) {
+    return x.getWidth() * x.getHeight() < y.getWidth() * y.getHeight();
+}
+
+
 function updatePreview() {
     var image = document.getElementById('imagePreview');
+	canvas.orderObjects();
     canvas.renderAll();
     image.src = canvas.toDataURL('image/jpeg', 1.0);
 }
@@ -811,6 +823,9 @@ $(document).on('keydown', function(e) {
         var newPost = document.getElementById('PostReddit');
         newPost.innerText = "Post to /r/";
     }
+    if (e.which === 82) { /* refresh preview using R */
+		updatePreview();
+    }
 });
 
 
@@ -894,5 +909,4 @@ function addCutout(url) {
         crossOrigin: 'Anonymous'
     });
 	canvas.isDrawingMode = false;
-	canvas.bringToFront(cutoutOverlay);
 }
