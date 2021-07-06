@@ -80,20 +80,8 @@ function requiresMinimize(id, md) {
         return false;
 }
 
-
-fabric.Canvas.prototype.orderObjects = function(compare) {
-    this._objects.sort(compare);
-    this.renderAll();
-}
-
-function compare(x,y) {
-    return x.getWidth() * x.getHeight() < y.getWidth() * y.getHeight();
-}
-
-
 function updatePreview() {
     var image = document.getElementById('imagePreview');
-	canvas.orderObjects();
     canvas.renderAll();
     image.src = canvas.toDataURL('image/jpeg', 1.0);
 }
@@ -264,6 +252,8 @@ function upload() {
         if (imgFileSize < 3000000) {
             format = 'image/png';
         }
+
+        canvas.sendToBack(maskImage);
 
         var img = document.getElementById('canvas').toDataURL(format, 1.0).split(',')[1];
 
@@ -822,9 +812,6 @@ $(document).on('keydown', function(e) {
         var newSub = newSubInput.value;
         var newPost = document.getElementById('PostReddit');
         newPost.innerText = "Post to /r/";
-    }
-    if (e.which === 82) { /* refresh preview using R */
-		updatePreview();
     }
 });
 
