@@ -894,4 +894,5 @@ function addCutout(url) {
         crossOrigin: 'Anonymous'
     });
 	canvas.isDrawingMode = false;
+	canvas.bringToFront(cutoutOverlay);
 }
