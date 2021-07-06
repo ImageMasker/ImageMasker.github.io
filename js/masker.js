@@ -231,7 +231,10 @@ function loadMask(selectedMask, alphaValue, origin, zoom, deform) {
 function upload() {
     document.getElementById('canvasDiv').style.display = "none";
     document.getElementById('previewImage').style.display = "block";
+
+    maskImage.sendToBack();
     updatePreview();
+
     if (imgHeight > imgWidth) {
         canvas.setZoom(imgHeight / 1300);
         canvas.setWidth(imgWidth);
@@ -252,8 +255,6 @@ function upload() {
         if (imgFileSize < 3000000) {
             format = 'image/png';
         }
-
-        canvas.sendToBack(maskImage);
 
         var img = document.getElementById('canvas').toDataURL(format, 1.0).split(',')[1];
 
@@ -462,8 +463,9 @@ function saveImage(mode) {
 
 function downloadImage() {
 
-
+    maskImage.sendToBack();
     updatePreview();
+
     if (imgHeight > imgWidth) {
         canvas.setZoom(imgHeight / 1300);
         canvas.setWidth(imgWidth);
@@ -501,8 +503,9 @@ function downloadImage() {
 
 function copyImage() {
 
-
+    maskImage.sendToBack();
     updatePreview();
+
     if (imgHeight > imgWidth) {
         canvas.setZoom(imgHeight / 1300);
         canvas.setWidth(imgWidth);
