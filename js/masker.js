@@ -793,10 +793,12 @@ $(document).on('keydown', function (e) {
     newPost.innerText = "Post to /r/";
   }
   if(e.which === 107){
-      canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize")) + 5;
+      canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value) + 5;
+      document.getElementById("brushSize").value = parseInt(document.getElementById("brushSize").value) + 5;
   }
   if(e.which === 109){
-    canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize")) - 5;
+    canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value) - 5;
+    document.getElementById("brushSize").value = parseInt(document.getElementById("brushSize").value) - 5;
 }
 });
 
