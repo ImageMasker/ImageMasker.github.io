@@ -792,11 +792,11 @@ $(document).on('keydown', function (e) {
     var newPost = document.getElementById('PostReddit');
     newPost.innerText = "Post to /r/";
   }
-  if(e.which === 107){
+  if(e.which === 87){
       canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value) + 5;
       document.getElementById("brushSize").value = parseInt(document.getElementById("brushSize").value) + 5;
   }
-  if(e.which === 109){
+  if(e.which === 83){
     canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value) - 5;
     document.getElementById("brushSize").value = parseInt(document.getElementById("brushSize").value) - 5;
 }
