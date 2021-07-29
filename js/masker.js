@@ -792,6 +792,12 @@ $(document).on('keydown', function (e) {
     var newPost = document.getElementById('PostReddit');
     newPost.innerText = "Post to /r/";
   }
+  if(e.which === 107){
+      canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize")) + 5;
+  }
+  if(e.which === 109){
+    canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize")) - 5;
+}
 });
 
 
