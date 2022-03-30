@@ -54,7 +54,7 @@ $("html").on("paste", function (event) {
 });
 
 function addProxyToUrl(baseUrl) {
-  return url = "https://cors.bridged.cc/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
+  return url =baseUrl.replace(/(^\w+:|^)\/\//, '');
 }
 
 function checkURL(url) {
