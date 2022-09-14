@@ -217,10 +217,16 @@ img:hover{
 	outline:0;
 }
 
-#displayedTitle, #displayedAnswer, #saveFromURLURL, #saveFromURLTitle, #saveFromURLAnswer{
+#saveFromURLURL, #saveFromURLTitle, #saveFromURLAnswer{
 	position: relative;
 	margin: 5px;
 	width: 300px;
+}
+
+#displayedTitle, #displayedAnswer{
+	position: relative;
+	margin: 5px;
+	width: 800px;
 }
 
 #PostReddit2, #delete,  #UpdateInfo, #saveExternal, #export{
