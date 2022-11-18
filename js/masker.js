@@ -24,7 +24,7 @@ $("html").on("paste", function (event) {
     var item = items[0];
     item.getAsString(function (s) {
       window.open("http://www.tineye.com/search/?url=" + s);
-      window.open("http://www.google.com/searchbyimage?image_url=" + s);
+      window.open("https://lens.google.com/uploadbyurl?url=" + s);
       window.open("https://yandex.com/images/search?url=" + s + "&rpt=imageview");
       window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + s);
     });
@@ -54,7 +54,7 @@ $("html").on("paste", function (event) {
 });
 
 function addProxyToUrl(baseUrl) {
-  return url =baseUrl.replace(/(^\w+:|^)\/\//, '');
+  return url = "https://cors.bridged.cc/" + baseUrl.replace(/(^\w+:|^)\/\//, '');
 }
 
 function checkURL(url) {
@@ -322,7 +322,7 @@ function checkRIS() {
   if (isSafari) {
     setTimeout(function () { window.open("https://yandex.com/images/search?url=" + url + "&rpt=imageview") }, 2000);
     setTimeout(function () { window.open("http://www.tineye.com/search/?url=" + url) }, 2000);
-    setTimeout(function () { window.open("http://www.google.com/searchbyimage?image_url=" + url) }, 2000);
+    setTimeout(function () { window.open("https://lens.google.com/uploadbyurl?url=" + url) }, 2000);
     setTimeout(function () { window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url) }, 2000);
   } else {
     window.open("https://yandex.com/images/search?url=" + url + "&rpt=imageview");
@@ -334,7 +334,7 @@ function checkRIS() {
       popUp.focus();
     }
     window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url);
-    window.open("http://www.google.com/searchbyimage?image_url=" + url);
+    window.open("https://lens.google.com/uploadbyurl?url=" + url);
   }
 }
 
@@ -351,20 +351,20 @@ function updateHue() {
   var hueIndex;
   var slider = document.getElementById("hue");
 
-  if(maskImage.filters.length > 0){
-    for(var i = 0; i < maskImage.filters.length; i++){
-      if(maskImage.filters[i].hasOwnProperty("rotation")){
-          firstHue = false;
-          hueIndex = i;
+  if (maskImage.filters.length > 0) {
+    for (var i = 0; i < maskImage.filters.length; i++) {
+      if (maskImage.filters[i].hasOwnProperty("rotation")) {
+        firstHue = false;
+        hueIndex = i;
       }
     }
   }
-  if (maskImage.filters.length == 0 || firstHue){
-    var filter = new fabric.Image.filters.HueRotation({rotation: slider.value,});
+  if (maskImage.filters.length == 0 || firstHue) {
+    var filter = new fabric.Image.filters.HueRotation({ rotation: slider.value, });
     maskImage.filters.push(filter);
-  }else{
+  } else {
     maskImage.filters[hueIndex]["rotation"] = slider.value;
-  }  
+  }
   maskImage.applyFilters();
   canvas.renderAll();
 }
@@ -662,7 +662,7 @@ var filters = ['grayscale', 'invert', 'remove-color', 'sepia', 'brownie',
   'polaroid', 'blend-color', 'gamma', 'kodachrome',
   'blackwhite', 'blend-image', 'hue', 'resize'];
 
-function invert(){
+function invert() {
   ObjectName = 'mask';
   function selectObject(ObjectName) {
     canvas.getObjects().forEach(function (o) {
@@ -792,14 +792,14 @@ $(document).on('keydown', function (e) {
     var newPost = document.getElementById('PostReddit');
     newPost.innerText = "Post to /r/";
   }
-  if(e.which === 87){
-      canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value) + 5;
-      document.getElementById("brushSize").value = parseInt(document.getElementById("brushSize").value) + 5;
+  if (e.which === 87) {
+    canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value) + 5;
+    document.getElementById("brushSize").value = parseInt(document.getElementById("brushSize").value) + 5;
   }
-  if(e.which === 83){
+  if (e.which === 83) {
     canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value) - 5;
     document.getElementById("brushSize").value = parseInt(document.getElementById("brushSize").value) - 5;
-}
+  }
 });
 
 
@@ -841,9 +841,9 @@ function copyYml(index) {
     roundAnswer = document.getElementById("displayedAnswer").value;
     imageLink = document.getElementById("displayedImagelink").href;
   }
-  
-  var text = 
-`masker_round_${Date.now()}:
+
+  var text =
+    `masker_round_${Date.now()}:
   title: |
     ${roundTitle}
   url: ${imageLink}
@@ -853,18 +853,18 @@ function copyYml(index) {
   var el = document.createElement('textarea');
   // Set value (string to be copied)
   el.value = text;
-  
+
   // Set non-editable to avoid focus and move outside of view
   el.setAttribute('readonly', '');
-  el.style = {position: 'absolute', left: '-9999px'};
+  el.style = { position: 'absolute', left: '-9999px' };
   document.body.appendChild(el);
 
   // Select text inside element
   el.select();
-  
+
   // Copy text to clipboard
   document.execCommand('copy');
-  
+
   // Remove temporary element
   document.body.removeChild(el);
 }
