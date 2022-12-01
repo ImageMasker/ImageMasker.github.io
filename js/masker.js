@@ -237,6 +237,12 @@ function upload() {
 
   setTimeout(imgurUpload, 250);
   function imgurUpload() {
+    var token = "";
+    if (localStorage.getItem('accessToken') == null || localStorage.getItem('accessToken') == "") {
+      token = "Client-ID 9c586fafe6ec100";
+    } else {
+      token = 'Bearer ' + localStorage.getItem('accessToken');
+    }
     var format = 'image/jpeg';
     data_url = canvas.toDataURL("image/png");
     var head = 'data:image/png;base64,';
@@ -251,7 +257,7 @@ function upload() {
       url: 'https://api.imgur.com/3/image',
       type: 'post',
       headers: {
-        Authorization: 'Client-ID 9c586fafe6ec100'
+        Authorization: token
       },
       data: {
         image: img
@@ -288,7 +294,6 @@ function upload() {
         }
         if (response.success) {
           document.getElementById('uploadedUrl').value = response.data.link;
-          //document.getElementById('uploadbutton').style.display = "none";
           document.getElementById('uploadbutton').value = "Reupload";
           document.getElementById('uploadedUrl').style.display = "inline-block";
           document.getElementById('copyToClipboard').style.display = "inline-block";
@@ -867,4 +872,23 @@ function copyYml(index) {
 
   // Remove temporary element
   document.body.removeChild(el);
+}
+
+function submitAccessToken() {
+  var accessToken = document.getElementById("accessTokenInput").value;
+  localStorage.setItem('accessToken', accessToken);
+  document.getElementById("accessTokenInput").value = "";
+  document.getElementById("accessTokenInput").placeholder = "Access token saved";
+}
+
+function deleteAccessToken() {
+  localStorage.removeItem('accessToken');
+  document.getElementById("accessTokenInput").value = "";
+  document.getElementById("accessTokenInput").placeholder = "Access token deleted";
+}
+
+//load localstorage accessToken and set it in accessTokenInput
+var accessToken = localStorage.getItem('accessToken');
+if (accessToken) {
+  document.getElementById("accessTokenInput").value = accessToken;
 }
