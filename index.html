@@ -4,8 +4,9 @@
 <head>
   <meta charset='UTF-8'>
   <link rel="stylesheet" href="stylesheet.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.3.1/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>-->
+  <script src="fabric.min.js"></script>
   <title> Image Masker </title>
   <link rel="icon" href="images/favicon.png">
 </head>
@@ -38,10 +39,10 @@
     <br>
     <input class="color night" id="displayedTitle" placeholder="Round title" type="text" maxlength="285"> <br>
     <input class="color night" id="displayedAnswer" placeholder="Round answer" type="text"> <br>
-    <button class="color night" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
-    <button class="color night" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
-    <button class="color night" id="delete" onclick="deleteImage()">Delete round</button><br>
-    <button class="color night" id="export" onclick="copyYml(1)">Copy YML</button>
+    <button class="color night button" id="PostReddit2" onclick="postReddit(1,'picturegame')">Submit to /r/PictureGame</button><br>
+    <button class="color night button" id="UpdateInfo" onclick="updateInfo()">Update title and answer</button><br>
+    <button class="color night button" id="delete" onclick="deleteImage()">Delete round</button><br>
+    <button class="color night button" id="export" onclick="copyYml(1)">Copy YML</button>
   </div>
   <br>
   <button class="color night" id="saveFromURL" type="button" onclick="displaySaveURL()">Save from URL</button>
@@ -52,41 +53,94 @@
     <button class="color night" id="saveExternal" onclick="saveImage(2)">Save round</button>
   </div>
   <div id="container">
-    <div id="masker">
-      <fieldset class="color night" id="tools">
-        <legend>Tools</legend>
-        Set opacity:
-        <br>
-        <div id="slider">
-          <input type="range" min="0" max="100" value="75" id="alpha" oninput="updateOpacity()">
-          <span id="sliderValue">75</span>
-        </div>
-        <div id="zoomSlider">
-          Set mask zoom: <br>
-          <input type="range" min="0" max="100" value="50" id="zoom" oninput="updateZoomer()">
-          <button type="button" class="color night" id="undo" onclick="undo()">Undo</button>
-        </div>
-        <div id="brush">
-          Brush size and color: <br>
-          <input type="range" min="1" max="50" value="10" id="brushSize">
-          <input id="colorSelect" type="color" oninput="colorSelect()"> <br>
-          
-        </div>
-        <div id="hueSlider">
-          Set mask hue: <br>
-          <input type="range" min="0" max="2" value="0" step="0.002" id="hue" oninput="updateHue()">
-          <button type="button" class="color night" id="undo" onclick="invert()">Invert</button>
-        </div>
-        <!--text field for an access token with a submit button next to it-->
-        <div id="accessToken">
-          <input class="color night" id="accessTokenInput" placeholder="Imgur access token" type="text"> <br>
-          <button class="color night" id="accessTokenSubmit" onclick="submitAccessToken()">Submit token</button>
-          <button class="color night" id="accessTokenSubmit" onclick="deleteAccessToken()">Delete token</button>
-        </div>
+      <div id="toolsDiv">
+        <fieldset class="color night" id="tools">
+          <legend>Tools</legend>
+          Mask opacity:
+          <br>
+          <div id="slider">
+            <input type="range" min="0" max="100" value="75" id="alpha" class="sliders" oninput="updateOpacity()">
+            <span id="sliderValue">75</span>
+          </div>
+          <div id="zoomSlider">
+           Mask zoom: <br>
+            <input type="range" min="0" max="100" value="50" id="zoom" class="sliders" oninput="updateZoomer()">
+            <button type="button" class="color night button" id="undo" onclick="undo()">Undo</button>
+          </div>
+          <!-- slider to change the mask angle-->
+          <div id="angleSlider">
+            Mask angle: <br>
+            <input type="range" min="0" max="360" value="0" id="angle" class="sliders" oninput="rotateMask()">
+          </div>
+          <div id="brush">
+            Brush size and color: <br>
+            <input type="range" min="1" max="50" value="10" class="sliders" id="brushSize">
+            <input id="colorSelect" type="color" oninput="colorSelect()"> <br>
+          </div>
+          <!-- brush opacity slider-->
+          <div>
+            Brush opacity: <br>
+            <input type="range" min="0" max="100" value="100" class="sliders" id="brushOpacity" oninput="updateBrushOpacity()">
+          </div>
+          <div id="hueSlider">
+            Mask hue: <br>
+            <input type="range" min="0" max="2" value="0" step="0.002" class="sliders" id="hue" oninput="updateHue()">
+            <button type="button" class="color night button" id="undo" onclick="invert()">Invert</button>
+          </div>
+          <!--button to add text to the canvas-->
+          <div id="text">
+            Text size and color: <br>
+            <input type="range" min="0" max="100" value="50" class="sliders" id="textSize" oninput="updateTextSize()">
+            <input class="color night" id="colorSelectText" placeholder="Text color" type="color"> <br>
+            <button class="color night button" id="addText" onclick="addText()">Add text</button>
+          </div>
+          <!--text field for an access token with a submit button next to it-->
+          <div id="accessToken">
+            <input class="color night button" id="accessTokenInput" placeholder="Imgur access token" type="text"> <br>
+            <button class="color night button" id="accessTokenSubmit" onclick="submitAccessToken()">Submit token</button>
+            <button class="color night button" id="accessTokenDelete" onclick="deleteAccessToken()">Delete token</button>
+          </div>
+          <br class="smallBreak">
+          <!--eraser button-->
+          <div>
+            <button class="color night button" id="eraserButton" onclick="eraser()">Eraser</button>
+            <button class="color night button" id="brushButton" onclick="brush()">Brush mode</button>
+            <!--button to disable drawing mode-->
+            <button class="color night button" id="disableDrawing" onclick="disableDrawingMode()">Move mode</button>
+          </div>
+          <br  class="smallBreak">
+          <div>
+            <button class="color night button" id="addRectangle" onclick="addRect()">Add rectangle</button>
+            <button class="color night button" id="dupeMask" onclick="duplicateMask()">Dupe</button>
+          </div>
 
-
-      </fieldset>
-      <br>
+        </fieldset>
+      </div>
+    <div id="preview">
+      <div class="color night" id="buttons">
+        <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" />
+        <input type="text" id="uploadedUrl" style="display: none;">
+        <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
+        <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
+        <input type="text" id="roundTitle" placeholder="Round Title" maxlength="285">
+        <input type="text" id="roundAnswer" placeholder="Round Answer">
+        <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)"
+          style="display: none;">Submit to
+          /r/PictureGame</button>
+        <input type="text" id="newSubInput" placeholder="Subreddit" value="picturegame" style="display: none;">
+        <button type="button" id="Save" onclick="saveImage(1)" style="display: none;">Save round</button>
+        <button type="button" id="Copy" onclick="copyImage()">Copy to clipboard</button>
+        <button type="button" id="Download" onclick="downloadImage()" style="margin-top: 5px;">Download image</button>
+        <button type="button" id="Export" onclick="copyYml(2)" style="display: none;">Copy YML</button>
+      </div>
+      <div id="previewImage">
+        <img id='imagePreview'>
+      </div>
+      <div id="canvasDiv">
+        <canvas id='canvas'></canvas>
+      </div>
+    </div>
+    <div id="masksDiv">
       <fieldset class="color night" id="masks">
         <legend>Masks</legend>
         <br>
@@ -320,36 +374,11 @@
         <img width='95' height='95' src='images/8_thumb.png' onclick='loadMask(this,65)' />
         <img width='95' height='95' src='images/9_thumb.png' onclick='loadMask(this,75)' />
         <br id="br">
-        <input type="text" class="color night" id="customMaskURL" placeholder="Mask URL (Imgur)">
+        <input type="text" class="color night button" id="customMaskURL" placeholder="Mask URL (Imgur)">
         <br>
-        <button type="button" class="color night" id="addMask" onclick="addMask()">Submit mask</button>
-        <button class="color night" id="clearMasks" type="button" onclick="clearMasks()">Delete masks</button>
+        <button type="button" class="color night button" id="addMask" onclick="addMask()">Submit mask</button>
+        <button class="color night button" id="clearMasks" type="button" onclick="clearMasks()">Delete masks</button>
       </fieldset>
-    </div>
-    <div id="preview">
-      <div class="color night" id="buttons">
-        <input type="button" id="uploadbutton" onclick="upload()" value="Upload to Imgur" />
-        <input type="text" id="uploadedUrl" style="display: none;">
-        <button type="button" id="copyToClipboard" onclick="copyUrl()" style="display: none;">Copy</button>
-        <button type="button" id="checkForRIS" onclick="checkRIS()" style="display: none;">Check RIS</button>
-        <input type="text" id="roundTitle" placeholder="Round Title" maxlength="285">
-        <input type="text" id="roundAnswer" placeholder="Round Answer">
-        <button type="button" id="PostReddit" onclick="postReddit(2, document.getElementById('newSubInput').value)"
-          style="display: none;">Submit to
-          /r/PictureGame</button>
-        <input type="text" id="newSubInput" placeholder="Subreddit" value="picturegame" style="display: none;">
-        <button type="button" id="Save" onclick="saveImage(1)" style="display: none;">Save round</button>
-        <button type="button" id="Copy" onclick="copyImage()">Copy to clipboard (HQ)</button>
-        <button type="button" id="Download" onclick="downloadImage()" style="margin-top: 5px;">Download image (HQ)</button>
-        <button type="button" id="Export" onclick="copyYml(2)" style="display: none;">Copy YML</button>
-
-      </div>
-      <div id="previewImage">
-        <img id='imagePreview'>
-      </div>
-      <div id="canvasDiv">
-        <canvas id='canvas'></canvas>
-      </div>
     </div>
   </div>
   <script src="js/night.js"></script>
