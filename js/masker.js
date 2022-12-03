@@ -811,16 +811,7 @@ function loadMasks() {
 }
 
 //*****************Keyboard shortcuts *********************/
-//Disable drawing mode with SHIFT, enable it again pressing SHIFT
-$(document).on("keydown", function (e) {
-  if (e.shiftKey) {
-    if (canvas.isDrawingMode == false) {
-      canvas.isDrawingMode = true;
-    } else {
-      canvas.isDrawingMode = false;
-    }
-  }
-});
+
 
 //undo on CTRL+Z
 $(document).on("keydown", function (e) {
