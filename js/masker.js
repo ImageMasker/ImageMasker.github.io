@@ -34,6 +34,7 @@ $("html").on("paste", function (event) {
     item.getAsString(function (s) {
       window.open("http://www.tineye.com/search/?url=" + s);
       window.open("https://lens.google.com/uploadbyurl?url=" + s);
+      window.open("https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + s);
       window.open(
         "https://yandex.com/images/search?url=" + s + "&rpt=imageview"
       );
@@ -381,6 +382,9 @@ function checkRIS() {
       window.open("https://lens.google.com/uploadbyurl?url=" + url);
     }, 2000);
     setTimeout(function () {
+      window.open("https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + url);
+    }, 2000);
+    setTimeout(function () {
       window.open(
         "https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url
       );
@@ -401,6 +405,7 @@ function checkRIS() {
       "https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url
     );
     window.open("https://lens.google.com/uploadbyurl?url=" + url);
+    window.open("https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + url);
   }
 }
 
