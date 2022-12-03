@@ -384,7 +384,7 @@ img:hover{
 		top: 70vh;
 		left: 5vh;
 	}
-	#alpha, #zoom, #brushSize, #textSize, #brushOpacity, #angle{
+	#alpha, #zoom, #brushSize, #hue, #textSize, #brushOpacity, #angle{
 		height: 50px;
 		width: 90%
 	}
