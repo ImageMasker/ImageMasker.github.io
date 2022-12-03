@@ -56,6 +56,19 @@
       <div id="toolsDiv">
         <fieldset class="color night" id="tools">
           <legend>Tools</legend>
+          <!--eraser button-->
+          <div>
+            <button class="color night button" id="eraserButton" onclick="eraser()">Eraser</button>
+            <button class="color night button" id="brushButton" onclick="brush()">Brush mode</button>
+            <!--button to disable drawing mode-->
+            <button class="color night button" id="disableDrawing" onclick="disableDrawingMode()">Move mode</button>
+          </div>
+          <br  class="smallBreak">
+          <div>
+            <button class="color night button" id="addRectangle" onclick="addRect()">Add rectangle</button>
+            <button class="color night button" id="dupeMask" onclick="duplicateMask()">Dupe</button>
+          </div>
+          <br class="smallBreak">
           Mask opacity:
           <br>
           <div id="slider">
@@ -99,19 +112,6 @@
             <input class="color night button" id="accessTokenInput" placeholder="Imgur access token" type="text"> <br>
             <button class="color night button" id="accessTokenSubmit" onclick="submitAccessToken()">Submit token</button>
             <button class="color night button" id="accessTokenDelete" onclick="deleteAccessToken()">Delete token</button>
-          </div>
-          <br class="smallBreak">
-          <!--eraser button-->
-          <div>
-            <button class="color night button" id="eraserButton" onclick="eraser()">Eraser</button>
-            <button class="color night button" id="brushButton" onclick="brush()">Brush mode</button>
-            <!--button to disable drawing mode-->
-            <button class="color night button" id="disableDrawing" onclick="disableDrawingMode()">Move mode</button>
-          </div>
-          <br  class="smallBreak">
-          <div>
-            <button class="color night button" id="addRectangle" onclick="addRect()">Add rectangle</button>
-            <button class="color night button" id="dupeMask" onclick="duplicateMask()">Dupe</button>
           </div>
 
         </fieldset>
