@@ -33,7 +33,6 @@ $("html").on("paste", function (event) {
     var item = items[0];
     item.getAsString(function (s) {
       window.open("http://www.tineye.com/search/?url=" + s);
-      getFinalRedirect("https://lens.google.com/uploadbyurl?url=" + s)
       window.open("https://lens.google.com/uploadbyurl?url=" + s);
       window.open("https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + s);
       window.open(
