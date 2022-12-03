@@ -919,6 +919,10 @@ $(document).on("keydown", function (e) {
     document.getElementById("brushSize").value =
       parseInt(document.getElementById("brushSize").value) - 5;
   }
+  //bind delete object to DEL key
+  if (e.which === 46) {
+    deleteObject();
+  }
 });
 
 function updateBrushOpacity() {
@@ -1095,6 +1099,13 @@ function duplicateMask() {
   object.set("top", object.top + 7);
   object.set("left", object.left + 7);
   canvas.add(object);
+  canvas.isDrawingMode = false;
+  canvas.renderAll();
+}
+
+//function to delete the selected object
+function deleteObject() {
+  canvas.remove(canvas.getActiveObject());
   canvas.isDrawingMode = false;
   canvas.renderAll();
 }

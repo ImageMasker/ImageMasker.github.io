@@ -255,7 +255,7 @@ img:hover{
 
 #buttons button, #buttons :first-child, #PostReddit2, #UpdateInfo, #saveExternal, #delete, #addMask, 
 #clearMasks, #undo, #invert, #export, #accessTokenSubmit, #accessTokenDelete, #addText, #eraserButton, 
-#brushButton, #disableDrawing, #addRectangle, #dupeMask{
+#brushButton, #disableDrawing, #addRectangle, #dupeMask, #deleteObject{
 	background-color: rgb(236, 140, 116);
 	color: white;
 	border: none;
@@ -274,7 +274,7 @@ img:hover{
 
 #roundTitle, #uploadedUrl, #displayedTitle, #roundAnswer, #displayedAnswer, 
 #saveFromURLURL, #saveFromURLTitle, #saveFromURLAnswer, #customMaskURL, #newSubInput, #accessTokenInput, #accessTokenSubmit, #accessTokenDelete,
- #addText, #eraserButton, #brushButton, #disableDrawing, #addRectangle, #dupeMask{
+ #addText, #eraserButton, #brushButton, #disableDrawing, #addRectangle, #dupeMask, #deleteObject{
 	border: none;
 	background-color: rgb(238, 168, 150);
 	color: white;
@@ -294,7 +294,7 @@ img:hover{
 #displayedAnswer::placeholder, #customMaskURL::placeholder, #newSubInput::placeholder,
  #accessTokenInput::placeholder, #accessTokenSubmit::placeholder, #accessTokenDelete::placeholder, 
  #addText::placeholder, #eraserButton::placeholder, #brushButton::placeholder, #disableDrawing::placeholder, 
- #addRectangle::placeholder, #dupeMask::placeholder{
+ #addRectangle::placeholder, #dupeMask::placeholder, #deleteObject::placeholder{
 	color: rgb(230, 230, 230);
 }
 
@@ -411,14 +411,14 @@ body.night{
 
 #buttons.night *, #buttons.night :first-child, #addMask.night, #clearMasks.night, #undo.night, #invert.night, 
 #accessTokenSubmit.night, #accessTokenDelete.night, #addText.night, #eraserButton.night,
- #brushButton.night, #disableDrawing.night, #addRectangle.night, #dupeMask.night{
+ #brushButton.night, #disableDrawing.night, #addRectangle.night, #dupeMask.night, #deleteObject.night{
 	background-color: rgb(53, 44, 95);
 }
 
 #buttons.night button:hover, #buttons.night :first-child:hover, #addMask.night:hover, #clearMasks.night:hover, 
 #undo.night:hover, #invert.night:hover, #accessTokenSubmit.night:hover, #accessTokenDelete.night:hover, 
 #addText.night:hover, #eraserButton.night:hover, #brushButton.night:hover, #disableDrawing.night:hover, #addRectangle.night:hover,
- #dupeMask.night:hover{
+ #dupeMask.night:hover, #deleteObject.night:hover{
 	background-color: rgb(71, 77, 146);
 }
 
