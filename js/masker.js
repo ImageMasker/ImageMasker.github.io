@@ -34,13 +34,12 @@ $("html").on("paste", function (event) {
     item.getAsString(function (s) {
       window.open("http://www.tineye.com/search/?url=" + s);
       getFinalRedirect("https://lens.google.com/uploadbyurl?url=" + s)
-      //window.open(getFinalRedirect("https://lens.google.com/uploadbyurl?url=") + s);
+      window.open("https://lens.google.com/uploadbyurl?url=" + s);
       window.open("https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + s);
       window.open(
         "https://yandex.com/images/search?url=" + s + "&rpt=imageview"
       );
-      getFinalRedirect("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + s)
-      //window.open(getFinalRedirect("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=") + s);
+      window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + s);
     });
   } else {
     if (event.originalEvent.clipboardData) {
@@ -1104,19 +1103,4 @@ function deleteObject() {
   canvas.remove(canvas.getActiveObject());
   canvas.isDrawingMode = false;
   canvas.renderAll();
-}
-
-//function to get the final redirect from a given url
-function getFinalRedirect(url) {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", url, true);
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState == 4) {
-      //check if xhr response is a valid url
-      if (xhr.responseURL.match(/^(http|https):\/\/[^ "]+$/)) {
-        window.open(xhr.responseURL, "_blank");
-      }
-    }
-  };
-  xhr.send();
 }
