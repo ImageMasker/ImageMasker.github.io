@@ -2,10 +2,10 @@ var maskImage = null;
 var canvasHeight, canvasWidth;
 var imgHeight, imgWidth;
 var mask = null;
-var data_url;
 var canvas = new fabric.Canvas("canvas", {
   isDrawingMode: true,
   enableRetinaScaling: false,
+  preserveObjectStacking: true
 });
 
 var uploadArea = document.getElementById("uploader");
@@ -287,17 +287,10 @@ function upload() {
     } else {
       token = "Bearer " + localStorage.getItem("accessToken");
     }
-    var format = "image/jpeg";
-    data_url = canvas.toDataURL("image/png");
-    var head = "data:image/png;base64,";
-    var imgFileSize = Math.round(((data_url.length - head.length) * 3) / 4);
-    if (imgFileSize < 3000000) {
-      format = "image/png";
-    }
 
     var img = document
       .getElementById("canvas")
-      .toDataURL(format, 1.0)
+      .toDataURL("image/png", 1.0)
       .split(",")[1];
 
     $.ajax({
@@ -500,6 +493,7 @@ function postReddit(index, subreddit) {
 }
 
 function saveImage(mode) {
+  canvas.renderAll();
   if (mode == 1) {
     var imageURL = document.getElementById("uploadedUrl").value;
     var roundTitle = document.getElementById("roundTitle").value;
@@ -572,6 +566,7 @@ function downloadImage() {
 }
 
 function copyImage() {
+  canvas.renderAll();
   updatePreview();
   if (imgHeight > imgWidth) {
     canvas.setZoom(imgHeight / 800);
@@ -583,7 +578,10 @@ function copyImage() {
     canvas.setHeight(imgHeight);
   }
   try {
-    blob = dataURItoBlob(canvas.toDataURL("image/png"));
+    blob = dataURItoBlob(document
+      .getElementById("canvas")
+      .toDataURL("image/png", 1.0)
+      .split(",")[1]);
     const item = new ClipboardItem({ "image/png": blob });
     navigator.clipboard.write([item]);
   } catch (err) {
@@ -1033,6 +1031,7 @@ function rotateMask() {
   var angle = parseFloat(document.getElementById("angle").value);
   maskImage.rotate(angle);
   canvas.renderAll();
+  canvas.renderAll();
 }
 
 function addText() {
@@ -1046,6 +1045,7 @@ function addText() {
     })
   );
   canvas.isDrawingMode = false;
+  canvas.renderAll();
 }
 
 //function to use the eraser
@@ -1053,6 +1053,7 @@ function eraser() {
   canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
   canvas.isDrawingMode = true;
   canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value);
+  canvas.renderAll();
 }
 //function to use the brush
 function brush() {
@@ -1060,10 +1061,12 @@ function brush() {
   canvas.isDrawingMode = true;
   canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value);
   canvas.freeDrawingBrush.color = hexToRgb(document.getElementById("colorSelect").value);
+  canvas.renderAll();
 }
 //function to disable drawing mode
 function disableDrawingMode() {
   canvas.isDrawingMode = false;
+  canvas.renderAll();
 }
 
 //function to add a rectangle
@@ -1078,6 +1081,7 @@ function addRect() {
     })
   );
   canvas.isDrawingMode = false;
+  canvas.renderAll();
 }
 
 //function to duplicate the mask
@@ -1092,4 +1096,5 @@ function duplicateMask() {
   object.set("left", object.left + 7);
   canvas.add(object);
   canvas.isDrawingMode = false;
+  canvas.renderAll();
 }
