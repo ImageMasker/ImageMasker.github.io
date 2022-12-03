@@ -535,7 +535,7 @@ function downloadImage() {
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   } else {
-    canvas.setZoom(imgWidth / 1100);
+    canvas.setZoom(imgWidth / 1000);
     canvas.setWidth(imgWidth);
     canvas.setHeight(imgHeight);
   }
@@ -565,8 +565,8 @@ function downloadImage() {
     canvas.setHeight((canvas.height * 800) / imgHeight);
   } else {
     canvas.setZoom(1);
-    canvas.setWidth(canvas.width * (1100 / imgWidth));
-    canvas.setHeight(canvas.height * (1100 / imgWidth));
+    canvas.setWidth(canvas.width * (1000 / imgWidth));
+    canvas.setHeight(canvas.height * (1000 / imgWidth));
   }
   updatePreview();
 }
