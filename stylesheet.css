@@ -96,7 +96,7 @@ img:hover{
 	height: 10px;
 	border: none;
 	opacity: 0.5;
-	width: 85%;
+	width: 70%;
 	padding: 10px;
 	transition: 0.5s;
 }
@@ -381,7 +381,7 @@ img:hover{
 	#preview{
 		position: absolute;
 		width: 200vw;
-		top: 70vh;
+		top: 80vh;
 		left: 5vh;
 	}
 	#alpha, #zoom, #brushSize, #hue, #textSize, #brushOpacity, #angle{
