@@ -581,10 +581,7 @@ function copyImage() {
     canvas.setHeight(imgHeight);
   }
   try {
-    blob = dataURItoBlob(document
-      .getElementById("canvas")
-      .toDataURL("image/png", 1.0)
-      .split(",")[1]);
+    blob = dataURItoBlob(canvas.toDataURL("image/png"));W
     const item = new ClipboardItem({ "image/png": blob });
     navigator.clipboard.write([item]);
   } catch (err) {

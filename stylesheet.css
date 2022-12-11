@@ -381,8 +381,8 @@ img:hover{
 	#preview{
 		position: absolute;
 		width: 100vw;
-		top: 90vh;
-		left: 5vh;
+		top: 80vh;
+		left: 2vh;
 	}
 	#alpha, #zoom, #brushSize, #hue, #textSize, #brushOpacity, #angle{
 		height: 50px;
