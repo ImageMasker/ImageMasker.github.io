@@ -342,7 +342,8 @@ function upload() {
         }
         if (response.success) {
           document.getElementById("uploadedUrl").value = response.data.link;
-          document.getElementById("uploadbutton").value = "Reupload";
+          //change upload button inner text to "Reupload"
+          document.getElementById("uploadbutton").innerHTML = "Reupload";
           document.getElementById("uploadedUrl").style.display = "inline-block";
           document.getElementById("copyToClipboard").style.display =
             "inline-block";

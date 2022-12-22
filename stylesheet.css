@@ -215,13 +215,6 @@ img:hover {
   margin: 0 auto;
 }
 
-#uploadbutton,
-#Download,
-#Copy {
-  display: none;
-  visibility: hidden;
-}
-
 #displayRounds,
 #saveFromURL {
   border: none;
@@ -466,35 +459,21 @@ img:hover {
   #tools,
   #preview,
   #masks {
+    padding-top: 10px;
+    padding-bottom: 10px;
     float: none;
     width: 100%;
   }
-  #tools {
-    order: 1;
-  }
-
-  #preview {
-    order: 3;
-  }
-
-  #masks {
-    order: 2;
-  }
-
   #tools,
   #masks {
     display: block;
-    /*position: relative;
-    width: 100vw;
-    height: 110%;
-    left: 5vw;
-    top: 3vh;*/
-    font-size: 200%;
+    font-size: 150%;
+    width: 97%;
   }
 
   #preview {
     /*position: absolute;*/
-    width: 100vw;
+    width: 97vw;
     /*top: 80vh;
     left: 2vh;*/
   }
@@ -505,8 +484,14 @@ img:hover {
   #textSize,
   #brushOpacity,
   #angle {
-    height: 50px;
-    width: 90%;
+    height: 40px;
+    width: 85%;
+  }
+  #tools * button, #preview * button, #masks * button {
+    font-size: 22px;
+  }
+  #tools * input, #canvas * input, #masks * input {
+    font-size: 22px;
   }
 }
 
