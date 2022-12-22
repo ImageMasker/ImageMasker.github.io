@@ -606,7 +606,7 @@ function copyImage() {
     canvas.setHeight(canvas.height * 800 / imgHeight);
   } else {
     canvas.setZoom(1);
-    canvas.setWidth(canvas.width * (1100 / imgWidth));
+    canvas.setWidth(canvas.width * (1000 / imgWidth));
     canvas.setHeight(canvas.height * (1000 / imgWidth));
   }
   updatePreview();
