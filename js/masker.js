@@ -5,7 +5,7 @@ var mask = null;
 var canvas = new fabric.Canvas("canvas", {
   isDrawingMode: true,
   enableRetinaScaling: false,
-  preserveObjectStacking: true
+  preserveObjectStacking: true,
 });
 
 var uploadArea = document.getElementById("uploader");
@@ -19,7 +19,9 @@ uploadArea.ondrop = function (e) {
 
 canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
 canvas.freeDrawingBrush.width = 10;
-canvas.freeDrawingBrush.color = hexToRgb(document.getElementById("colorSelect").value);
+canvas.freeDrawingBrush.color = hexToRgb(
+  document.getElementById("colorSelect").value
+);
 fabric.textureSize = 4096;
 
 $("html").on("paste", function (event) {
@@ -34,11 +36,15 @@ $("html").on("paste", function (event) {
     item.getAsString(function (s) {
       window.open("http://www.tineye.com/search/?url=" + s);
       window.open("https://lens.google.com/uploadbyurl?url=" + s);
-      window.open("https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + s);
+      window.open(
+        "https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + s
+      );
       window.open(
         "https://yandex.com/images/search?url=" + s + "&rpt=imageview"
       );
-      window.open("https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + s);
+      window.open(
+        "https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + s
+      );
     });
   } else {
     if (event.originalEvent.clipboardData) {
@@ -120,7 +126,7 @@ function loadSourceImage(baseUrl, externalImage) {
         imgHeight = img.height * resizeFactor;
         imgWidth = img.width * resizeFactor;
 
-        if (img.height > img.width * 0.8) {
+        if (img.height > img.width) {
           canvas.setWidth((img.width * 800) / img.height);
           canvas.setHeight(800);
         } else {
@@ -136,7 +142,7 @@ function loadSourceImage(baseUrl, externalImage) {
           {
             scaleX: canvas.width / img.width,
             scaleY: canvas.height / img.height,
-            erasable: false
+            erasable: false,
           }
         );
       },
@@ -149,7 +155,7 @@ function loadSourceImage(baseUrl, externalImage) {
       imgHeight = img.height * resizeFactor;
       imgWidth = img.width * resizeFactor;
 
-      if (img.height > img.width * 0.8) {
+      if (img.height > img.width) {
         canvas.setWidth((img.width * 800) / img.height);
         canvas.setHeight(800);
       } else {
@@ -159,7 +165,7 @@ function loadSourceImage(baseUrl, externalImage) {
       canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
         scaleX: canvas.width / img.width,
         scaleY: canvas.height / img.height,
-        erasable: false
+        erasable: false,
       });
       canvasHeight = canvas.getHeight();
       canvasWidth = canvas.getWidth();
@@ -380,7 +386,9 @@ function checkRIS() {
       window.open("https://lens.google.com/uploadbyurl?url=" + url);
     }, 2000);
     setTimeout(function () {
-      window.open("https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + url);
+      window.open(
+        "https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + url
+      );
     }, 2000);
     setTimeout(function () {
       window.open(
@@ -403,7 +411,9 @@ function checkRIS() {
       "https://www.bing.com/images/searchbyimage?cbir=ssbi&imgurl=" + url
     );
     window.open("https://lens.google.com/uploadbyurl?url=" + url);
-    window.open("https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + url);
+    window.open(
+      "https://www.google.com/searchbyimage?sbisrc=cr_1_5_2&image_url=" + url
+    );
   }
 }
 
@@ -569,7 +579,8 @@ function downloadImage() {
 }
 
 function copyImage() {
-  canvas.renderAll();
+
+
   updatePreview();
   if (imgHeight > imgWidth) {
     canvas.setZoom(imgHeight / 800);
@@ -581,25 +592,25 @@ function copyImage() {
     canvas.setHeight(imgHeight);
   }
   try {
-    blob = dataURItoBlob(canvas.toDataURL("image/png"));W
+
+    blob = dataURItoBlob(canvas.toDataURL("image/png"));
     const item = new ClipboardItem({ "image/png": blob });
     navigator.clipboard.write([item]);
   } catch (err) {
-    alert(
-      "This feature isn't supported on Firefox by default. Set dom.events.asyncClipboard.clipboardItem to true (FF 87 or more required)"
-    );
+    alert("This feature isn't supported on Firefox by default. Set dom.events.asyncClipboard.clipboardItem to true (FF 87 or more required)");
   }
 
   if (imgHeight > imgWidth) {
     canvas.setZoom(1);
-    canvas.setWidth((canvas.width * 800) / imgHeight);
-    canvas.setHeight((canvas.height * 800) / imgHeight);
+    canvas.setWidth(canvas.width * 800 / imgHeight);
+    canvas.setHeight(canvas.height * 800 / imgHeight);
   } else {
     canvas.setZoom(1);
-    canvas.setWidth(canvas.width * (1000 / imgWidth));
+    canvas.setWidth(canvas.width * (1100 / imgWidth));
     canvas.setHeight(canvas.height * (1000 / imgWidth));
   }
   updatePreview();
+
 }
 
 function dataURItoBlob(dataURI) {
@@ -812,7 +823,6 @@ function loadMasks() {
 
 //*****************Keyboard shortcuts *********************/
 
-
 //undo on CTRL+Z
 $(document).on("keydown", function (e) {
   if (e.ctrlKey && e.which === 90) {
@@ -917,14 +927,18 @@ $(document).on("keydown", function (e) {
 });
 
 function updateBrushOpacity() {
-  var brushOpacity = parseInt(document.getElementById("brushOpacity").value / 100);
+  var brushOpacity = parseInt(
+    document.getElementById("brushOpacity").value / 100
+  );
   if (canvas.getActiveObject()) {
     var obj = canvas.getActiveObject();
   } else {
     var obj = canvas._objects[canvas._objects.length - 1];
   }
   obj.set("opacity", brushOpacity);
-  canvas.freeDrawingBrush.color =  hexToRgb(document.getElementById("colorSelect").value);
+  canvas.freeDrawingBrush.color = hexToRgb(
+    document.getElementById("colorSelect").value
+  );
   canvas.renderAll();
 }
 
@@ -1017,7 +1031,16 @@ if (accessToken) {
 function hexToRgb(hex) {
   var opacity = document.getElementById("brushOpacity").value / 100;
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  var output = 'rgba(' + parseInt(result[1], 16) + ',' + parseInt(result[2], 16) + ',' + parseInt(result[3], 16) + ',' + opacity + ')';
+  var output =
+    "rgba(" +
+    parseInt(result[1], 16) +
+    "," +
+    parseInt(result[2], 16) +
+    "," +
+    parseInt(result[3], 16) +
+    "," +
+    opacity +
+    ")";
   return output;
 }
 
@@ -1047,15 +1070,21 @@ function addText() {
 function eraser() {
   canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
   canvas.isDrawingMode = true;
-  canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value);
+  canvas.freeDrawingBrush.width = parseInt(
+    document.getElementById("brushSize").value
+  );
   canvas.renderAll();
 }
 //function to use the brush
 function brush() {
   canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
   canvas.isDrawingMode = true;
-  canvas.freeDrawingBrush.width = parseInt(document.getElementById("brushSize").value);
-  canvas.freeDrawingBrush.color = hexToRgb(document.getElementById("colorSelect").value);
+  canvas.freeDrawingBrush.width = parseInt(
+    document.getElementById("brushSize").value
+  );
+  canvas.freeDrawingBrush.color = hexToRgb(
+    document.getElementById("colorSelect").value
+  );
   canvas.renderAll();
 }
 //function to disable drawing mode
