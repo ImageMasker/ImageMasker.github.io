@@ -360,7 +360,7 @@ function upload() {
         }
       },
     });
-    document.getElementById("uploadbutton").value = "Uploading...";
+    document.getElementById("uploadbutton").innerHTML = "Uploading...";
     document.getElementById("uploadbutton").disabled = true;
   }
 }
