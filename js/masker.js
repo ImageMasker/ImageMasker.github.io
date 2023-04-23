@@ -469,7 +469,7 @@ function colorSelect() {
 
 function postReddit(index, subreddit) {
   var request = new XMLHttpRequest();
-  request.open("GET", "https://api.picturegame.co/current", true);
+  request.open("GET", "https://api.picturega.me/current", true);
   request.onload = () => {
     var textResponse = request.responseText;
     var jsonResponse = JSON.parse(textResponse);
