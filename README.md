@@ -38,3 +38,12 @@ These keyboard shortcuts are features that weren't important enough to get a UI 
 * Left/right arrow keys: Rotate the mask. If you're viewing your saved rounds you can use left/right to browse them too.
 * Insert: Edit default subreddit to which your image will be submitted (useful in case you want to save your rounds on a private subreddit).
 * W/S: Increase/decrease brush size
+
+### Adding an imgur token
+If you want your uploads to have a higher quality and a higher size limit you can put an imgur token. 
+- go to https://api.imgur.com/oauth2/addclient
+- create an application and copy the client id
+- then go to https://api.imgur.com/oauth2/authorize?client_id=CLIENT_ID&response_type=token and put your client id in that url
+- authorize your own app to upload images
+- it will redirect you to a page with this url https://imgur.com/#access_token=tokenhere
+- copy the token and put it in the masker
