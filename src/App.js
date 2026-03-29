@@ -1324,7 +1324,11 @@ export class App {
       this.queueAutosave();
     });
 
-    this.eventBus.on('layer:updated', () => {
+    this.eventBus.on('layer:updated', ({ field } = {}) => {
+      if (field === 'opacity') {
+        return;
+      }
+
       this.renderLayerPanel();
       this.queueAutosave();
     });

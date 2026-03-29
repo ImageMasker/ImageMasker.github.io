@@ -17,6 +17,132 @@ const BUILTIN_THEMES = [
     layout: {},
     cssText: '',
   },
+  {
+    id: 'claude-light',
+    name: 'Claude Light',
+    builtin: true,
+    base: 'light',
+    vars: {
+      '--bg-primary': 'rgb(247, 243, 236)',
+      '--bg-panel': 'rgb(241, 233, 221)',
+      '--bg-button': 'rgb(226, 213, 194)',
+      '--bg-button-hover': 'rgb(216, 201, 180)',
+      '--bg-input': 'rgb(235, 226, 214)',
+      '--bg-slider': 'rgb(231, 222, 209)',
+      '--bg-slider-thumb': 'rgb(201, 143, 87)',
+      '--bg-upload-label': 'rgb(239, 231, 220)',
+      '--bg-upload-label-hover': 'rgb(228, 216, 200)',
+      '--bg-nav-button': 'rgb(224, 196, 155)',
+      '--bg-saved-rounds-button': 'rgb(237, 228, 216)',
+      '--bg-saved-rounds-button-hover': 'rgb(225, 212, 194)',
+      '--bg-country-select': 'rgb(235, 227, 215)',
+      '--bg-night-button': 'rgb(236, 228, 216)',
+      '--bg-night-button-hover': 'rgb(226, 215, 199)',
+      '--bg-overlay': 'rgba(45, 35, 24, 0.18)',
+      '--bg-success': 'rgb(122, 157, 113)',
+      '--bg-warning': 'rgb(193, 142, 79)',
+      '--bg-error': 'rgb(180, 96, 89)',
+      '--text-primary': 'rgb(43, 37, 32)',
+      '--text-muted': 'rgba(43, 37, 32, 0.68)',
+      '--text-button': 'rgb(43, 37, 32)',
+      '--text-placeholder': 'rgb(129, 118, 104)',
+      '--border-fieldset': 'rgba(111, 92, 66, 0.5)',
+      '--border-strong': 'rgba(89, 73, 51, 0.14)',
+      '--slider-hover': 'rgb(226, 215, 199)',
+      '--shadow-soft': '0 18px 42px rgba(68, 50, 30, 0.08)',
+      '--focus-ring': 'rgba(201, 143, 87, 0.55)',
+    },
+    layout: {},
+    cssText: `
+      body {
+        background:
+          radial-gradient(circle at top left, rgba(214, 185, 143, 0.16), transparent 34%),
+          linear-gradient(180deg, rgb(250, 247, 242) 0%, rgb(245, 240, 232) 100%);
+      }
+
+      .panel-fieldset,
+      .settings-modal {
+        border-radius: 18px;
+      }
+
+      .tool-section,
+      .panel-inline-message,
+      .panel-empty-state,
+      .settings-tab-list {
+        background: rgba(255, 252, 247, 0.52);
+      }
+
+      .app-button,
+      #settingsButton,
+      #github,
+      .settings-tab-button {
+        border-radius: 999px;
+      }
+    `,
+  },
+  {
+    id: 'claude-dark',
+    name: 'Claude Dark',
+    builtin: true,
+    base: 'dark',
+    vars: {
+      '--bg-primary': 'rgb(40, 38, 34)',
+      '--bg-panel': 'rgb(52, 49, 45)',
+      '--bg-button': 'rgb(66, 61, 54)',
+      '--bg-button-hover': 'rgb(80, 74, 66)',
+      '--bg-input': 'rgb(60, 56, 50)',
+      '--bg-slider': 'rgb(67, 62, 55)',
+      '--bg-slider-thumb': 'rgb(208, 154, 96)',
+      '--bg-upload-label': 'rgb(58, 54, 48)',
+      '--bg-upload-label-hover': 'rgb(72, 67, 60)',
+      '--bg-nav-button': 'rgb(88, 67, 46)',
+      '--bg-saved-rounds-button': 'rgb(56, 52, 47)',
+      '--bg-saved-rounds-button-hover': 'rgb(70, 65, 58)',
+      '--bg-country-select': 'rgb(58, 54, 48)',
+      '--bg-night-button': 'rgb(60, 56, 50)',
+      '--bg-night-button-hover': 'rgb(74, 69, 61)',
+      '--bg-overlay': 'rgba(10, 10, 9, 0.5)',
+      '--bg-success': 'rgb(96, 136, 101)',
+      '--bg-warning': 'rgb(180, 130, 76)',
+      '--bg-error': 'rgb(163, 92, 84)',
+      '--text-primary': 'rgb(244, 237, 227)',
+      '--text-muted': 'rgba(244, 237, 227, 0.68)',
+      '--text-button': 'rgb(244, 237, 227)',
+      '--text-placeholder': 'rgb(167, 156, 143)',
+      '--border-fieldset': 'rgba(230, 214, 191, 0.22)',
+      '--border-strong': 'rgba(255, 244, 228, 0.12)',
+      '--slider-hover': 'rgb(81, 75, 67)',
+      '--shadow-soft': '0 18px 42px rgba(0, 0, 0, 0.28)',
+      '--focus-ring': 'rgba(220, 171, 118, 0.62)',
+    },
+    layout: {},
+    cssText: `
+      body {
+        background:
+          radial-gradient(circle at top left, rgba(130, 97, 62, 0.16), transparent 30%),
+          linear-gradient(180deg, rgb(42, 40, 36) 0%, rgb(36, 34, 30) 100%);
+      }
+
+      .panel-fieldset,
+      .settings-modal {
+        border-radius: 18px;
+      }
+
+      :root.dark .tool-section,
+      :root.dark .panel-inline-message,
+      :root.dark .panel-empty-state,
+      :root.dark .settings-tab-list {
+        background: rgba(255, 248, 238, 0.05);
+      }
+
+      .app-button,
+      #settingsButton,
+      #github,
+      .settings-tab-button {
+        border-radius: 999px;
+      }
+    `,
+  },
 ];
 
 const ALLOWED_LAYOUT_COLUMNS = new Set(['default', 'mirrored']);

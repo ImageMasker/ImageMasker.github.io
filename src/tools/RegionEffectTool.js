@@ -752,7 +752,10 @@ export class RegionEffectTool {
 
   mergeRegionData(baseData, partialData = {}, positionOverride = null) {
     const base = createDefaultRegionData(baseData);
-    const nextShapeType = partialData?.shape?.type ?? base.shape.type;
+    const baseShapeType = typeof baseData?.shape?.type === 'string'
+      ? baseData.shape.type
+      : base.shape.type;
+    const nextShapeType = partialData?.shape?.type ?? baseShapeType;
     const nextEffectType = partialData?.effect?.type ?? base.effect.type;
     const merged = normalizeRegionEffectData({
       shape: {
@@ -771,6 +774,33 @@ export class RegionEffectTool {
       }),
       blendMode: partialData.blendMode ?? base.blendMode,
     });
+    const baseShapePoints = Array.isArray(baseData?.shape?.points)
+      ? baseData.shape.points
+      : Array.isArray(base.shape?.points)
+        ? base.shape.points
+        : [];
+    const nextShapePoints = Array.isArray(partialData?.shape?.points)
+      ? partialData.shape.points
+      : baseShapePoints;
+
+    if (nextShapeType === 'freehand') {
+      merged.shape = {
+        type: 'freehand',
+        points: nextShapePoints
+          .map((point) => ({
+            x: Number.isFinite(Number(point?.x)) ? Number(point.x) : 0,
+            y: Number.isFinite(Number(point?.y)) ? Number(point.y) : 0,
+          }))
+          .filter((point, index, source) => {
+            if (index === 0) {
+              return true;
+            }
+
+            const previous = source[index - 1];
+            return previous.x !== point.x || previous.y !== point.y;
+          }),
+      };
+    }
 
     if (!positionOverride) {
       return merged;
