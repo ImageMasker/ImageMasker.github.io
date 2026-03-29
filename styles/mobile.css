@@ -1,0 +1,163 @@
+@media screen and (max-aspect-ratio: 11/16) {
+  html,
+  body {
+    overflow: auto;
+  }
+
+  .app-root {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  #container.app-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'toolsDiv'
+      'preview'
+      'masksDiv';
+  }
+
+  #tools,
+  #preview,
+  #masks {
+    width: 100%;
+  }
+
+  #toolsDiv,
+  #masksDiv {
+    overflow-y: visible;
+  }
+
+  .canvas-stage {
+    min-height: 50vh;
+  }
+
+  #tools,
+  #masks {
+    font-size: 112%;
+  }
+
+  .tool-section {
+    border-radius: 12px;
+  }
+
+  .tool-section:not([open]) .tool-section-summary {
+    border-bottom: none;
+  }
+
+  .tool-section-summary {
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
+
+  .tool-section-body {
+    padding: 0 12px 12px;
+  }
+
+  .tool-button-cluster .app-button,
+  .action-group-controls .app-button {
+    flex: 1 1 44%;
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+
+  .sliders {
+    height: 36px;
+    width: 100% !important;
+  }
+
+  #tools .field-controls {
+    gap: 8px;
+  }
+
+  #tools button,
+  #preview button,
+  #masks button,
+  #layerPanel button,
+  #displayRounds,
+  #saveFromURL,
+  #settingsButton {
+    font-size: 16px;
+  }
+
+  #tools input,
+  #preview input,
+  #masks input,
+  #tools select,
+  #preview select,
+  #masks select {
+    font-size: 16px;
+  }
+
+  .action-group-controls,
+  .field-controls {
+    align-items: stretch;
+  }
+
+  .action-group-controls input,
+  .action-group-controls select {
+    width: 100%;
+  }
+
+  #displayedImage {
+    max-width: 92vw;
+    max-height: 44vh;
+  }
+
+  .layer-row {
+    grid-template-columns: 1fr;
+  }
+
+  .layer-preview,
+  .layer-row-content,
+  .layer-row-header,
+  .layer-row-main,
+  .layer-row-actions {
+    width: 100%;
+  }
+
+  .layer-row-header {
+    grid-template-columns: 1fr;
+  }
+
+  .layer-row-actions {
+    justify-content: flex-start;
+  }
+
+  .layer-setting-controls {
+    flex-wrap: wrap;
+  }
+
+  .layer-preview {
+    width: 64px;
+    height: 64px;
+  }
+
+  .saved-rounds-empty-state,
+  .delete-confirm {
+    width: 100%;
+  }
+
+  .chrome-controls {
+    position: static;
+    margin-bottom: 8px;
+    justify-content: flex-end;
+  }
+
+  .settings-modal-overlay {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .settings-modal {
+    width: 100%;
+    max-height: none;
+    min-height: calc(100vh - 24px);
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}

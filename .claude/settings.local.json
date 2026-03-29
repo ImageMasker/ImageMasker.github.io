@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/Noelia/Documents/ImageMasker.github.io -type f ! -path ./.git/* -exec ls -lh {})",
+      "Bash(2)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}

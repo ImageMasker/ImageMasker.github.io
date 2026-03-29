@@ -27,7 +27,7 @@ body {
 
 #github {
   right: 70px;
-  background-image: url("images/GitHub.png");
+  background-image: url("../images/GitHub.png");
   background-size: contain;
   width: 40px;
   height: 40px;

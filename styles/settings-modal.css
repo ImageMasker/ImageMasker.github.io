@@ -1,0 +1,99 @@
+.settings-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(10px);
+}
+
+.settings-modal {
+  width: min(880px, calc(100vw - 48px));
+  max-height: min(760px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 16px;
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: 22px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+}
+
+.settings-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-modal-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-modal-title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.settings-modal-close {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: var(--bg-button);
+  color: var(--text-button);
+  cursor: pointer;
+}
+
+.settings-modal-close:hover {
+  background: var(--bg-button-hover);
+}
+
+.settings-tab-list {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  width: fit-content;
+}
+
+:root.dark .settings-tab-list {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.settings-tab-button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.settings-tab-button.is-active {
+  background: var(--bg-button);
+  color: var(--text-button);
+}
+
+.settings-modal-body {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.settings-tab-panel {
+  display: grid;
+  gap: 12px;
+}
+
+body.settings-modal-open {
+  overflow: hidden;
+}

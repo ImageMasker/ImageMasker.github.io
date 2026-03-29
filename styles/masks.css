@@ -1,0 +1,118 @@
+#masks {
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#country {
+  width: 100%;
+  background: var(--bg-country-select);
+  color: var(--text-primary);
+}
+
+.mask-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.mask-thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mask-thumb-button {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mask-thumb-button:hover {
+  border-color: white;
+}
+
+.mask-thumb-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+#customMaskURL {
+  width: 100%;
+}
+
+.mask-custom-row {
+  display: grid;
+  gap: 6px;
+}
+
+#aiEditPanel {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+#aiEditPanel textarea,
+#aiEditPanel select,
+#aiEditPanel input {
+  width: 100%;
+}
+
+#aiEditPrompt {
+  min-height: 108px;
+  resize: vertical;
+}
+
+.ai-edit-service-hint {
+  margin-top: -2px;
+}
+
+.ai-edit-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ai-edit-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.ai-edit-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-top-color: var(--bg-slider-thumb);
+  animation: ai-edit-spin 0.9s linear infinite;
+}
+
+#aiEditPanel.is-busy {
+  opacity: 0.96;
+}
+
+@keyframes ai-edit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,74 @@
+.saved-rounds-shell {
+  text-align: left;
+  margin-top: 6px;
+}
+
+#displayRounds,
+#saveFromURL {
+  border: none;
+  background: var(--bg-saved-rounds-button);
+  color: var(--text-primary);
+  height: 28px;
+  border-radius: 5px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+#displayRounds:hover,
+#saveFromURL:hover {
+  background: var(--bg-saved-rounds-button-hover);
+}
+
+#savedRounds,
+#saveExternalURL {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.saved-rounds-empty-state {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.delete-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+#left,
+#right {
+  border: none;
+  background: var(--bg-nav-button);
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--text-button);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+#displayedImage {
+  max-width: 100%;
+  max-height: 30vh;
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft);
+}
+
+#displayedTitle,
+#displayedAnswer,
+#saveFromURLURL,
+#saveFromURLTitle,
+#saveFromURLAnswer {
+  width: 100%;
+}

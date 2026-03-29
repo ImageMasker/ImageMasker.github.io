@@ -1,0 +1,78 @@
+.settings-section {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-section-header {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-section-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-field {
+  display: grid;
+  gap: 6px;
+}
+
+.session-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-actions-row .app-button {
+  flex: 1 1 130px;
+}
+
+.session-status,
+.theme-summary,
+.theme-status {
+  line-height: 1.45;
+}
+
+.session-restore-banner {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(214, 151, 73, 0.35);
+  background: rgba(214, 151, 73, 0.12);
+  box-shadow: var(--shadow-soft);
+}
+
+.session-restore-message {
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+#sessionSelect,
+#sessionName,
+#themeSelect {
+  width: 100%;
+}
+
+.theme-format-preview {
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-primary);
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+:root.dark .theme-format-preview {
+  background: rgba(255, 255, 255, 0.08);
+}
