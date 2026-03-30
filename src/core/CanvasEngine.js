@@ -86,7 +86,7 @@ export class CanvasEngine {
     this.app.renderer.resize(editorSize.width, editorSize.height);
     this.editorWidth = editorSize.width;
     this.editorHeight = editorSize.height;
-    const documentSize = this.calculateDocumentSize(imageWidth, imageHeight, editorSize);
+    const documentSize = this.resolveDocumentSize(imageWidth, imageHeight, options.documentSize, editorSize);
     this.canvasWidth = documentSize.width;
     this.canvasHeight = documentSize.height;
     this.app.stage.scale.set(1, 1);
@@ -153,6 +153,20 @@ export class CanvasEngine {
       width: Math.max(1, Math.round(baseWidth * fitScale)),
       height: Math.max(1, Math.round(baseHeight * fitScale)),
     };
+  }
+
+  resolveDocumentSize(imageWidth, imageHeight, requestedSize = null, editorSize = this.getContainerSize()) {
+    const requestedWidth = Number(requestedSize?.width);
+    const requestedHeight = Number(requestedSize?.height);
+
+    if (Number.isFinite(requestedWidth) && requestedWidth > 0 && Number.isFinite(requestedHeight) && requestedHeight > 0) {
+      return {
+        width: Math.max(1, Math.round(requestedWidth)),
+        height: Math.max(1, Math.round(requestedHeight)),
+      };
+    }
+
+    return this.calculateDocumentSize(imageWidth, imageHeight, editorSize);
   }
 
   centerDocument() {

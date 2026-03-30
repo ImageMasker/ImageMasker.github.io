@@ -8,6 +8,7 @@ import { LayerManager } from './core/LayerManager.js';
 import { ViewportController } from './core/ViewportController.js';
 import { ExportManager } from './export/ExportManager.js';
 import { AiImageEditor } from './integrations/AiImageEditor.js';
+import { BackgroundRemover } from './integrations/BackgroundRemover.js';
 import { ImgurUploader } from './integrations/ImgurUploader.js';
 import { MaskEffects } from './masks/MaskEffects.js';
 import { MaskManager } from './masks/MaskManager.js';
@@ -34,6 +35,7 @@ import {
 } from './tools/regionDefinitions.js';
 import { KeyboardShortcuts } from './ui/KeyboardShortcuts.js';
 import { AiEditPanel } from './ui/AiEditPanel.js';
+import { BackgroundRemovalPanel } from './ui/BackgroundRemovalPanel.js';
 import { CanvasArea } from './ui/CanvasArea.js';
 import { LayerPanel } from './ui/LayerPanel.js';
 import { MaskPanel } from './ui/MaskPanel.js';
@@ -73,6 +75,7 @@ export class App {
     this.viewportController = null;
     this.exportManager = null;
     this.aiImageEditor = null;
+    this.backgroundRemover = null;
     this.toolManager = null;
     this.keyboardShortcuts = null;
     this.imgurUploader = null;
@@ -93,6 +96,7 @@ export class App {
     this.toolbar = null;
     this.maskPanel = null;
     this.aiEditPanel = null;
+    this.backgroundRemovalPanel = null;
     this.layerPanel = null;
     this.canvasArea = null;
     this.sessionPanel = null;
@@ -113,8 +117,10 @@ export class App {
     this.isRestoringSession = false;
     this.regionCreationSeed = Math.random();
     this.aiEditCount = 0;
+    this.backgroundRemovalCount = 0;
     this.aiEditModels = [];
     this.expandedLayerSettings = new Set();
+    this.selectedPanelLayerId = null;
     this.uiStateController = null;
     this.savedRoundsController = null;
     this.sessionController = null;
@@ -140,6 +146,7 @@ export class App {
     this.historyManager = new HistoryManager();
     this.exportManager = new ExportManager(this.canvasEngine);
     this.aiImageEditor = new AiImageEditor();
+    this.backgroundRemover = new BackgroundRemover();
     this.sessionSerializer = new SessionSerializer();
     this.uiStateController = new UiStateController(this);
     this.savedRoundsController = new SavedRoundsController(this);
@@ -169,6 +176,7 @@ export class App {
     this.toolbar = new Toolbar();
     this.layerPanel = new LayerPanel();
     this.maskPanel = new MaskPanel(this.maskStorage.getMasks());
+    this.backgroundRemovalPanel = new BackgroundRemovalPanel();
     this.aiEditPanel = new AiEditPanel();
     this.canvasArea = new CanvasArea();
     this.sessionPanel = new SessionPanel();
@@ -214,6 +222,7 @@ export class App {
       this.maskPanel.element,
     ]);
 
+    this.maskPanel.element.appendChild(this.backgroundRemovalPanel.element);
     this.maskPanel.element.appendChild(this.aiEditPanel.element);
 
     this.appShell = el('div', {
@@ -374,6 +383,7 @@ export class App {
     this.bindToolEvents();
     this.bindLayerPanelEvents();
     this.bindMaskEvents();
+    this.bindBackgroundRemovalEvents();
     this.bindAiEditEvents();
     this.bindImageLoadingEvents();
     this.bindCanvasActions();
@@ -1086,6 +1096,12 @@ export class App {
     });
   }
 
+  bindBackgroundRemovalEvents() {
+    this.backgroundRemovalPanel.refs.button.addEventListener('click', async () => {
+      await this.removeBackgroundFromCurrentTarget();
+    });
+  }
+
   bindAiEditEvents() {
     const refs = this.aiEditPanel.refs;
 
@@ -1464,6 +1480,7 @@ export class App {
     });
 
     this.eventBus.on('selection:changed', ({ layer, object }) => {
+      this.selectedPanelLayerId = null;
       const primaryObject = layer ? this.layerManager.getPrimaryContentObject(layer) ?? object : object;
 
       if (layer?.type === 'mask' && primaryObject?.__toolType === 'mask') {
@@ -1820,6 +1837,19 @@ export class App {
     }
   }
 
+  setBackgroundVisibility(visible) {
+    if (!this.canvasEngine?.backgroundSprite) {
+      return;
+    }
+
+    const nextVisible = visible !== false;
+    this.canvasEngine.backgroundSprite.visible = nextVisible;
+
+    if (this.currentBackgroundSource) {
+      this.currentBackgroundSource.visible = nextVisible;
+    }
+  }
+
   serializeCurrentSession() {
     return this.sessionSerializer.serialize(this);
   }
@@ -2117,7 +2147,7 @@ export class App {
 
   startCropMode() {
     if (!this.canvasEngine.sourceImageElement) {
-      this.notify('Load an image before cropping.', 'warning');
+      this.notify('Load an image before resizing the canvas.', 'warning');
       return;
     }
 
@@ -2152,7 +2182,7 @@ export class App {
     }
 
     this.historyManager.pushExecuted({
-      label: 'Crop image',
+      label: 'Resize canvas',
       undo: () => {
         void this.applySceneSnapshot(beforeDocument);
       },
@@ -2164,8 +2194,8 @@ export class App {
   }
 
   async performDestructiveCrop(rect) {
-    const clampedRect = this.clampDocumentRect(rect);
-    const backgroundDataUrl = this.cropElementToDataUrl(this.canvasEngine.sourceImageElement, clampedRect);
+    const resizeRect = this.normalizeCanvasResizeRect(rect);
+    const backgroundDataUrl = this.cropElementToDataUrl(this.canvasEngine.sourceImageElement, resizeRect);
     const backgroundVisible = this.canvasEngine.backgroundSprite?.visible !== false;
     const backgroundOpacity = this.canvasEngine.backgroundSprite?.alpha ?? 1;
 
@@ -2173,13 +2203,17 @@ export class App {
 
     for (const layer of allLayers) {
       layer.container.position.set(
-        (layer.container.x ?? 0) - clampedRect.x,
-        (layer.container.y ?? 0) - clampedRect.y
+        (layer.container.x ?? 0) - resizeRect.x,
+        (layer.container.y ?? 0) - resizeRect.y
       );
     }
 
     await this.canvasEngine.loadBackgroundImage(backgroundDataUrl, false, {
       preserveScene: true,
+      documentSize: {
+        width: resizeRect.width,
+        height: resizeRect.height,
+      },
     });
     this.setBackgroundSource({
       type: 'local',
@@ -2193,17 +2227,19 @@ export class App {
   }
 
   cropElementToDataUrl(source, rect) {
-    const scaleX = (source?.naturalWidth || source?.videoWidth || source?.width || this.canvasEngine.canvasWidth) / this.canvasEngine.canvasWidth;
-    const scaleY = (source?.naturalHeight || source?.videoHeight || source?.height || this.canvasEngine.canvasHeight) / this.canvasEngine.canvasHeight;
+    const sourceWidth = source?.naturalWidth || source?.videoWidth || source?.width || this.canvasEngine.canvasWidth;
+    const sourceHeight = source?.naturalHeight || source?.videoHeight || source?.height || this.canvasEngine.canvasHeight;
+    const scaleX = sourceWidth / this.canvasEngine.canvasWidth;
+    const scaleY = sourceHeight / this.canvasEngine.canvasHeight;
     const sourceRect = {
       x: Math.round(rect.x * scaleX),
       y: Math.round(rect.y * scaleY),
-      width: Math.round(rect.width * scaleX),
-      height: Math.round(rect.height * scaleY),
+      width: Math.max(1, Math.round(rect.width * scaleX)),
+      height: Math.max(1, Math.round(rect.height * scaleY)),
     };
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, sourceRect.width);
-    canvas.height = Math.max(1, sourceRect.height);
+    canvas.width = sourceRect.width;
+    canvas.height = sourceRect.height;
     const context = canvas.getContext('2d');
 
     if (!context) {
@@ -2212,17 +2248,22 @@ export class App {
 
     context.drawImage(
       source,
-      sourceRect.x,
-      sourceRect.y,
-      sourceRect.width,
-      sourceRect.height,
-      0,
-      0,
-      sourceRect.width,
-      sourceRect.height
+      -sourceRect.x,
+      -sourceRect.y,
+      Math.max(1, Math.round(this.canvasEngine.canvasWidth * scaleX)),
+      Math.max(1, Math.round(this.canvasEngine.canvasHeight * scaleY))
     );
 
     return canvas.toDataURL('image/png');
+  }
+
+  normalizeCanvasResizeRect(rect) {
+    return {
+      x: Math.round(Number(rect?.x) || 0),
+      y: Math.round(Number(rect?.y) || 0),
+      width: Math.max(1, Math.round(Number(rect?.width) || 0)),
+      height: Math.max(1, Math.round(Number(rect?.height) || 0)),
+    };
   }
 
   startRegionInsertion() {
@@ -2604,13 +2645,25 @@ export class App {
       return;
     }
 
+    const selectedPanelLayerId = this.getSelectedPanelLayerId();
+
     this.layerPanel.renderLayers(
       this.getLayerPanelLayers(),
       {
-        selectedLayerIds: this.selectTool?.getSelectedLayerIds?.() ?? [],
-        activeLayerId: this.layerManager?.getActiveLayer()?.id ?? null,
+        selectedLayerIds: selectedPanelLayerId
+          ? [selectedPanelLayerId]
+          : (this.selectTool?.getSelectedLayerIds?.() ?? []),
+        activeLayerId: selectedPanelLayerId ?? this.layerManager?.getActiveLayer()?.id ?? null,
       }
     );
+  }
+
+  getSelectedPanelLayerId() {
+    if (this.selectedPanelLayerId === BACKGROUND_LAYER_ID && this.canvasEngine?.backgroundSprite) {
+      return BACKGROUND_LAYER_ID;
+    }
+
+    return null;
   }
 
   getLayerPanelLayers() {
@@ -2765,10 +2818,17 @@ export class App {
     }
 
     if (layer.type === 'image') {
+      const sourceType = object?.__imageLayerData?.sourceType ?? '';
+      const badge = sourceType === 'background-removal'
+        ? 'CUT'
+        : object?.__imageLayerData?.serviceId
+          ? 'AI'
+          : 'IMG';
+
       return {
         kind: 'image',
         label: layer.name,
-        badge: 'AI',
+        badge,
         src: this.createSpritePreviewDataUrl(object),
       };
     }
@@ -2867,6 +2927,189 @@ export class App {
     } catch {
       return '';
     }
+  }
+
+  async removeBackgroundFromCurrentTarget() {
+    if (!this.canvasEngine?.sourceImageElement) {
+      this.backgroundRemovalPanel.setMessage('Load an image before removing a background.', 'warning');
+      this.notify('Load an image before removing a background.', 'warning');
+      return;
+    }
+
+    const panel = this.backgroundRemovalPanel;
+
+    panel.setBusy(true, 'Preparing');
+    panel.setMessage('');
+
+    try {
+      const target = await this.captureBackgroundRemovalSource();
+      const layerName = this.buildBackgroundRemovalLayerName(target);
+      const removedBlob = await this.backgroundRemover.removeBackground(target.imageDataUrl, {
+        onProgress: (key, current, total) => {
+          panel.setBusy(true, this.getBackgroundRemovalProgressLabel(key, current, total));
+        },
+      });
+      const persistentUrl = await this.blobToDataUrl(removedBlob);
+      const inserted = await this.createGeneratedImageLayer({
+        result: {
+          imageBlob: removedBlob,
+          persistentUrl,
+        },
+        documentRect: target.documentRect,
+        name: layerName,
+        metadata: {
+          sourceType: 'background-removal',
+          sourceKind: target.kind,
+          sourceLayerId: target.layer?.id ?? '',
+          sourceLayerName: target.name,
+        },
+      });
+      const insertedIndex = this.layerManager.getLayers().findIndex((entry) => entry.id === inserted.layer.id);
+
+      if (target.kind === 'background') {
+        this.setBackgroundVisibility(false);
+        this.renderLayerPanel();
+      } else {
+        this.layerManager.setLayerVisibility(target.layer.id, false);
+      }
+
+      this.toolManager.setActiveTool('select');
+      this.selectTool.selectLayer(inserted.layer, inserted.sprite);
+
+      this.historyManager.pushExecuted({
+        label: 'Remove background',
+        undo: () => {
+          this.selectTool.clearSelection();
+          this.layerManager.detachLayer(inserted.layer.id);
+
+          if (target.kind === 'background') {
+            this.setBackgroundVisibility(target.originalVisible);
+            this.renderLayerPanel();
+            return;
+          }
+
+          this.layerManager.setLayerVisibility(target.layer.id, target.originalVisible);
+        },
+        redo: () => {
+          this.layerManager.insertLayer(inserted.layer, insertedIndex);
+
+          if (target.kind === 'background') {
+            this.setBackgroundVisibility(false);
+            this.renderLayerPanel();
+          } else {
+            this.layerManager.setLayerVisibility(target.layer.id, false);
+          }
+
+          this.toolManager.setActiveTool('select');
+          this.selectTool.selectLayer(inserted.layer, inserted.sprite);
+        },
+      });
+
+      panel.setMessage('Background removed into a new layer.', 'success');
+      this.notify('Background removal completed.', 'success');
+    } catch (error) {
+      panel.setMessage(error.message, 'error');
+      this.notify(error.message, 'error', 4200);
+    } finally {
+      panel.setBusy(false);
+    }
+  }
+
+  async captureBackgroundRemovalSource() {
+    const selectedLayer = this.selectTool.getSelectedLayer();
+    const fullCanvasRect = {
+      x: 0,
+      y: 0,
+      width: this.canvasEngine.canvasWidth,
+      height: this.canvasEngine.canvasHeight,
+    };
+
+    if (!selectedLayer) {
+      return {
+        kind: 'background',
+        name: 'Base image',
+        originalVisible: this.canvasEngine.backgroundSprite?.visible !== false,
+        imageDataUrl: this.cropElementToDataUrl(this.canvasEngine.sourceImageElement, fullCanvasRect),
+        documentRect: fullCanvasRect,
+        layer: null,
+      };
+    }
+
+    const object = this.selectTool.getPrimaryLayerObject(selectedLayer);
+
+    if (!object) {
+      throw new Error('Select a layer with visible content first.');
+    }
+
+    const documentRect = this.clampDocumentRect(this.globalBoundsToDocumentRect(object.getBounds()));
+
+    if (!documentRect.width || !documentRect.height) {
+      throw new Error('The selected layer has no visible area to process.');
+    }
+
+    const fullDataUrl = await this.captureEditorComposite({
+      isolateLayerId: selectedLayer.id,
+    });
+    const imageDataUrl =
+      documentRect.width === fullCanvasRect.width &&
+      documentRect.height === fullCanvasRect.height &&
+      documentRect.x === 0 &&
+      documentRect.y === 0
+        ? fullDataUrl
+        : await this.cropDataUrlToRect(fullDataUrl, documentRect);
+
+    return {
+      kind: 'layer',
+      name: selectedLayer.name,
+      originalVisible: selectedLayer.visible !== false,
+      imageDataUrl,
+      documentRect,
+      layer: selectedLayer,
+    };
+  }
+
+  buildBackgroundRemovalLayerName(target) {
+    this.backgroundRemovalCount += 1;
+    const baseName = target?.name ? `${target.name} cutout` : 'Background removed';
+
+    return this.backgroundRemovalCount === 1
+      ? baseName
+      : `${baseName} ${this.backgroundRemovalCount}`;
+  }
+
+  getBackgroundRemovalProgressLabel(key, current = 0, total = 0) {
+    if (typeof key !== 'string') {
+      return 'Removing background';
+    }
+
+    if (key.startsWith('fetch:')) {
+      const assetName = key.replace('fetch:', '');
+
+      if (total > 0) {
+        const percent = Math.round((current / total) * 100);
+        return `Downloading ${assetName} (${percent}%)`;
+      }
+
+      return `Downloading ${assetName}`;
+    }
+
+    if (key === 'compute:decode') {
+      return 'Decoding image';
+    }
+
+    if (key === 'compute:inference') {
+      return 'Running model';
+    }
+
+    if (key === 'compute:mask') {
+      return 'Building mask';
+    }
+
+    if (key === 'compute:encode') {
+      return 'Encoding cutout';
+    }
+
+    return 'Removing background';
   }
 
   async generateAiEditedLayer() {
@@ -3071,6 +3314,23 @@ export class App {
     );
 
     return canvas.toDataURL('image/png');
+  }
+
+  async blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+          return;
+        }
+
+        reject(new Error('Could not read the generated image.'));
+      };
+      reader.onerror = () => reject(new Error('Could not read the generated image.'));
+      reader.readAsDataURL(blob);
+    });
   }
 
   async createGeneratedImageLayer({ result, documentRect, name, metadata = {}, objectState = null }) {
@@ -3286,6 +3546,18 @@ export class App {
   }
 
   selectLayerById(layerId, options = {}) {
+    if (layerId === BACKGROUND_LAYER_ID) {
+      if (!this.canvasEngine?.backgroundSprite) {
+        return;
+      }
+
+      this.selectTool.clearSelection();
+      this.selectedPanelLayerId = BACKGROUND_LAYER_ID;
+      this.renderLayerPanel();
+      return;
+    }
+
+    this.selectedPanelLayerId = null;
     const layer = this.layerManager.getLayer(layerId);
     const activeToolName = this.toolManager.getActiveToolName();
     const { append = false } = options;
@@ -3319,12 +3591,7 @@ export class App {
       }
 
       const nextVisible = this.canvasEngine.backgroundSprite.visible === false;
-      this.canvasEngine.backgroundSprite.visible = nextVisible;
-
-      if (this.currentBackgroundSource) {
-        this.currentBackgroundSource.visible = nextVisible;
-      }
-
+      this.setBackgroundVisibility(nextVisible);
       this.renderLayerPanel();
       this.queueAutosave();
       return;

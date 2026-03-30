@@ -1,6 +1,6 @@
 import { normalizeRegionEffectData } from '../tools/regionDefinitions.js';
 
-export const SCENE_DOCUMENT_VERSION = 5;
+export const SCENE_DOCUMENT_VERSION = 6;
 
 export function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
@@ -35,6 +35,20 @@ function normalizeViewport(viewport) {
     scale: Number.isFinite(scale) ? scale : 1,
     x: Number.isFinite(x) ? x : 0,
     y: Number.isFinite(y) ? y : 0,
+  };
+}
+
+function normalizeDocumentSize(documentSize) {
+  const width = Number(documentSize?.width);
+  const height = Number(documentSize?.height);
+
+  if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(height) || height <= 0) {
+    return null;
+  }
+
+  return {
+    width: Math.max(1, Math.round(width)),
+    height: Math.max(1, Math.round(height)),
   };
 }
 
@@ -110,6 +124,7 @@ export function normalizeSceneDocument(document) {
     canRestore: (background.type === 'external' && Boolean(background.url)) ||
       Boolean(background.embeddedDataUrl) ||
       /^data:/i.test(background.url),
+    documentSize: normalizeDocumentSize(document.documentSize),
     viewport: normalizeViewport(document.viewport),
     drawing: {
       strokes: Array.isArray(document.drawing?.strokes) ? cloneJson(document.drawing.strokes) : [],

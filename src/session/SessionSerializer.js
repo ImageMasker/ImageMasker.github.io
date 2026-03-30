@@ -15,6 +15,10 @@ export class SessionSerializer {
 
     return createSceneDocument({
       background,
+      documentSize: {
+        width: app.canvasEngine.canvasWidth,
+        height: app.canvasEngine.canvasHeight,
+      },
       viewport: app.canvasEngine.getViewportState(),
       drawing: {
         strokes: cloneJson(app.brushTool.getLayerStrokes(app.layerManager.getDrawingLayer()?.id)),
@@ -149,7 +153,9 @@ export class SessionSerializer {
     const isExternal = normalizedDocument.background.type === 'external' &&
       !normalizedDocument.background.embeddedDataUrl &&
       !/^data:/i.test(normalizedDocument.background.url);
-    await app.canvasEngine.loadBackgroundImage(backgroundSource, isExternal);
+    await app.canvasEngine.loadBackgroundImage(backgroundSource, isExternal, {
+      documentSize: normalizedDocument.documentSize,
+    });
     app.setBackgroundSource({
       type: isExternal ? 'external' : 'local',
       url: backgroundSource,

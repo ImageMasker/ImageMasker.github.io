@@ -22,7 +22,7 @@ export class CropTool {
 
     this.eventBus.on('canvas:resized', () => {
       if (this.overlayContainer.visible) {
-        this.clampCropRect();
+        this.ensureMinimumCropRect();
         this.renderOverlay();
       }
     });
@@ -93,7 +93,7 @@ export class CropTool {
     if (this.dragState.kind === 'move') {
       this.cropRect.x = event.canvasX - this.dragState.offsetX;
       this.cropRect.y = event.canvasY - this.dragState.offsetY;
-      this.clampCropRect();
+      this.ensureMinimumCropRect();
       this.renderOverlay();
       return;
     }
@@ -105,7 +105,7 @@ export class CropTool {
         event.canvasX,
         event.canvasY
       );
-      this.clampCropRect();
+      this.ensureMinimumCropRect();
       this.renderOverlay();
       return;
     }
@@ -133,7 +133,7 @@ export class CropTool {
     }
 
     this.cropRect = nextRect;
-    this.clampCropRect();
+    this.ensureMinimumCropRect();
     this.renderOverlay();
   }
 
@@ -142,14 +142,11 @@ export class CropTool {
   }
 
   resetCropRect() {
-    const insetX = Math.max(0, Math.round(this.canvasEngine.canvasWidth * 0.1));
-    const insetY = Math.max(0, Math.round(this.canvasEngine.canvasHeight * 0.1));
-
     this.cropRect = {
-      x: insetX,
-      y: insetY,
-      width: Math.max(MIN_CROP_SIZE, this.canvasEngine.canvasWidth - insetX * 2),
-      height: Math.max(MIN_CROP_SIZE, this.canvasEngine.canvasHeight - insetY * 2),
+      x: 0,
+      y: 0,
+      width: Math.max(MIN_CROP_SIZE, this.canvasEngine.canvasWidth),
+      height: Math.max(MIN_CROP_SIZE, this.canvasEngine.canvasHeight),
     };
   }
 
@@ -159,8 +156,8 @@ export class CropTool {
     }
 
     return {
-      x: Math.max(0, Math.round(this.cropRect.x)),
-      y: Math.max(0, Math.round(this.cropRect.y)),
+      x: Math.round(this.cropRect.x),
+      y: Math.round(this.cropRect.y),
       width: Math.max(MIN_CROP_SIZE, Math.round(this.cropRect.width)),
       height: Math.max(MIN_CROP_SIZE, Math.round(this.cropRect.height)),
     };
@@ -247,21 +244,13 @@ export class CropTool {
     };
   }
 
-  clampCropRect() {
+  ensureMinimumCropRect() {
     if (!this.cropRect) {
       return;
     }
 
-    this.cropRect.x = Math.max(0, Math.min(this.cropRect.x, this.canvasEngine.canvasWidth - MIN_CROP_SIZE));
-    this.cropRect.y = Math.max(0, Math.min(this.cropRect.y, this.canvasEngine.canvasHeight - MIN_CROP_SIZE));
-    this.cropRect.width = Math.max(
-      MIN_CROP_SIZE,
-      Math.min(this.cropRect.width, this.canvasEngine.canvasWidth - this.cropRect.x)
-    );
-    this.cropRect.height = Math.max(
-      MIN_CROP_SIZE,
-      Math.min(this.cropRect.height, this.canvasEngine.canvasHeight - this.cropRect.y)
-    );
+    this.cropRect.width = Math.max(MIN_CROP_SIZE, this.cropRect.width);
+    this.cropRect.height = Math.max(MIN_CROP_SIZE, this.cropRect.height);
   }
 
   getHandleRadius() {

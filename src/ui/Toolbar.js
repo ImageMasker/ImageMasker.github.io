@@ -18,9 +18,9 @@ export class Toolbar {
     this.refs.blurBrushButton = this.button('blurBrushButton', 'Blur brush');
     this.refs.pixelateBrushButton = this.button('pixelateBrushButton', 'Pixel brush');
     this.refs.moveButton = this.button('disableDrawing', 'Move mode');
-    this.refs.cropButton = this.button('cropButton', 'Crop');
-    this.refs.applyCropButton = this.button('applyCropButton', 'Apply crop');
-    this.refs.cancelCropButton = this.button('cancelCropButton', 'Cancel crop');
+    this.refs.cropButton = this.button('cropButton', 'Crop / Resize');
+    this.refs.applyCropButton = this.button('applyCropButton', 'Apply resize');
+    this.refs.cancelCropButton = this.button('cancelCropButton', 'Cancel resize');
     this.refs.addRectangleButton = this.button('addRectangle', 'Add rectangle');
     this.refs.duplicateButton = this.button('dupeMask', 'Duplicate');
     this.refs.deleteButton = this.button('deleteObject', 'Delete');

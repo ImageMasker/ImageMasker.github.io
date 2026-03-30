@@ -26,6 +26,7 @@ Keep DevTools open and watch the Console for errors.
 6. Add rectangle, text, blur region, and pixelate region layers.
 7. Select, move, resize, rotate, duplicate, and delete each layer type.
 8. Shift-click multiple layers, move them together, then undo and redo.
+9. Use `Crop / Resize` to crop inward, then expand the canvas outward on at least one edge. Confirm the background and all layers keep their relative placement, undo/redo works, and exporting matches the visible result.
 
 ## Text and layers
 

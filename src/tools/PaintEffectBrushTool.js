@@ -21,6 +21,11 @@ export class PaintEffectBrushTool extends BrushTool {
       layer.locked !== true;
   }
 
+  getSurfaceLayerId() {
+    const activeLayer = this.layerManager.getActiveLayer();
+    return this.canPaintLayer(activeLayer) ? activeLayer.id : null;
+  }
+
   resolveTargetLayer() {
     return this.paintEffectManager.ensureActiveEffectLayer(this.effectType, {
       opacity: this.opacity,

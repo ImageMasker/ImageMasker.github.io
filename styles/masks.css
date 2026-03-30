@@ -64,6 +64,17 @@
   gap: 10px;
 }
 
+#backgroundRemovalPanel {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+#backgroundRemovalPanel.is-busy {
+  opacity: 0.96;
+}
+
 #aiEditPanel textarea,
 #aiEditPanel select,
 #aiEditPanel input {
