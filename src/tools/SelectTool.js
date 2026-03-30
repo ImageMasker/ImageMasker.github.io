@@ -7,10 +7,11 @@ import {
 const { Container, Graphics, Sprite, Text } = PIXI;
 
 export class SelectTool {
-  constructor(canvasEngine, layerManager, eventBus, textTool, regionEffectTool) {
+  constructor(canvasEngine, layerManager, eventBus, brushTool, textTool, regionEffectTool) {
     this.canvasEngine = canvasEngine;
     this.layerManager = layerManager;
     this.eventBus = eventBus;
+    this.brushTool = brushTool;
     this.textTool = textTool;
     this.regionEffectTool = regionEffectTool;
     this.overlayContainer = new Container();
@@ -22,6 +23,7 @@ export class SelectTool {
     this.dragState = null;
     this.resizeState = null;
     this.rotateState = null;
+    this.marqueeState = null;
     this.handlePoints = [];
     this.handleRadius = this.getHandleRadius();
     this.rotateHandleRadius = this.handleRadius + 2;
@@ -76,6 +78,7 @@ export class SelectTool {
     this.dragState = null;
     this.resizeState = null;
     this.rotateState = null;
+    this.marqueeState = null;
     window.cancelAnimationFrame(this.overlayFrameId);
     this.overlayFrameId = 0;
     this.overlayContainer.visible = false;
@@ -100,11 +103,7 @@ export class SelectTool {
     const isAppendSelection = Boolean(event.originalEvent.shiftKey);
 
     if (!hit) {
-      if (isAppendSelection) {
-        return;
-      }
-
-      this.clearSelection();
+      this.startMarquee(event, isAppendSelection);
       return;
     }
 
@@ -124,21 +123,21 @@ export class SelectTool {
     }
 
     const isRepeatedTextClick =
-      hit.object.__toolType === 'text' &&
-      this.lastClickObject === hit.object &&
+      hit.hitObject?.__toolType === 'text' &&
+      this.lastClickObject === hit.hitObject &&
       Date.now() - this.lastClickTime < 400;
 
-    if (hit.object.__toolType === 'text' && (event.originalEvent.detail >= 2 || isRepeatedTextClick)) {
+    if (hit.hitObject?.__toolType === 'text' && (event.originalEvent.detail >= 2 || isRepeatedTextClick)) {
       this.dragState = null;
       this.resizeState = null;
-      this.textTool.beginEditing(hit.object);
+      this.textTool.beginEditing(hit.hitObject);
       this.lastClickTime = 0;
       this.lastClickObject = null;
       return;
     }
 
     this.lastClickTime = Date.now();
-    this.lastClickObject = hit.object;
+    this.lastClickObject = hit.hitObject ?? hit.object;
 
     this.dragState = {
       startX: event.canvasX,
@@ -155,6 +154,11 @@ export class SelectTool {
   }
 
   onPointerMove(event) {
+    if (this.marqueeState) {
+      this.updateMarquee(event);
+      return;
+    }
+
     if (this.rotateState && this.selectedObject) {
       this.applyRotation(event);
       this.requestOverlayUpdate();
@@ -197,6 +201,12 @@ export class SelectTool {
   }
 
   onPointerUp() {
+    if (this.marqueeState) {
+      this.completeMarquee();
+      this.canvasEngine.app.canvas.style.cursor = this.selectedObject ? 'move' : 'default';
+      return;
+    }
+
     const transformedObject = this.selectedObject;
     const beforeState =
       this.rotateState?.beforeState ??
@@ -257,13 +267,14 @@ export class SelectTool {
     }
 
     const { append = false } = options;
+    const targetObject = this.resolveSelectionObject(layer, object);
 
     if (!append) {
-      this.setSelectionEntries([{ layer, object }], 0);
+      this.setSelectionEntries([{ layer, object: targetObject }], 0);
       return;
     }
 
-    const existingIndex = this.selectedEntries.findIndex((entry) => entry.layer.id === layer.id && entry.object === object);
+    const existingIndex = this.selectedEntries.findIndex((entry) => entry.layer.id === layer.id && entry.object === targetObject);
 
     if (existingIndex >= 0) {
       const nextEntries = this.selectedEntries.filter((_, index) => index !== existingIndex);
@@ -277,7 +288,7 @@ export class SelectTool {
       return;
     }
 
-    this.setSelectionEntries([...this.selectedEntries, { layer, object }], this.selectedEntries.length);
+    this.setSelectionEntries([...this.selectedEntries, { layer, object: targetObject }], this.selectedEntries.length);
   }
 
   selectLastSelectableLayer() {
@@ -292,19 +303,14 @@ export class SelectTool {
   }
 
   getPrimaryLayerObject(layer) {
-    if (!layer?.container?.children?.length) {
-      return null;
-    }
-
-    return [...layer.container.children]
-      .reverse()
-      .find((object) => object?.__toolType !== 'brush-surface') ?? null;
+    return this.resolveSelectionObject(layer, this.layerManager.getPrimaryContentObject(layer));
   }
 
   clearSelection() {
     this.selectedEntries = [];
     this.selectedLayer = null;
     this.selectedObject = null;
+    this.marqueeState = null;
     this.handlePoints = [];
     window.cancelAnimationFrame(this.overlayFrameId);
     this.overlayFrameId = 0;
@@ -326,21 +332,11 @@ export class SelectTool {
     const duplicatedEntries = [];
 
     for (const entry of this.selectedEntries) {
-      const clone = this.cloneObject(entry.object);
+      const duplicated = this.duplicateLayerEntry(entry.layer, 7, 7);
 
-      if (!clone) {
-        continue;
+      if (duplicated) {
+        duplicatedEntries.push(duplicated);
       }
-
-      const layerId = this.layerManager.addLayer(`${entry.layer.name} copy`, entry.layer.type);
-      const layer = this.layerManager.getLayer(layerId);
-
-      clone.position.set(entry.object.x + 7, entry.object.y + 7);
-      if (clone.__toolType === 'effect-region') {
-        this.regionEffectTool?.refreshRegion?.(clone);
-      }
-      layer.container.addChild(clone);
-      duplicatedEntries.push({ layer, object: clone });
     }
 
     if (duplicatedEntries.length === 0) {
@@ -349,6 +345,60 @@ export class SelectTool {
 
     this.setSelectionEntries(duplicatedEntries, duplicatedEntries.length - 1);
     return duplicatedEntries;
+  }
+
+  duplicateLayerEntry(layer, offsetX = 7, offsetY = 7) {
+    if (!layer || layer.type === 'drawing') {
+      return null;
+    }
+
+    const primaryObject = this.layerManager.getPrimaryContentObject(layer);
+    const layerId = this.layerManager.addLayer(`${layer.name} copy`, layer.type);
+    const duplicatedLayer = this.layerManager.getLayer(layerId);
+
+    if (!duplicatedLayer) {
+      return null;
+    }
+
+    duplicatedLayer.visible = layer.visible !== false;
+    duplicatedLayer.locked = layer.locked === true;
+    duplicatedLayer.container.visible = duplicatedLayer.visible;
+    duplicatedLayer.container.alpha = layer.container.alpha ?? 1;
+    duplicatedLayer.opacity = layer.opacity ?? 1;
+
+    if (layer.paintEffect) {
+      duplicatedLayer.paintEffect = JSON.parse(JSON.stringify(layer.paintEffect));
+    }
+
+    duplicatedLayer.container.position.set(
+      (layer.container.x ?? 0) + offsetX,
+      (layer.container.y ?? 0) + offsetY
+    );
+    duplicatedLayer.container.scale.copyFrom(layer.container.scale);
+    duplicatedLayer.container.rotation = layer.container.rotation;
+    duplicatedLayer.container.alpha = layer.container.alpha;
+
+    if (primaryObject) {
+      const clone = this.cloneObject(primaryObject);
+
+      if (clone) {
+        clone.position.set(primaryObject.x, primaryObject.y);
+        duplicatedLayer.container.addChild(clone);
+
+        if (clone.__toolType === 'effect-region') {
+          this.regionEffectTool?.refreshRegion?.(clone);
+        }
+      }
+    }
+
+    if (this.brushTool?.getLayerStrokes(layer.id)?.length) {
+      this.brushTool.cloneLayerStrokes(layer.id, duplicatedLayer.id);
+    }
+
+    return {
+      layer: duplicatedLayer,
+      object: this.resolveSelectionObject(duplicatedLayer, this.layerManager.getPrimaryContentObject(duplicatedLayer)),
+    };
   }
 
   deleteSelection() {
@@ -375,6 +425,10 @@ export class SelectTool {
 
   getSelectedLayers() {
     return this.selectedEntries.map((entry) => entry.layer);
+  }
+
+  getSelectedLayerIds() {
+    return this.getSelectedLayers().map((layer) => layer.id);
   }
 
   isSelectionMember(layer, object) {
@@ -406,12 +460,18 @@ export class SelectTool {
   findHitObject(event) {
     const layers = this.layerManager
       .getLayers()
-      .filter((layer) => layer.type !== 'drawing' && layer.visible !== false && layer.locked !== true)
+      .filter((layer) => layer.visible !== false && layer.locked !== true)
       .slice()
       .reverse();
 
     for (const layer of layers) {
-      const children = [...layer.container.children].reverse();
+      const children = [...layer.container.children]
+        .reverse()
+        .filter((object) =>
+          object?.__toolType !== 'brush-surface' &&
+          object?.__toolType !== 'paint-effect-preview' &&
+          object?.__toolType !== 'paint-effect-mask'
+        );
 
       for (const object of children) {
         const bounds = object.getBounds();
@@ -422,12 +482,200 @@ export class SelectTool {
           event.y >= bounds.y &&
           event.y <= bounds.y + bounds.height
         ) {
-          return { layer, object };
+          return {
+            layer,
+            object: this.resolveSelectionObject(layer, object),
+            hitObject: object,
+          };
         }
+      }
+
+      if (!this.layerSupportsSurfaceSelection(layer) || !this.brushTool?.layerHasVisibleContent(layer.id)) {
+        continue;
+      }
+
+      const surface = this.getSurfaceObject(layer);
+
+      if (!surface) {
+        continue;
+      }
+
+      const bounds = surface.getBounds();
+
+      if (
+        event.x >= bounds.x &&
+        event.x <= bounds.x + bounds.width &&
+        event.y >= bounds.y &&
+        event.y <= bounds.y + bounds.height
+      ) {
+        return {
+          layer,
+          object: this.resolveSelectionObject(layer, surface),
+          hitObject: surface,
+        };
       }
     }
 
     return null;
+  }
+
+  resolveSelectionObject(layer, object = null) {
+    if (!layer) {
+      return object ?? null;
+    }
+
+    if (this.layerUsesContainerSelection(layer)) {
+      return layer.container;
+    }
+
+    return object ?? this.layerManager.getPrimaryContentObject(layer) ?? layer.container;
+  }
+
+  layerUsesContainerSelection(layer) {
+    return layer?.type === 'drawing' ||
+      layer?.type === 'paint-effect' ||
+      Boolean(this.brushTool?.layerHasVisibleContent(layer?.id));
+  }
+
+  layerSupportsSurfaceSelection(layer) {
+    return Boolean(layer && this.layerUsesContainerSelection(layer));
+  }
+
+  getSurfaceObject(layer) {
+    return layer?.container?.children?.find((child) => child?.__toolType === 'brush-surface') ?? null;
+  }
+
+  startMarquee(event, append = false) {
+    this.dragState = null;
+    this.resizeState = null;
+    this.rotateState = null;
+    this.marqueeState = {
+      append,
+      startX: event.x,
+      startY: event.y,
+      currentX: event.x,
+      currentY: event.y,
+      canvasStartX: event.canvasX,
+      canvasStartY: event.canvasY,
+      canvasCurrentX: event.canvasX,
+      canvasCurrentY: event.canvasY,
+      activated: false,
+    };
+    this.canvasEngine.app.canvas.style.cursor = 'crosshair';
+    this.requestOverlayUpdate();
+  }
+
+  updateMarquee(event) {
+    if (!this.marqueeState) {
+      return;
+    }
+
+    this.marqueeState.currentX = event.x;
+    this.marqueeState.currentY = event.y;
+    this.marqueeState.canvasCurrentX = event.canvasX;
+    this.marqueeState.canvasCurrentY = event.canvasY;
+
+    const distance = Math.hypot(
+      this.marqueeState.currentX - this.marqueeState.startX,
+      this.marqueeState.currentY - this.marqueeState.startY
+    );
+
+    if (distance >= 4) {
+      this.marqueeState.activated = true;
+    }
+
+    if (this.marqueeState.activated) {
+      this.requestOverlayUpdate();
+    }
+  }
+
+  completeMarquee() {
+    const marqueeState = this.marqueeState;
+    this.marqueeState = null;
+
+    if (!marqueeState?.activated) {
+      if (!marqueeState?.append) {
+        this.clearSelection();
+      } else {
+        this.requestOverlayUpdate();
+      }
+      return;
+    }
+
+    const rect = this.normalizeRect(
+      marqueeState.canvasStartX,
+      marqueeState.canvasStartY,
+      marqueeState.canvasCurrentX,
+      marqueeState.canvasCurrentY
+    );
+    const hits = this.findObjectsInRect(rect);
+
+    if (!marqueeState.append) {
+      this.setSelectionEntries(hits, hits.length - 1);
+      return;
+    }
+
+    let nextEntries = [...this.selectedEntries];
+
+    for (const hit of hits) {
+      const existingIndex = nextEntries.findIndex((entry) => entry.layer.id === hit.layer.id && entry.object === hit.object);
+
+      if (existingIndex >= 0) {
+        nextEntries = nextEntries.filter((_, index) => index !== existingIndex);
+      } else {
+        nextEntries.push(hit);
+      }
+    }
+
+    if (!nextEntries.length) {
+      this.clearSelection();
+      return;
+    }
+
+    this.setSelectionEntries(nextEntries, nextEntries.length - 1);
+  }
+
+  findObjectsInRect(rect) {
+    const entries = [];
+    const seenLayers = new Set();
+
+    for (const layer of this.layerManager.getLayers().filter((entry) => entry.visible !== false && entry.locked !== true)) {
+      const selectionObject = this.resolveSelectionObject(layer);
+
+      if (!selectionObject || seenLayers.has(layer.id)) {
+        continue;
+      }
+
+      const bounds = selectionObject.getBounds();
+
+      if (this.boundsIntersect(rect, bounds)) {
+        entries.push({
+          layer,
+          object: selectionObject,
+        });
+        seenLayers.add(layer.id);
+      }
+    }
+
+    return entries;
+  }
+
+  normalizeRect(x1, y1, x2, y2) {
+    return {
+      x: Math.min(x1, x2),
+      y: Math.min(y1, y2),
+      width: Math.abs(x2 - x1),
+      height: Math.abs(y2 - y1),
+    };
+  }
+
+  boundsIntersect(a, b) {
+    return (
+      a.x <= b.x + b.width &&
+      a.x + a.width >= b.x &&
+      a.y <= b.y + b.height &&
+      a.y + a.height >= b.y
+    );
   }
 
   findHandleAtPoint(event) {
@@ -547,8 +795,15 @@ export class SelectTool {
   }
 
   updateOverlay() {
+    if (this.marqueeState?.activated) {
+      this.renderMarqueeOverlay();
+      return;
+    }
+
     if (!this.selectedEntries.length || !this.selectedObject) {
-      this.clearSelection();
+      this.overlayContainer.removeChildren().forEach((child) => child.destroy());
+      this.overlayContainer.visible = false;
+      this.handlePoints = [];
       return;
     }
 
@@ -687,6 +942,37 @@ export class SelectTool {
       this.overlayContainer.addChild(handle);
     }
 
+    this.overlayContainer.visible = true;
+  }
+
+  renderMarqueeOverlay() {
+    if (!this.marqueeState?.activated) {
+      return;
+    }
+
+    this.overlayContainer.removeChildren().forEach((child) => child.destroy());
+    this.handlePoints = [];
+
+    const rect = this.normalizeRect(
+      this.marqueeState.startX,
+      this.marqueeState.startY,
+      this.marqueeState.currentX,
+      this.marqueeState.currentY
+    );
+    const fill = new Graphics();
+    const border = new Graphics();
+
+    fill.rect(rect.x, rect.y, rect.width, rect.height).fill({
+      color: 0xffa155,
+      alpha: 0.12,
+    });
+    border.rect(rect.x, rect.y, rect.width, rect.height).stroke({
+      color: 0xffa155,
+      width: 2,
+    });
+
+    this.overlayContainer.addChild(fill);
+    this.overlayContainer.addChild(border);
     this.overlayContainer.visible = true;
   }
 

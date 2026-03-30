@@ -60,7 +60,7 @@ export class CanvasEngine {
     this.app.stage.addChild(this.overlayContainer);
   }
 
-  async loadBackgroundImage(source, isExternal = false) {
+  async loadBackgroundImage(source, isExternal = false, options = {}) {
     if (!this.app) {
       throw new Error('CanvasEngine must be initialized before loading images.');
     }
@@ -123,6 +123,7 @@ export class CanvasEngine {
       editorHeight: this.canvasHeight,
       source: source,
       resolvedSource,
+      preserveScene: options.preserveScene === true,
     });
   }
 

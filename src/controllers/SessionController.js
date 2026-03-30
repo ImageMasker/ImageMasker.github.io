@@ -224,10 +224,8 @@ export class SessionController {
     let didRestore = false;
 
     try {
-      await this.app.sessionSerializer.restore(this.app, document);
-      this.app.syncExportControlsFromPreset();
-      didRestore = true;
-      return true;
+      didRestore = await this.app.applySceneSnapshot(document);
+      return didRestore;
     } finally {
       this.app.isRestoringSession = false;
       this.updateSessionStatus(this.app.sessionStorage.getSession(this.app.selectedSessionId));

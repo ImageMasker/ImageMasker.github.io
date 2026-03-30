@@ -15,7 +15,12 @@ export class Toolbar {
 
     this.refs.eraserButton = this.button('eraserButton', 'Eraser');
     this.refs.brushButton = this.button('brushButton', 'Brush mode', 'is-active');
+    this.refs.blurBrushButton = this.button('blurBrushButton', 'Blur brush');
+    this.refs.pixelateBrushButton = this.button('pixelateBrushButton', 'Pixel brush');
     this.refs.moveButton = this.button('disableDrawing', 'Move mode');
+    this.refs.cropButton = this.button('cropButton', 'Crop');
+    this.refs.applyCropButton = this.button('applyCropButton', 'Apply crop');
+    this.refs.cancelCropButton = this.button('cancelCropButton', 'Cancel crop');
     this.refs.addRectangleButton = this.button('addRectangle', 'Add rectangle');
     this.refs.duplicateButton = this.button('dupeMask', 'Duplicate');
     this.refs.deleteButton = this.button('deleteObject', 'Delete');
@@ -38,6 +43,7 @@ export class Toolbar {
       el('option', { value: 'spray', textContent: 'Spray' }),
     ]);
     this.refs.brushOpacityInput = this.slider('brushOpacity', 0, 100, 100, { 'aria-label': 'Brush opacity' });
+    this.refs.paintEffectAmountInput = this.slider('paintEffectAmount', 1, 40, 12, { 'aria-label': 'Paint effect amount' });
     this.refs.hueInput = el('input', {
       id: 'hue',
       type: 'range',
@@ -119,6 +125,8 @@ export class Toolbar {
         el('legend', { textContent: 'Tools' }),
         this.section('Modes & Actions', [
           this.row([this.refs.brushButton, this.refs.eraserButton, this.refs.moveButton]),
+          this.row([this.refs.blurBrushButton, this.refs.pixelateBrushButton, this.refs.cropButton]),
+          this.refs.cropActionRow = this.row([this.refs.applyCropButton, this.refs.cancelCropButton]),
           this.row([this.refs.addRectangleButton, this.refs.addTextButton]),
           this.row([this.refs.addRegionButton]),
           this.row([this.refs.duplicateButton, this.refs.deleteButton, this.refs.undoButton]),
@@ -127,6 +135,7 @@ export class Toolbar {
           this.field('Brush size and color:', [this.refs.brushSizeInput, this.refs.brushColorInput]),
           this.field('Brush type:', [this.refs.brushTypeSelect]),
           this.field('Brush opacity:', [this.refs.brushOpacityInput]),
+          this.refs.paintEffectAmountField = this.field('Effect amount:', [this.refs.paintEffectAmountInput]),
         ], { open: !compactLayout }),
         this.section('Text', [
           this.field('Text size and color:', [
@@ -168,6 +177,7 @@ export class Toolbar {
       type: 'button',
       className: `app-button ${className}`.trim(),
       textContent,
+      'data-shortcut-label': textContent,
       ...extraAttrs,
     });
   }

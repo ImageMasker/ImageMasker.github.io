@@ -18,6 +18,7 @@ export class SessionSerializer {
       viewport: app.canvasEngine.getViewportState(),
       drawing: {
         strokes: cloneJson(app.brushTool.getLayerStrokes(app.layerManager.getDrawingLayer()?.id)),
+        layerState: this.serializeContainerState(app.layerManager.getDrawingLayer()?.container),
       },
       layers: app.layerManager
         .getLayers()
@@ -38,10 +39,10 @@ export class SessionSerializer {
   }
 
   serializeLayer(app, layer) {
-    const object = layer.container.children[layer.container.children.length - 1];
+    const object = app.layerManager.getPrimaryContentObject(layer);
     const serializedObject = this.serializeObject(layer.type, object);
 
-    if (!serializedObject) {
+    if (!serializedObject && layer.type !== 'paint-effect' && !app.brushTool.getLayerStrokes(layer.id).length) {
       return null;
     }
 
@@ -51,6 +52,8 @@ export class SessionSerializer {
       visible: layer.visible,
       opacity: layer.opacity ?? 1,
       locked: layer.locked,
+      layerState: this.serializeContainerState(layer.container),
+      paintEffect: cloneJson(layer.paintEffect ?? {}),
       object: serializedObject,
       strokes: cloneJson(app.brushTool.getLayerStrokes(layer.id)),
     };
@@ -121,6 +124,10 @@ export class SessionSerializer {
       };
     }
 
+    if (type === 'paint-effect') {
+      return null;
+    }
+
     return base;
   }
 
@@ -131,15 +138,22 @@ export class SessionSerializer {
       document,
     });
 
-    if (!normalizedDocument?.background?.url || normalizedDocument.background.type !== 'external') {
-      throw new Error('Only URL-backed sessions can be restored automatically.');
+    await app.clearEditorScene();
+    const backgroundSource = normalizedDocument.background.embeddedDataUrl ||
+      normalizedDocument.background.url;
+
+    if (!backgroundSource) {
+      throw new Error('The saved session background is missing.');
     }
 
-    await app.clearEditorScene();
-    await app.canvasEngine.loadBackgroundImage(normalizedDocument.background.url, true);
+    const isExternal = normalizedDocument.background.type === 'external' &&
+      !normalizedDocument.background.embeddedDataUrl &&
+      !/^data:/i.test(normalizedDocument.background.url);
+    await app.canvasEngine.loadBackgroundImage(backgroundSource, isExternal);
     app.setBackgroundSource({
-      type: 'external',
-      url: normalizedDocument.background.url,
+      type: isExternal ? 'external' : 'local',
+      url: backgroundSource,
+      embeddedDataUrl: normalizedDocument.background.embeddedDataUrl || '',
       visible: normalizedDocument.background.visible !== false,
       opacity: normalizedDocument.background.opacity ?? 1,
     });
@@ -165,6 +179,10 @@ export class SessionSerializer {
     const drawingLayerId = app.layerManager.getDrawingLayer()?.id ?? null;
 
     if (drawingLayerId) {
+      this.applyObjectState(
+        app.layerManager.getDrawingLayer()?.container,
+        normalizedDocument.drawing?.layerState ?? {}
+      );
       app.brushTool.restoreLayerStrokes(
         drawingLayerId,
         cloneJson(normalizedDocument.drawing?.strokes ?? [])
@@ -194,6 +212,7 @@ export class SessionSerializer {
 
     if (layerState.type === 'mask') {
       const layer = await app.maskManager.restoreMaskLayer(layerState, app.maskEffects);
+      this.applyObjectState(layer.container, layerState.layerState);
       app.layerManager.setLayerOpacity(layer.id, layerState.opacity ?? 1);
       app.brushTool.restoreLayerStrokes(layer.id, cloneJson(layerState.strokes ?? []));
       return layer;
@@ -206,6 +225,7 @@ export class SessionSerializer {
 
       this.applyObjectState(rect, layerState.object);
       layer.container.addChild(rect);
+      this.applyObjectState(layer.container, layerState.layerState);
       layer.visible = layerState.visible !== false;
       layer.locked = layerState.locked === true;
       layer.container.visible = layer.visible;
@@ -221,6 +241,7 @@ export class SessionSerializer {
 
       this.applyObjectState(region, layerState.object);
       layer.container.addChild(region);
+      this.applyObjectState(layer.container, layerState.layerState);
       layer.visible = layerState.visible !== false;
       layer.locked = layerState.locked === true;
       layer.container.visible = layer.visible;
@@ -240,6 +261,7 @@ export class SessionSerializer {
 
       this.applyObjectState(textObject, layerState.object);
       layer.container.addChild(textObject);
+      this.applyObjectState(layer.container, layerState.layerState);
       layer.visible = layerState.visible !== false;
       layer.locked = layerState.locked === true;
       layer.container.visible = layer.visible;
@@ -252,9 +274,26 @@ export class SessionSerializer {
       const layer = await app.restoreGeneratedImageLayer(layerState);
 
       if (layer) {
+        this.applyObjectState(layer.container, layerState.layerState);
         app.brushTool.restoreLayerStrokes(layer.id, cloneJson(layerState.strokes ?? []));
       }
 
+      return layer;
+    }
+
+    if (layerState.type === 'paint-effect') {
+      const layer = app.paintEffectManager.createLayer(layerState.paintEffect?.type ?? 'blur', {
+        name: layerState.name,
+        amount: layerState.paintEffect?.amount,
+        opacity: layerState.paintEffect?.opacity ?? layerState.opacity,
+      });
+      layer.visible = layerState.visible !== false;
+      layer.locked = layerState.locked === true;
+      layer.container.visible = layer.visible;
+      app.layerManager.setLayerOpacity(layer.id, layerState.opacity ?? 1);
+      this.applyObjectState(layer.container, layerState.layerState);
+      app.brushTool.restoreLayerStrokes(layer.id, cloneJson(layerState.strokes ?? []));
+      app.paintEffectManager.updateLayerEffect(layer.id, layerState.paintEffect ?? {});
       return layer;
     }
 
@@ -266,10 +305,26 @@ export class SessionSerializer {
   }
 
   applyObjectState(object, state) {
+    if (!object || !state) {
+      return;
+    }
+
     object.position.set(state.x, state.y);
     object.scale.set(state.scaleX, state.scaleY);
     object.rotation = state.rotation;
     object.alpha = state.alpha;
     object.blendMode = state.blendMode ?? 'normal';
+  }
+
+  serializeContainerState(container) {
+    return {
+      x: container?.x ?? 0,
+      y: container?.y ?? 0,
+      scaleX: container?.scale?.x ?? 1,
+      scaleY: container?.scale?.y ?? 1,
+      rotation: container?.rotation ?? 0,
+      alpha: container?.alpha ?? 1,
+      blendMode: container?.blendMode ?? 'normal',
+    };
   }
 }

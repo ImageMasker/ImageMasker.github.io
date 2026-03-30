@@ -73,6 +73,30 @@
   flex: 1 1 80px;
 }
 
+.tool-button-cluster .app-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shortcut-label-text {
+  min-width: 0;
+}
+
+.shortcut-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4em;
+  padding: 0 0.45em;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.16);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
 #sliderValue {
   display: inline-block;
   min-width: 2ch;

@@ -2,6 +2,7 @@ const ACTIVE_THEME_KEY = 'imagemasker.activeTheme';
 const CUSTOM_THEMES_KEY = 'imagemasker.customThemes';
 const AI_EDIT_SETTINGS_KEY = 'imagemasker.aiEditSettings';
 const PASTE_IMAGE_AS_LAYER_KEY = 'imagemasker.pasteImageAsLayer';
+const EDITOR_SHORTCUTS_KEY = 'imagemasker.editorShortcuts';
 const LEGACY_THEME_KEY = 'Night';
 const POINTER_CALIBRATION_X_KEY = 'pointerCalibrationX';
 const POINTER_CALIBRATION_Y_KEY = 'pointerCalibrationY';
@@ -70,6 +71,22 @@ export class Settings {
 
   setPasteImageAsLayer(enabled) {
     localStorage.setItem(PASTE_IMAGE_AS_LAYER_KEY, String(enabled !== false));
+  }
+
+  getEditorShortcuts() {
+    try {
+      const value = JSON.parse(localStorage.getItem(EDITOR_SHORTCUTS_KEY) || '{}');
+      return value && typeof value === 'object' ? value : {};
+    } catch {
+      return {};
+    }
+  }
+
+  setEditorShortcuts(bindings) {
+    localStorage.setItem(
+      EDITOR_SHORTCUTS_KEY,
+      JSON.stringify(bindings && typeof bindings === 'object' ? bindings : {})
+    );
   }
 
   clearPointerCalibration() {

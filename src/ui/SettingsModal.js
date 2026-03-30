@@ -21,6 +21,13 @@ export class SettingsModal {
       'data-settings-tab': 'themes',
       'aria-pressed': 'false',
     });
+    this.refs.shortcutsTabButton = el('button', {
+      type: 'button',
+      className: 'settings-tab-button',
+      textContent: 'Shortcuts',
+      'data-settings-tab': 'shortcuts',
+      'aria-pressed': 'false',
+    });
     this.refs.sessionsContent = el('div', {
       className: 'settings-tab-panel',
       'data-settings-panel': 'sessions',
@@ -28,6 +35,10 @@ export class SettingsModal {
     this.refs.themesContent = el('div', {
       className: 'settings-tab-panel hidden',
       'data-settings-panel': 'themes',
+    });
+    this.refs.shortcutsContent = el('div', {
+      className: 'settings-tab-panel hidden',
+      'data-settings-panel': 'shortcuts',
     });
     this.refs.closeButton = el('button', {
       type: 'button',
@@ -58,10 +69,12 @@ export class SettingsModal {
       el('div', { className: 'settings-tab-list' }, [
         this.refs.sessionsTabButton,
         this.refs.themesTabButton,
+        this.refs.shortcutsTabButton,
       ]),
       el('div', { className: 'settings-modal-body' }, [
         this.refs.sessionsContent,
         this.refs.themesContent,
+        this.refs.shortcutsContent,
       ]),
     ]);
     this.refs.overlay = el('div', {
@@ -81,13 +94,19 @@ export class SettingsModal {
   }
 
   setActiveTab(tab) {
-    const isSessions = tab !== 'themes';
+    const nextTab = ['sessions', 'themes', 'shortcuts'].includes(tab) ? tab : 'sessions';
+    const isSessions = nextTab === 'sessions';
+    const isThemes = nextTab === 'themes';
+    const isShortcuts = nextTab === 'shortcuts';
 
     this.refs.sessionsTabButton.classList.toggle('is-active', isSessions);
     this.refs.sessionsTabButton.setAttribute('aria-pressed', isSessions ? 'true' : 'false');
-    this.refs.themesTabButton.classList.toggle('is-active', !isSessions);
-    this.refs.themesTabButton.setAttribute('aria-pressed', isSessions ? 'false' : 'true');
+    this.refs.themesTabButton.classList.toggle('is-active', isThemes);
+    this.refs.themesTabButton.setAttribute('aria-pressed', isThemes ? 'true' : 'false');
+    this.refs.shortcutsTabButton.classList.toggle('is-active', isShortcuts);
+    this.refs.shortcutsTabButton.setAttribute('aria-pressed', isShortcuts ? 'true' : 'false');
     this.refs.sessionsContent.classList.toggle('hidden', !isSessions);
-    this.refs.themesContent.classList.toggle('hidden', isSessions);
+    this.refs.themesContent.classList.toggle('hidden', !isThemes);
+    this.refs.shortcutsContent.classList.toggle('hidden', !isShortcuts);
   }
 }

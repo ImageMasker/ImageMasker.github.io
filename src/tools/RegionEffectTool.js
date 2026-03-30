@@ -247,7 +247,7 @@ export class RegionEffectTool {
       .filter((layer) => layer.type === 'effect-region');
 
     for (const layer of layers) {
-      const object = layer.container.children[layer.container.children.length - 1];
+      const object = this.layerManager.getPrimaryContentObject(layer);
 
       if (object?.__toolType === 'effect-region') {
         this.refreshRegion(object);
@@ -339,6 +339,7 @@ export class RegionEffectTool {
     }
 
     return this.layerManager.getLayers().find((layer) =>
+      layer.container === object ||
       layer.container === object.parent || layer.container.children.includes(object)
     ) ?? null;
   }
@@ -358,7 +359,7 @@ export class RegionEffectTool {
         continue;
       }
 
-      const object = layer.container.children[layer.container.children.length - 1];
+      const object = this.layerManager.getPrimaryContentObject(layer);
 
       if (object?.__toolType === 'effect-region' && object !== excludeObject) {
         this.refreshRegion(object);

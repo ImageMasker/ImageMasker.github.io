@@ -200,11 +200,20 @@ export class LayerManager {
   }
 
   setActiveLayer(layerId) {
-    if (!this.getLayer(layerId)) {
+    const layer = this.getLayer(layerId);
+
+    if (!layer) {
+      return;
+    }
+
+    if (this.activeLayerId === layerId) {
       return;
     }
 
     this.activeLayerId = layerId;
+    this.eventBus.emit('layer:active-changed', {
+      layer,
+    });
   }
 
   getDrawingLayer() {
@@ -230,5 +239,21 @@ export class LayerManager {
 
     const numericId = Number(match[1]);
     this.nextLayerId = Math.max(this.nextLayerId, numericId + 1);
+  }
+
+  getPrimaryContentObject(layerOrId) {
+    const layer = typeof layerOrId === 'string' ? this.getLayer(layerOrId) : layerOrId;
+
+    if (!layer?.container?.children?.length) {
+      return null;
+    }
+
+    return [...layer.container.children]
+      .reverse()
+      .find((object) =>
+        object?.__toolType !== 'brush-surface' &&
+        object?.__toolType !== 'paint-effect-preview' &&
+        object?.__toolType !== 'paint-effect-mask'
+      ) ?? null;
   }
 }

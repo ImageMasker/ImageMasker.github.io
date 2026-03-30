@@ -7,4 +7,8 @@ export class EraserTool extends BrushTool {
       strokeType: 'erase',
     });
   }
+
+  canPaintLayer(layer) {
+    return Boolean(layer && layer.visible !== false && layer.locked !== true);
+  }
 }

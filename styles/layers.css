@@ -18,6 +18,9 @@
   padding: 10px;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.06);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
 :root.dark .layer-row {
@@ -25,7 +28,18 @@
 }
 
 .layer-row.is-selected {
+  border-color: color-mix(in srgb, var(--bg-slider-thumb) 55%, transparent);
+  background: color-mix(in srgb, var(--bg-slider-thumb) 10%, rgba(0, 0, 0, 0.04));
+}
+
+.layer-row.is-active {
+  border-color: var(--bg-slider-thumb);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg-slider-thumb) 32%, transparent);
+}
+
+.layer-row:focus-visible {
   outline: 2px solid var(--bg-slider-thumb);
+  outline-offset: 2px;
 }
 
 .layer-preview {

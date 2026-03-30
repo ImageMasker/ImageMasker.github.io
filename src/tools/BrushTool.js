@@ -20,7 +20,13 @@ export class BrushTool {
     };
     this.currentStroke = null;
 
-    this.eventBus.on('image:loaded', () => {
+    this.eventBus.on('image:loaded', ({ preserveScene } = {}) => {
+      if (preserveScene) {
+        this.refreshSurface();
+        this.ensureSurface();
+        return;
+      }
+
       this.clear();
       this.ensureSurface();
     });
@@ -80,8 +86,9 @@ export class BrushTool {
   clear() {
     const layerStates = this.getAllLayerStates();
 
-    for (const layerState of Object.values(layerStates)) {
+    for (const [layerId, layerState] of Object.entries(layerStates)) {
       layerState.strokes = [];
+      this.emitPaintChanged(layerId);
     }
 
     this.currentStroke = null;
@@ -147,6 +154,7 @@ export class BrushTool {
     const layerState = this.getLayerState(this.currentStroke.layerId);
     layerState.strokes.push(this.currentStroke);
     this.refreshSurface(this.currentStroke.layerId);
+    this.emitPaintChanged(this.currentStroke.layerId);
     this.eventBus.emit('stroke:committed', {
       stroke: this.currentStroke,
     });
@@ -158,6 +166,7 @@ export class BrushTool {
     const clampedIndex = Math.max(0, Math.min(index, layerState.strokes.length));
     layerState.strokes.splice(clampedIndex, 0, stroke);
     this.refreshSurface(stroke.layerId);
+    this.emitPaintChanged(stroke.layerId);
   }
 
   removeStroke(stroke) {
@@ -170,6 +179,7 @@ export class BrushTool {
 
     layerState.strokes.splice(index, 1);
     this.refreshSurface(stroke.layerId);
+    this.emitPaintChanged(stroke.layerId);
     return index;
   }
 
@@ -181,6 +191,7 @@ export class BrushTool {
     const layerState = this.getLayerState(layerId);
     layerState.strokes = Array.isArray(strokes) ? strokes : [];
     this.refreshSurface(layerId);
+    this.emitPaintChanged(layerId);
   }
 
   ensureSurface(layerId = this.resolveTargetLayer()?.id ?? null) {
@@ -486,11 +497,16 @@ export class BrushTool {
   resolveTargetLayer() {
     const activeLayer = this.layerManager.getActiveLayer();
 
-    if (activeLayer && activeLayer.visible !== false && activeLayer.locked !== true) {
+    if (this.canPaintLayer(activeLayer)) {
       return activeLayer;
     }
 
-    return this.layerManager.getDrawingLayer();
+    const fallbackLayer = this.layerManager.getDrawingLayer();
+    return this.canPaintLayer(fallbackLayer) ? fallbackLayer : null;
+  }
+
+  canPaintLayer(layer) {
+    return Boolean(layer && layer.visible !== false && layer.locked !== true && layer.type !== 'paint-effect');
   }
 
   attachSurfaceSprite(layer, sprite) {
@@ -562,5 +578,69 @@ export class BrushTool {
     if (layerState?.texture?.source?.update) {
       layerState.texture.source.update();
     }
+  }
+
+  getLayerStrokeBounds(layerId) {
+    const strokes = this.getLayerState(layerId).strokes;
+
+    if (!strokes.length) {
+      return null;
+    }
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    for (const stroke of strokes) {
+      const radius = Math.max(1, Number(stroke.width) || 1) / 2;
+
+      for (const point of stroke.points ?? []) {
+        minX = Math.min(minX, point.x - radius);
+        minY = Math.min(minY, point.y - radius);
+        maxX = Math.max(maxX, point.x + radius);
+        maxY = Math.max(maxY, point.y + radius);
+      }
+    }
+
+    if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+      return null;
+    }
+
+    return {
+      x: minX,
+      y: minY,
+      width: Math.max(1, maxX - minX),
+      height: Math.max(1, maxY - minY),
+    };
+  }
+
+  layerHasVisibleContent(layerId) {
+    const bounds = this.getLayerStrokeBounds(layerId);
+    return Boolean(bounds && bounds.width > 0 && bounds.height > 0);
+  }
+
+  cloneLayerStrokes(sourceLayerId, targetLayerId, offsetX = 0, offsetY = 0) {
+    const cloned = this.getLayerStrokes(sourceLayerId).map((stroke) => ({
+      ...stroke,
+      layerId: targetLayerId,
+      points: (stroke.points ?? []).map((point) => ({
+        x: point.x + offsetX,
+        y: point.y + offsetY,
+      })),
+    }));
+
+    this.restoreLayerStrokes(targetLayerId, cloned);
+    return cloned;
+  }
+
+  emitPaintChanged(layerId) {
+    if (!layerId) {
+      return;
+    }
+
+    this.eventBus.emit('layer:paint-changed', {
+      layerId,
+    });
   }
 }

@@ -94,6 +94,49 @@
   gap: 12px;
 }
 
+.shortcut-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.shortcut-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shortcut-list {
+  display: grid;
+  gap: 16px;
+}
+
+.shortcut-group {
+  display: grid;
+  gap: 8px;
+}
+
+.shortcut-group-title {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.shortcut-row-main {
+  min-width: 0;
+}
+
+.shortcut-label {
+  font-weight: 600;
+}
+
 body.settings-modal-open {
   overflow: hidden;
 }

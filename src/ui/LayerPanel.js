@@ -75,32 +75,27 @@ export class LayerPanel {
     return this.refs.root;
   }
 
-  renderLayers(layers, selectedLayerId) {
+  renderLayers(layers, selectionState = {}) {
     const orderedLayers = layers.slice().reverse();
+    const selectedLayerIds = new Set(selectionState.selectedLayerIds ?? []);
+    const activeLayerId = selectionState.activeLayerId ?? null;
     this.refs.emptyState.classList.toggle('hidden', orderedLayers.length > 0);
 
     this.refs.list.replaceChildren(
-      ...orderedLayers.map((layer) => this.createRow(layer, selectedLayerId))
+      ...orderedLayers.map((layer) => this.createRow(layer, {
+        isSelected: selectedLayerIds.has(layer.id),
+        isActive: activeLayerId === layer.id,
+      }))
     );
   }
 
-  createRow(layer, selectedLayerId) {
-    const selectable = layer.selectable !== false;
+  createRow(layer, selectionState = {}) {
     const visibilityToggleable = layer.visibilityToggleable !== false;
     const lockToggleable = layer.lockToggleable !== false;
     const reorderable = layer.reorderable !== false;
     const deletable = layer.deletable !== false;
     const settings = layer.settings ?? null;
     const actionButtons = [];
-
-    if (selectable) {
-      actionButtons.push(this.createIconButton({
-        layer,
-        action: 'select',
-        icon: 'select',
-        label: layer.type === 'drawing' ? `Use ${layer.name} as brush layer` : `Select layer ${layer.name}`,
-      }));
-    }
 
     if (visibilityToggleable) {
       actionButtons.push(this.createIconButton({
@@ -159,8 +154,15 @@ export class LayerPanel {
     }
 
     return el('div', {
-      className: `layer-row ${selectedLayerId === layer.id ? 'is-selected' : ''}`.trim(),
+      className: [
+        'layer-row',
+        selectionState.isSelected ? 'is-selected' : '',
+        selectionState.isActive ? 'is-active' : '',
+      ].filter(Boolean).join(' '),
       'data-layer-id': layer.id,
+      tabindex: '0',
+      role: 'button',
+      'aria-pressed': selectionState.isSelected ? 'true' : 'false',
     }, [
       this.createPreview(layer),
       el('div', { className: 'layer-row-content' }, [

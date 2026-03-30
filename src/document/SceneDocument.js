@@ -1,6 +1,6 @@
 import { normalizeRegionEffectData } from '../tools/regionDefinitions.js';
 
-export const SCENE_DOCUMENT_VERSION = 4;
+export const SCENE_DOCUMENT_VERSION = 5;
 
 export function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
@@ -15,12 +15,14 @@ function normalizeBackground(background) {
   const url = typeof background.url === 'string' ? background.url : '';
   const visible = background.visible !== false;
   const opacity = Number.isFinite(Number(background.opacity)) ? Number(background.opacity) : 1;
+  const embeddedDataUrl = typeof background.embeddedDataUrl === 'string' ? background.embeddedDataUrl : '';
 
   return {
     type,
     url,
     visible,
     opacity,
+    embeddedDataUrl,
   };
 }
 
@@ -83,6 +85,8 @@ function normalizeLayer(layer) {
     visible: layer.visible !== false,
     opacity: Number.isFinite(Number(layer.opacity)) ? Number(layer.opacity) : 1,
     locked: layer.locked === true,
+    layerState: normalizeObjectState(layer.layerState ?? {}),
+    paintEffect: cloneJson(layer.paintEffect ?? {}),
     object: normalizeObjectState(layer.object ?? {}),
     strokes: Array.isArray(layer.strokes) ? cloneJson(layer.strokes) : [],
   };
@@ -103,10 +107,13 @@ export function normalizeSceneDocument(document) {
     version: SCENE_DOCUMENT_VERSION,
     savedAt: typeof document.savedAt === 'string' ? document.savedAt : new Date().toISOString(),
     background,
-    canRestore: background.type === 'external' && Boolean(background.url),
+    canRestore: (background.type === 'external' && Boolean(background.url)) ||
+      Boolean(background.embeddedDataUrl) ||
+      /^data:/i.test(background.url),
     viewport: normalizeViewport(document.viewport),
     drawing: {
       strokes: Array.isArray(document.drawing?.strokes) ? cloneJson(document.drawing.strokes) : [],
+      layerState: normalizeObjectState(document.drawing?.layerState ?? {}),
     },
     layers: Array.isArray(document.layers)
       ? document.layers.map((layer) => normalizeLayer(layer)).filter(Boolean)
