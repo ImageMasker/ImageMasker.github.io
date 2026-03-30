@@ -235,6 +235,7 @@ export class CanvasArea {
       type: 'button',
       className: `app-button ${hidden ? 'hidden' : ''}`.trim(),
       textContent,
+      'data-shortcut-label': textContent,
       ...extraAttrs,
     });
   }

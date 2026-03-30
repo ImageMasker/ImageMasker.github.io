@@ -1,6 +1,7 @@
 export const SHORTCUT_COMMANDS = [
   { id: 'undo', label: 'Undo', category: 'Edit', defaultBinding: 'Ctrl+Z' },
   { id: 'redo', label: 'Redo', category: 'Edit', defaultBinding: 'Ctrl+Y' },
+  { id: 'copyCanvas', label: 'Copy canvas to clipboard', category: 'Export', defaultBinding: 'Ctrl+C' },
   { id: 'duplicate', label: 'Duplicate', category: 'Edit', defaultBinding: 'D' },
   { id: 'delete', label: 'Delete selection', category: 'Edit', defaultBinding: 'Delete' },
   { id: 'brush', label: 'Brush mode', category: 'Tools', defaultBinding: 'B' },

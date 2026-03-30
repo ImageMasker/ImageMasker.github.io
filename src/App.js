@@ -316,6 +316,9 @@ export class App {
       handlers: {
         undo: () => this.historyManager.undo(),
         redo: () => this.historyManager.redo(),
+        copyCanvas: () => {
+          void this.copyImage();
+        },
         duplicate: () => this.duplicateSelectedObject(),
         delete: () => this.deleteSelectedObject(),
         brush: () => this.toolManager.setActiveTool('brush'),
@@ -1738,6 +1741,7 @@ export class App {
       [this.toolbar.refs.duplicateButton, this.keyboardShortcuts.getBinding('duplicate')],
       [this.toolbar.refs.deleteButton, this.keyboardShortcuts.getBinding('delete')],
       [this.toolbar.refs.undoButton, this.keyboardShortcuts.getBinding('undo')],
+      [this.canvasArea.refs.copyImageButton, this.keyboardShortcuts.getBinding('copyCanvas')],
     ]);
 
     for (const [button, binding] of buttonBindings.entries()) {
@@ -4039,17 +4043,35 @@ export class App {
   }
 
   async copyImage() {
-    if (!window.ClipboardItem || !navigator.clipboard?.write) {
+    const clipboardSupportIssues = [];
+
+    if (!window.isSecureContext) {
+      clipboardSupportIssues.push('this page is not in a secure context; use https:// or http://localhost instead of file://');
+    }
+
+    if (!window.ClipboardItem) {
+      clipboardSupportIssues.push('ClipboardItem is unavailable');
+    }
+
+    if (!navigator.clipboard?.write) {
+      clipboardSupportIssues.push('navigator.clipboard.write is unavailable');
+    }
+
+    if (clipboardSupportIssues.length) {
       this.notify(
-        "Clipboard image copy isn't supported here. Firefox usually needs dom.events.asyncClipboard.clipboardItem enabled.",
+        `Clipboard image copy isn't available because ${clipboardSupportIssues.join('; ')}.`,
         'warning',
-        4200
+        6200
       );
       return;
     }
 
-    const exportOptions = this.getCurrentExportOptions();
-    const mimeType = this.exportManager.getMimeType(exportOptions.format);
+    // PNG is the only image type the Clipboard API reliably guarantees across browsers.
+    const exportOptions = {
+      ...this.getCurrentExportOptions(),
+      format: 'png',
+    };
+    const mimeType = 'image/png';
 
     try {
       const blob = await this.exportManager.exportBlob(exportOptions);
@@ -4057,10 +4079,11 @@ export class App {
       await navigator.clipboard.write([item]);
       this.notify('Image copied to clipboard.', 'success');
     } catch (error) {
+      const reason = error?.name ? `${error.name}: ${error.message || 'Clipboard write failed.'}` : 'Clipboard write failed.';
       this.notify(
-        "Clipboard image copy failed. Firefox may require dom.events.asyncClipboard.clipboardItem.",
+        `Clipboard image copy failed. ${reason}`,
         'warning',
-        4200
+        6200
       );
     }
   }
