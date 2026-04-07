@@ -1,6 +1,6 @@
-import { addProxyToUrl } from '../integrations/CorsProxy.js';
+import { getCorsImageSourceCandidates } from '../integrations/CorsProxy.js';
 import { devAssert } from '../utils/dev.js';
-import { loadImageElement } from '../utils/image.js';
+import { loadImageElement, loadImageElementFromSources } from '../utils/image.js';
 
 const { Application, Container, Sprite, Texture } = PIXI;
 
@@ -65,10 +65,15 @@ export class CanvasEngine {
       throw new Error('CanvasEngine must be initialized before loading images.');
     }
 
-    const resolvedSource = isExternal ? addProxyToUrl(source) : source;
-    const image = await loadImageElement(resolvedSource, {
-      crossOrigin: isExternal ? 'anonymous' : null,
-    });
+    const sourceCandidates = isExternal ? getCorsImageSourceCandidates(source) : [source];
+    const { image, src: resolvedSource } = isExternal
+      ? await loadImageElementFromSources(sourceCandidates, {
+        crossOrigin: 'anonymous',
+      })
+      : {
+        image: await loadImageElement(source),
+        src: source,
+      };
     const texture = Texture.from(image);
     const imageWidth = image.naturalWidth || image.width;
     const imageHeight = image.naturalHeight || image.height;

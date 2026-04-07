@@ -2,6 +2,19 @@ export function addProxyToUrl(baseUrl) {
   return 'https://cors.bridged.cc/' + baseUrl.replace(/(^\w+:|^)\/\//, '');
 }
 
+export function getCorsImageSourceCandidates(baseUrl) {
+  const trimmedUrl = String(baseUrl ?? '').trim();
+
+  if (!trimmedUrl) {
+    return [];
+  }
+
+  return [...new Set([
+    trimmedUrl,
+    addProxyToUrl(trimmedUrl),
+  ])];
+}
+
 export const IMGUR_UPLOAD_PROXY_CANDIDATES = [
   {
     id: 'cors-anywhere',

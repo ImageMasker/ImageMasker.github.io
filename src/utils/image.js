@@ -15,3 +15,22 @@ export function loadImageElement(src, { crossOrigin = null } = {}) {
     image.src = src;
   });
 }
+
+export async function loadImageElementFromSources(sources, { crossOrigin = null } = {}) {
+  const uniqueSources = [...new Set((sources ?? []).filter(Boolean))];
+  const errors = [];
+
+  for (const source of uniqueSources) {
+    try {
+      const image = await loadImageElement(source, { crossOrigin });
+      return {
+        image,
+        src: source,
+      };
+    } catch (error) {
+      errors.push(error?.message || `Failed to load image: ${source}`);
+    }
+  }
+
+  throw new Error(errors.join(' | ') || 'Failed to load image.');
+}

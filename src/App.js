@@ -49,9 +49,9 @@ import { ToastManager } from './ui/ToastManager.js';
 import { Toolbar } from './ui/Toolbar.js';
 import { RedditPoster } from './integrations/RedditPoster.js';
 import { RISChecker } from './integrations/RISChecker.js';
-import { addProxyToUrl } from './integrations/CorsProxy.js';
+import { getCorsImageSourceCandidates } from './integrations/CorsProxy.js';
 import { el } from './utils/dom.js';
-import { loadImageElement } from './utils/image.js';
+import { loadImageElement, loadImageElementFromSources } from './utils/image.js';
 import {
   applyObjectState,
   objectStatesEqual,
@@ -4308,10 +4308,15 @@ export class App {
     metadata = {},
     objectState = null,
   } = {}) {
-    const resolvedSource = isExternal ? addProxyToUrl(source) : source;
-    const image = await loadImageElement(resolvedSource, {
-      crossOrigin: isExternal ? 'anonymous' : null,
-    });
+    const sourceCandidates = isExternal ? getCorsImageSourceCandidates(source) : [source];
+    const { image, src: resolvedSource } = isExternal
+      ? await loadImageElementFromSources(sourceCandidates, {
+        crossOrigin: 'anonymous',
+      })
+      : {
+        image: await loadImageElement(source),
+        src: source,
+      };
     const texture = PIXI.Texture.from(image);
     const sprite = new PIXI.Sprite(texture);
     const imageWidth = image.naturalWidth || image.width || texture.width;

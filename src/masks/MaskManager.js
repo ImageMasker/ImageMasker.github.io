@@ -1,5 +1,5 @@
-import { addProxyToUrl } from '../integrations/CorsProxy.js';
-import { loadImageElement } from '../utils/image.js';
+import { getCorsImageSourceCandidates } from '../integrations/CorsProxy.js';
+import { loadImageElement, loadImageElementFromSources } from '../utils/image.js';
 
 const { Sprite, Texture } = PIXI;
 
@@ -52,10 +52,15 @@ export class MaskManager {
     const objectState = layerState?.object ?? null;
     const url = maskMeta.url;
     const origin = maskMeta.origin ?? 'custom';
-    const sourceUrl = origin === 'preset' ? url : addProxyToUrl(url);
-    const image = await loadImageElement(sourceUrl, {
-      crossOrigin: origin === 'preset' ? null : 'anonymous',
-    });
+    const sourceCandidates = origin === 'preset' ? [url] : getCorsImageSourceCandidates(url);
+    const { image, src: sourceUrl } = origin === 'preset'
+      ? {
+        image: await loadImageElement(url),
+        src: url,
+      }
+      : await loadImageElementFromSources(sourceCandidates, {
+        crossOrigin: 'anonymous',
+      });
     const texture = Texture.from(image);
     const sprite = new Sprite(texture);
     const zoomValue = this.resolveZoomValue(sprite, maskMeta.zoomValue ?? null);
