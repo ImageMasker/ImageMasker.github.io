@@ -107,6 +107,14 @@ export class App {
     this.toastManager = null;
     this.appShell = null;
     this.chromeControls = null;
+    this.mobileTopBar = null;
+    this.mobilePanelNav = null;
+    this.mobilePanelButtons = {};
+    this.mobileBottomShell = null;
+    this.mobilePanelGroups = {};
+    this.outputPanelShell = null;
+    this.toolsPanelElement = null;
+    this.masksPanelElement = null;
     this.settingsButton = null;
     this.githubButton = null;
     this.savedRoundIndex = 0;
@@ -124,6 +132,12 @@ export class App {
     this.uiStateController = null;
     this.savedRoundsController = null;
     this.sessionController = null;
+    this.mobileLayoutQuery = null;
+    this.mobilePanel = 'output';
+    this.mobilePanelUserSelected = false;
+    this.hasLoadedImage = false;
+    this.canvasHostResizeObserver = null;
+    this.canvasResizeFrame = 0;
   }
 
   async init() {
@@ -132,6 +146,7 @@ export class App {
     }
 
     this.render();
+    this.initializeResponsiveLayout();
     this.toolbar.refs.paintEffectAmountField.hidden = true;
     this.toolbar.refs.cropActionRow.hidden = true;
     this.risChecker = new RISChecker((message, tone) => this.notify(message, tone));
@@ -173,6 +188,8 @@ export class App {
   }
 
   render() {
+    const isMobileLayout = window.matchMedia?.('(max-width: 820px)')?.matches ?? false;
+
     this.toolbar = new Toolbar();
     this.layerPanel = new LayerPanel();
     this.maskPanel = new MaskPanel(this.maskStorage.getMasks());
@@ -185,10 +202,13 @@ export class App {
     this.shortcutsPanel = new ShortcutsPanel();
     this.settingsModal = new SettingsModal();
     this.toastManager = new ToastManager();
+    this.toolsPanelElement = this.toolbar.element.querySelector('#tools');
+    this.masksPanelElement = this.maskPanel.element.querySelector('#masks');
 
-    this.toolbar.element.appendChild(this.layerPanel.element);
-    this.toolbar.element.appendChild(this.canvasArea.refs.actionBar);
-    this.toolbar.element.appendChild(this.savedRoundsPanel.element);
+    this.outputPanelShell = el('div', { className: 'editor-output-panel' }, [
+      this.canvasArea.refs.actionBar,
+      this.savedRoundsPanel.element,
+    ]);
 
     this.settingsButton = el('button', {
       id: 'settingsButton',
@@ -211,30 +231,232 @@ export class App {
       this.settingsButton,
       this.githubButton,
     ]);
-    this.maskPanel.element.prepend(this.chromeControls);
+    this.mobileTopBar = el('div', { className: 'mobile-topbar' }, [this.chromeControls]);
+    this.mobilePanelNav = el('div', {
+      className: 'mobile-panel-nav',
+      'aria-label': 'Mobile editor panels',
+    }, [
+      this.createMobilePanelButton('output', 'Output'),
+      this.createMobilePanelButton('tools', 'Tools'),
+      this.createMobilePanelButton('layers', 'Layers'),
+      this.createMobilePanelButton('masks', 'Masks'),
+    ]);
+    this.mobilePanelGroups = {
+      output: el('section', {
+        className: 'mobile-panel-group',
+        'data-mobile-group': 'output',
+      }),
+      tools: el('section', {
+        className: 'mobile-panel-group',
+        'data-mobile-group': 'tools',
+      }),
+      layers: el('section', {
+        className: 'mobile-panel-group',
+        'data-mobile-group': 'layers',
+      }),
+      masks: el('section', {
+        className: 'mobile-panel-group',
+        'data-mobile-group': 'masks',
+      }),
+    };
+    this.mobileBottomShell = el('section', { className: 'mobile-bottom-shell' }, [
+      this.mobilePanelNav,
+      this.mobilePanelGroups.output,
+      this.mobilePanelGroups.tools,
+      this.mobilePanelGroups.layers,
+      this.mobilePanelGroups.masks,
+    ]);
     this.settingsModal.refs.sessionsContent.appendChild(this.sessionPanel.element);
     this.settingsModal.refs.themesContent.appendChild(this.themePanel.element);
     this.settingsModal.refs.shortcutsContent.appendChild(this.shortcutsPanel.element);
 
     const grid = el('div', { id: 'container', className: 'app-grid' }, [
       this.toolbar.element,
+      this.mobileTopBar,
       this.canvasArea.element,
+      this.mobileBottomShell,
       this.maskPanel.element,
     ]);
-
-    this.maskPanel.element.appendChild(this.backgroundRemovalPanel.element);
-    this.maskPanel.element.appendChild(this.aiEditPanel.element);
 
     this.appShell = el('div', {
       className: 'app-root',
       'data-layout-columns': 'default',
+      'data-layout-mode': isMobileLayout ? 'mobile' : 'desktop',
+      'data-mobile-panel': this.mobilePanel,
     }, [
       grid,
       this.settingsModal.element,
       this.toastManager.element,
     ]);
 
+    if (isMobileLayout) {
+      this.mountMobilePanels();
+    } else {
+      this.mountDesktopPanels();
+    }
     this.container.replaceChildren(this.appShell);
+  }
+
+  createMobilePanelButton(panel, label) {
+    const button = el('button', {
+      type: 'button',
+      className: 'mobile-panel-button',
+      textContent: label,
+      'data-mobile-panel-target': panel,
+      'aria-pressed': panel === this.mobilePanel ? 'true' : 'false',
+    });
+
+    this.mobilePanelButtons[panel] = button;
+    return button;
+  }
+
+  initializeResponsiveLayout() {
+    this.mobileLayoutQuery = window.matchMedia?.('(max-width: 820px)') ?? null;
+    this.applyResponsiveLayout();
+  }
+
+  mountDesktopPanels() {
+    this.maskPanel.element.replaceChildren(
+      this.chromeControls,
+      this.masksPanelElement,
+      this.backgroundRemovalPanel.element,
+      this.aiEditPanel.element
+    );
+    this.toolbar.element.replaceChildren(
+      this.toolsPanelElement,
+      this.layerPanel.element,
+      this.outputPanelShell
+    );
+
+    for (const group of Object.values(this.mobilePanelGroups)) {
+      group.replaceChildren();
+    }
+  }
+
+  mountMobilePanels() {
+    this.mobileTopBar.replaceChildren(this.chromeControls);
+    this.mobilePanelGroups.output.replaceChildren(this.outputPanelShell);
+    this.mobilePanelGroups.tools.replaceChildren(this.toolsPanelElement);
+    this.mobilePanelGroups.layers.replaceChildren(this.layerPanel.element);
+    this.mobilePanelGroups.masks.replaceChildren(
+      this.masksPanelElement,
+      this.backgroundRemovalPanel.element,
+      this.aiEditPanel.element
+    );
+    this.toolbar.element.replaceChildren();
+    this.maskPanel.element.replaceChildren();
+  }
+
+  bindResponsiveLayoutEvents() {
+    for (const [panel, button] of Object.entries(this.mobilePanelButtons)) {
+      button?.addEventListener('click', () => {
+        this.setMobilePanel(panel, { userInitiated: true });
+      });
+    }
+
+    const handleLayoutChange = () => {
+      this.applyResponsiveLayout();
+    };
+
+    if (this.mobileLayoutQuery?.addEventListener) {
+      this.mobileLayoutQuery.addEventListener('change', handleLayoutChange);
+    } else if (this.mobileLayoutQuery?.addListener) {
+      this.mobileLayoutQuery.addListener(handleLayoutChange);
+    }
+
+    window.addEventListener('resize', () => {
+      this.scheduleCanvasHostResize();
+    });
+    window.addEventListener('orientationchange', () => {
+      this.scheduleCanvasHostResize();
+    });
+
+    if (window.ResizeObserver) {
+      this.canvasHostResizeObserver = new ResizeObserver(() => {
+        this.scheduleCanvasHostResize();
+      });
+      this.canvasHostResizeObserver.observe(this.canvasArea.element);
+      this.canvasHostResizeObserver.observe(this.canvasArea.refs.canvasHost);
+    }
+  }
+
+  applyResponsiveLayout() {
+    const isMobileLayout = this.mobileLayoutQuery?.matches ?? false;
+
+    if (this.appShell) {
+      this.appShell.dataset.layoutMode = isMobileLayout ? 'mobile' : 'desktop';
+    }
+
+    if (isMobileLayout) {
+      this.mountMobilePanels();
+    } else {
+      this.mountDesktopPanels();
+    }
+
+    if (!this.mobilePanelUserSelected) {
+      this.setMobilePanel(this.getDefaultMobilePanel());
+    } else {
+      this.syncMobilePanelButtons();
+    }
+
+    this.syncSavedRoundsEntryPoints();
+    this.scheduleCanvasHostResize();
+  }
+
+  getDefaultMobilePanel() {
+    return this.hasLoadedImage ? 'tools' : 'output';
+  }
+
+  setMobilePanel(panel, { userInitiated = false } = {}) {
+    if (!['tools', 'layers', 'masks', 'output'].includes(panel)) {
+      return;
+    }
+
+    this.mobilePanel = panel;
+
+    if (userInitiated) {
+      this.mobilePanelUserSelected = true;
+    }
+
+    if (this.appShell) {
+      this.appShell.dataset.mobilePanel = panel;
+    }
+
+    this.syncMobilePanelButtons();
+  }
+
+  syncMobilePanelButtons() {
+    for (const [panel, button] of Object.entries(this.mobilePanelButtons)) {
+      const isActive = panel === this.mobilePanel;
+      button?.classList.toggle('is-active', isActive);
+      button?.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    }
+  }
+
+  isMobileLayoutActive() {
+    return this.appShell?.dataset.layoutMode === 'mobile';
+  }
+
+  syncSavedRoundsEntryPoints() {
+    if (!this.savedRoundsPanel) {
+      return;
+    }
+
+    const shouldShowEntryPoints = !this.hasLoadedImage || this.isMobileLayoutActive();
+
+    this.savedRoundsPanel.refs.savedRoundsButton.classList.toggle('hidden', !shouldShowEntryPoints);
+    this.savedRoundsPanel.refs.saveFromUrlButton.classList.toggle('hidden', !shouldShowEntryPoints);
+  }
+
+  scheduleCanvasHostResize() {
+    if (this.canvasResizeFrame) {
+      return;
+    }
+
+    this.canvasResizeFrame = window.requestAnimationFrame(() => {
+      this.canvasResizeFrame = 0;
+      this.canvasEngine?.resizeEditorToContainer();
+    });
   }
 
   initializeTools() {
@@ -382,6 +604,7 @@ export class App {
   }
 
   bindEvents() {
+    this.bindResponsiveLayoutEvents();
     this.bindThemeEvents();
     this.bindToolEvents();
     this.bindLayerPanelEvents();
@@ -1619,7 +1842,13 @@ export class App {
   }
 
   applyImageLoadedUiState() {
+    this.hasLoadedImage = true;
     this.uiStateController.applyImageLoadedUiState();
+    if (!this.mobilePanelUserSelected) {
+      this.setMobilePanel(this.getDefaultMobilePanel());
+    }
+    this.syncSavedRoundsEntryPoints();
+    this.scheduleCanvasHostResize();
   }
 
   updatePostRedditButtonLabel() {
@@ -1627,7 +1856,13 @@ export class App {
   }
 
   applyRestoredSessionUiState() {
+    this.hasLoadedImage = Boolean(this.canvasEngine?.backgroundSprite);
     this.uiStateController.applyRestoredSessionUiState();
+    if (!this.mobilePanelUserSelected) {
+      this.setMobilePanel(this.getDefaultMobilePanel());
+    }
+    this.syncSavedRoundsEntryPoints();
+    this.scheduleCanvasHostResize();
   }
 
   showCustomSubredditInput() {

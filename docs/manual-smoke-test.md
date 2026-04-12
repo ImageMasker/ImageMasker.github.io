@@ -71,10 +71,13 @@ Also verify shortcuts do not fire while typing inside a text input or textarea.
 ## Mobile / compact layout
 
 1. Switch DevTools to a narrow mobile viewport.
-2. Confirm toolbar sections collapse cleanly.
-3. Confirm the action bar stays reachable near the top.
-4. Confirm touch selection handles are large enough to use.
-5. Confirm paste URL and RIS inputs remain usable.
+2. Confirm the top area shows chrome controls and the canvas before the control panels.
+3. Confirm the sticky mobile tab bar stays reachable while scrolling.
+4. Confirm the `Output`, `Tools`, `Layers`, and `Masks` tabs each show only their intended content.
+5. Confirm the pre-load `Output` tab exposes the image URL input and paste mode toggle before an image is loaded.
+6. Confirm touch selection handles and layer controls are large enough to use.
+7. Confirm the mobile RIS input remains usable from the `Output` tab.
+8. Rotate the viewport after loading an image and confirm the canvas resizes without losing the current zoom.
 
 ## Session restore limitation
 

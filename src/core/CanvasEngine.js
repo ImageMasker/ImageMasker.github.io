@@ -91,7 +91,7 @@ export class CanvasEngine {
     this.app.renderer.resize(editorSize.width, editorSize.height);
     this.editorWidth = editorSize.width;
     this.editorHeight = editorSize.height;
-    const documentSize = this.resolveDocumentSize(imageWidth, imageHeight, options.documentSize, editorSize);
+    const documentSize = this.resolveDocumentSize(imageWidth, imageHeight, options.documentSize);
     this.canvasWidth = documentSize.width;
     this.canvasHeight = documentSize.height;
     this.app.stage.scale.set(1, 1);
@@ -142,25 +142,64 @@ export class CanvasEngine {
     };
   }
 
-  calculateDocumentSize(imageWidth, imageHeight, editorSize = this.getContainerSize()) {
+  resizeEditorToContainer() {
+    if (!this.app || this.isPreparedForExport) {
+      return false;
+    }
+
+    const nextSize = this.getContainerSize();
+    const previousWidth = Math.max(1, Math.round(this.app.renderer.width || this.editorWidth || 1));
+    const previousHeight = Math.max(1, Math.round(this.app.renderer.height || this.editorHeight || 1));
+
+    if (nextSize.width === previousWidth && nextSize.height === previousHeight) {
+      return false;
+    }
+
+    const deltaWidth = nextSize.width - previousWidth;
+    const deltaHeight = nextSize.height - previousHeight;
+    const viewportState = this.getViewportState();
+
+    this.app.renderer.resize(nextSize.width, nextSize.height);
+    this.editorWidth = nextSize.width;
+    this.editorHeight = nextSize.height;
+
+    if (this.imgWidth && this.imgHeight) {
+      this.centerDocument();
+
+      const viewportOffsetX = ((1 - viewportState.scale) * deltaWidth) / 2;
+      const viewportOffsetY = ((1 - viewportState.scale) * deltaHeight) / 2;
+
+      this.setViewportTransform({
+        scale: viewportState.scale,
+        x: viewportState.x + viewportOffsetX,
+        y: viewportState.y + viewportOffsetY,
+      }, false);
+    }
+
+    this.eventBus.emit('canvas:resized', {
+      width: this.canvasWidth,
+      height: this.canvasHeight,
+      editorWidth: this.editorWidth,
+      editorHeight: this.editorHeight,
+      mode: 'editor',
+    });
+    this.eventBus.emit('viewport:changed', this.getViewportState());
+
+    return true;
+  }
+
+  calculateDocumentSize(imageWidth, imageHeight) {
     const widthRatio = 1000 / imageWidth;
     const heightRatio = 800 / imageHeight;
     const baseScale = Math.min(widthRatio, heightRatio, 1);
-    const baseWidth = Math.max(1, Math.round(imageWidth * baseScale));
-    const baseHeight = Math.max(1, Math.round(imageHeight * baseScale));
-    const fitScale = Math.min(
-      editorSize.width / baseWidth,
-      editorSize.height / baseHeight,
-      1
-    );
 
     return {
-      width: Math.max(1, Math.round(baseWidth * fitScale)),
-      height: Math.max(1, Math.round(baseHeight * fitScale)),
+      width: Math.max(1, Math.round(imageWidth * baseScale)),
+      height: Math.max(1, Math.round(imageHeight * baseScale)),
     };
   }
 
-  resolveDocumentSize(imageWidth, imageHeight, requestedSize = null, editorSize = this.getContainerSize()) {
+  resolveDocumentSize(imageWidth, imageHeight, requestedSize = null) {
     const requestedWidth = Number(requestedSize?.width);
     const requestedHeight = Number(requestedSize?.height);
 
@@ -171,7 +210,7 @@ export class CanvasEngine {
       };
     }
 
-    return this.calculateDocumentSize(imageWidth, imageHeight, editorSize);
+    return this.calculateDocumentSize(imageWidth, imageHeight);
   }
 
   centerDocument() {
@@ -186,14 +225,24 @@ export class CanvasEngine {
   }
 
   documentToGlobalPoint(x, y) {
-    if (!this.documentContainer) {
+    if (!this.documentContainer || !this.viewportContainer) {
       return { x, y };
     }
 
-    const point = this.documentContainer.toGlobal({ x, y });
+    const stageScaleX = this.app?.stage?.scale?.x || 1;
+    const stageScaleY = this.app?.stage?.scale?.y || 1;
+    const stageX = this.app?.stage?.x || 0;
+    const stageY = this.app?.stage?.y || 0;
+    const viewportScaleX = this.viewportContainer.scale?.x || 1;
+    const viewportScaleY = this.viewportContainer.scale?.y || 1;
+    const viewportX = this.viewportContainer.x || 0;
+    const viewportY = this.viewportContainer.y || 0;
+    const documentX = this.documentContainer.x || 0;
+    const documentY = this.documentContainer.y || 0;
+
     return {
-      x: point.x,
-      y: point.y,
+      x: stageX + (viewportX + (documentX + x) * viewportScaleX) * stageScaleX,
+      y: stageY + (viewportY + (documentY + y) * viewportScaleY) * stageScaleY,
     };
   }
 
@@ -338,14 +387,24 @@ export class CanvasEngine {
   }
 
   globalToDocumentPoint(x, y) {
-    if (!this.documentContainer) {
+    if (!this.documentContainer || !this.viewportContainer) {
       return { x, y };
     }
 
-    const point = this.documentContainer.toLocal({ x, y });
+    const stageScaleX = this.app?.stage?.scale?.x || 1;
+    const stageScaleY = this.app?.stage?.scale?.y || 1;
+    const stageX = this.app?.stage?.x || 0;
+    const stageY = this.app?.stage?.y || 0;
+    const viewportScaleX = this.viewportContainer.scale?.x || 1;
+    const viewportScaleY = this.viewportContainer.scale?.y || 1;
+    const viewportX = this.viewportContainer.x || 0;
+    const viewportY = this.viewportContainer.y || 0;
+    const documentX = this.documentContainer.x || 0;
+    const documentY = this.documentContainer.y || 0;
+
     return {
-      x: point.x,
-      y: point.y,
+      x: (((x - stageX) / stageScaleX) - viewportX) / viewportScaleX - documentX,
+      y: (((y - stageY) / stageScaleY) - viewportY) / viewportScaleY - documentY,
     };
   }
 

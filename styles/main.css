@@ -143,6 +143,10 @@ textarea::placeholder {
   min-height: 0;
 }
 
+#container.app-grid > * {
+  min-width: 0;
+}
+
 .app-root[data-layout-columns='mirrored'] #container.app-grid {
   grid-template-columns: var(--masks-column-width) 1fr var(--tools-column-width);
   grid-template-areas: 'masksDiv preview toolsDiv';
@@ -216,6 +220,12 @@ textarea::placeholder {
   gap: 8px;
   width: 100%;
   margin-bottom: 8px;
+}
+
+.mobile-topbar,
+.mobile-bottom-shell,
+.mobile-panel-nav {
+  display: none;
 }
 
 #settingsButton,

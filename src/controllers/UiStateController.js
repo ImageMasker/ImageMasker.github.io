@@ -4,15 +4,14 @@ export class UiStateController {
   }
 
   hideIntroButtons() {
-    this.app.savedRoundsPanel.refs.savedRoundsButton.classList.add('hidden');
-    this.app.savedRoundsPanel.refs.saveFromUrlButton.classList.add('hidden');
+    this.app.syncSavedRoundsEntryPoints();
   }
 
   applyImageLoadedUiState() {
     const refs = this.app.canvasArea.refs;
 
     refs.dropOverlay.classList.add('hidden');
-    refs.actionBar.classList.remove('hidden');
+    refs.actionBar.classList.remove('is-preload');
     this.hideIntroButtons();
     refs.uploadButton.classList.remove('hidden');
     refs.copyImageButton.classList.remove('hidden');
@@ -43,7 +42,7 @@ export class UiStateController {
     const hasUploadedUrl = Boolean(refs.uploadedUrl.value.trim());
 
     refs.uploadButton.textContent = hasUploadedUrl ? 'Reupload' : 'Upload to Imgur';
-    refs.actionBar.classList.remove('hidden');
+    refs.actionBar.classList.remove('is-preload');
     refs.uploadedUrl.classList.toggle('hidden', !hasUploadedUrl);
     refs.copyUrlButton.classList.toggle('hidden', !hasUploadedUrl);
     refs.checkRisButton.classList.toggle('hidden', !hasUploadedUrl);
@@ -58,6 +57,7 @@ export class UiStateController {
     }
 
     this.updatePostRedditButtonLabel();
+    this.hideIntroButtons();
   }
 
   showCustomSubredditInput() {
