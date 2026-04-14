@@ -1020,6 +1020,7 @@ export class App {
     this.bindMaskHistorySlider(refs.alphaInput, (event) => {
       refs.alphaValue.textContent = event.target.value;
       this.maskEffects.updateOpacity(event.target.value);
+      this.renderLayerPanel();
     }, 'Update mask opacity');
 
     this.bindMaskHistorySlider(refs.zoomInput, (event) => {
@@ -1240,6 +1241,10 @@ export class App {
       }
 
       this.applyMaskLayerSetting(maskSlider.dataset.layerId, maskSlider.dataset.layerSetting, maskSlider.value);
+
+      if (maskSlider.dataset.layerSetting === 'opacity') {
+        this.syncLayerOpacityControl(maskSlider.closest('.layer-row'), Number(maskSlider.value) / 100);
+      }
     });
 
     this.layerPanel.refs.list.addEventListener('focusout', (event) => {
@@ -1285,7 +1290,7 @@ export class App {
       const maskId = Number(button.dataset.maskId);
       button.addEventListener('click', async () => {
         const preset = this.findPreset(maskId);
-        await this.maskManager.loadMask(preset.full, preset.defaultAlpha, 'preset');
+        await this.maskManager.loadMask(preset.full, 75, 'preset');
       });
     });
 
@@ -1829,7 +1834,7 @@ export class App {
 
     button.addEventListener('click', async () => {
       const url = button.dataset.customMaskUrl;
-      await this.maskManager.loadMask(url, 60, 'custom');
+      await this.maskManager.loadMask(url, 75, 'custom');
     });
   }
 
@@ -2284,10 +2289,12 @@ export class App {
       undo: () => {
         this.maskEffects.restoreCurrentMask(beforeState);
         this.syncMaskControlsFromState(beforeState);
+        this.renderLayerPanel();
       },
       redo: () => {
         this.maskEffects.restoreCurrentMask(afterState);
         this.syncMaskControlsFromState(afterState);
+        this.renderLayerPanel();
       },
     });
     this.queueAutosave();
@@ -2969,7 +2976,7 @@ export class App {
       };
     }
 
-    const maskSettings = layer.type === 'mask' ? this.buildMaskLayerSettings(object) : null;
+    const maskSettings = layer.type === 'mask' ? this.buildMaskLayerSettings(layer, object) : null;
     const available = layer.type === 'mask';
 
     return {
@@ -2979,16 +2986,23 @@ export class App {
     };
   }
 
-  buildMaskLayerSettings(object) {
+  buildMaskLayerSettings(layer, object) {
     if (!object) {
       return null;
     }
 
     const effects = this.getSerializedMaskEffects(object);
     const effectMap = new Map(effects.map((effect) => [effect.type, effect]));
+    const opacity = Number.isFinite(Number(layer?.opacity))
+      ? Number(layer.opacity)
+      : (
+        Number.isFinite(Number(object.__maskMeta?.alphaValue))
+          ? Number(object.__maskMeta.alphaValue) / 100
+          : (object.alpha ?? 1)
+      );
 
     return {
-      opacity: Math.round(Number(object.__maskMeta?.alphaValue ?? (object.alpha ?? 1) * 100)),
+      opacity: Math.round(opacity * 100),
       zoom: Math.round(Number(object.__maskMeta?.zoomValue ?? 50)),
       angle: this.normalizeAngleDegrees((object.rotation ?? 0) * (180 / Math.PI)),
       hue: Number(Number(effectMap.get('hue')?.value ?? 0).toFixed(3)),
@@ -3907,6 +3921,20 @@ export class App {
     };
   }
 
+  findLayerForObject(object) {
+    if (!object) {
+      return null;
+    }
+
+    return this.layerManager
+      .getLayers()
+      .find((layer) =>
+        layer.container === object ||
+        layer.container === object.parent ||
+        layer.container?.children?.includes(object)
+      ) ?? null;
+  }
+
   formatLayerSettingValue(setting, value) {
     const numericValue = Number(value);
 
@@ -3923,6 +3951,24 @@ export class App {
     }
 
     return `${Math.round(numericValue)}`;
+  }
+
+  syncLayerOpacityControl(row, opacity) {
+    if (!row || !Number.isFinite(opacity)) {
+      return;
+    }
+
+    const opacityPercent = Math.round(Math.max(0, Math.min(1, opacity)) * 100);
+    const slider = row.querySelector('.layer-opacity-slider');
+    const value = row.querySelector('.layer-opacity-value');
+
+    if (slider) {
+      slider.value = String(opacityPercent);
+    }
+
+    if (value) {
+      value.textContent = `${opacityPercent}%`;
+    }
   }
 
   applyMaskLayerSetting(layerId, setting, value) {
@@ -4088,7 +4134,22 @@ export class App {
       return;
     }
 
+    const layer = this.layerManager.getLayer(layerId);
     this.layerManager.setLayerOpacity(layerId, nextOpacity);
+
+    if (layer?.type === 'mask') {
+      const object = this.layerManager.getPrimaryContentObject(layer);
+
+      if (object?.__toolType === 'mask') {
+        object.alpha = 1;
+
+        if (object.__maskMeta) {
+          object.__maskMeta.alphaValue = Math.round(nextOpacity * 100);
+        }
+
+        this.syncSelectedMaskControls(layer, object);
+      }
+    }
   }
 
   commitLayerOpacityHistory(layerId, beforeOpacity, afterOpacity) {
@@ -4103,7 +4164,10 @@ export class App {
       return;
     }
 
-    const label = layerId === BACKGROUND_LAYER_ID ? 'Update base image opacity' : 'Update layer opacity';
+    const layer = layerId === BACKGROUND_LAYER_ID ? null : this.layerManager.getLayer(layerId);
+    const label = layerId === BACKGROUND_LAYER_ID
+      ? 'Update base image opacity'
+      : (layer?.type === 'mask' ? 'Update mask opacity' : 'Update layer opacity');
 
     this.historyManager.pushExecuted({
       label,
@@ -4121,54 +4185,101 @@ export class App {
 
   adjustSelectedObjectOpacity(delta) {
     const selectedObjects = this.selectTool.getSelectedObjects();
-    const targetObjects = selectedObjects.length > 0
-      ? selectedObjects
-      : [this.selectTool.getPrimaryLayerObject(this.layerManager.getLastNonDrawingLayer())].filter(Boolean);
+    const selectedLayers = selectedObjects.length > 0
+      ? this.selectTool.getSelectedLayers()
+      : [];
+    const targetEntries = selectedObjects.length > 0
+      ? selectedObjects.map((object, index) => ({
+        object,
+        layer: selectedLayers[index] ?? this.findLayerForObject(object),
+      }))
+      : [this.layerManager.getLastNonDrawingLayer()]
+        .filter(Boolean)
+        .map((layer) => ({
+          layer,
+          object: this.selectTool.getPrimaryLayerObject(layer),
+        }))
+        .filter((entry) => entry.object);
 
-    if (!targetObjects.length) {
+    if (!targetEntries.length) {
       return;
     }
 
-    const beforeEntries = targetObjects.map((object) => ({
-      object,
-      beforeState: snapshotObjectState(object),
-    }));
+    const beforeEntries = targetEntries.map(({ layer, object }) => {
+      const isMaskLayer = layer?.type === 'mask' && object?.__toolType === 'mask';
+
+      return {
+        layer,
+        object,
+        isMaskLayer,
+        beforeState: isMaskLayer
+          ? { opacity: layer.opacity ?? layer.container?.alpha ?? 1 }
+          : snapshotObjectState(object),
+      };
+    });
 
     for (const entry of beforeEntries) {
-      entry.object.alpha = Math.max(0.1, Math.min(1, entry.object.alpha + delta));
+      if (entry.isMaskLayer) {
+        this.applyLayerOpacity(
+          entry.layer.id,
+          Math.max(0.1, Math.min(1, (entry.layer.opacity ?? 1) + delta))
+        );
+      } else {
+        entry.object.alpha = Math.max(0.1, Math.min(1, entry.object.alpha + delta));
+      }
     }
 
     const changedEntries = beforeEntries
       .map((entry) => ({
+        layer: entry.layer,
         object: entry.object,
+        isMaskLayer: entry.isMaskLayer,
         beforeState: entry.beforeState,
-        afterState: snapshotObjectState(entry.object),
+        afterState: entry.isMaskLayer
+          ? { opacity: entry.layer.opacity ?? entry.layer.container?.alpha ?? 1 }
+          : snapshotObjectState(entry.object),
       }))
-      .filter((entry) => !objectStatesEqual(entry.beforeState, entry.afterState));
+      .filter((entry) => entry.isMaskLayer
+        ? Math.abs(entry.beforeState.opacity - entry.afterState.opacity) >= 0.001
+        : !objectStatesEqual(entry.beforeState, entry.afterState)
+      );
 
     if (!changedEntries.length) {
       return;
     }
 
     for (const entry of changedEntries) {
-      this.eventBus.emit('object:changed', { object: entry.object });
+      if (!entry.isMaskLayer) {
+        this.eventBus.emit('object:changed', { object: entry.object });
+      }
     }
 
     this.historyManager.pushExecuted({
       label: changedEntries.length > 1 ? 'Adjust selection opacity' : 'Adjust object opacity',
       undo: () => {
         for (const entry of changedEntries) {
-          applyObjectState(entry.object, entry.beforeState);
-          this.eventBus.emit('object:changed', { object: entry.object });
+          if (entry.isMaskLayer) {
+            this.applyLayerOpacity(entry.layer.id, entry.beforeState.opacity);
+          } else {
+            applyObjectState(entry.object, entry.beforeState);
+            this.eventBus.emit('object:changed', { object: entry.object });
+          }
         }
+        this.renderLayerPanel();
       },
       redo: () => {
         for (const entry of changedEntries) {
-          applyObjectState(entry.object, entry.afterState);
-          this.eventBus.emit('object:changed', { object: entry.object });
+          if (entry.isMaskLayer) {
+            this.applyLayerOpacity(entry.layer.id, entry.afterState.opacity);
+          } else {
+            applyObjectState(entry.object, entry.afterState);
+            this.eventBus.emit('object:changed', { object: entry.object });
+          }
         }
+        this.renderLayerPanel();
       },
     });
+    this.renderLayerPanel();
   }
 
   adjustMaskRotationByDelta(deltaDegrees) {

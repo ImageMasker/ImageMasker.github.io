@@ -1,5 +1,15 @@
 import { EffectStack } from '../filters/EffectStack.js';
 
+function clamp01(value, fallback = 1) {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.min(1, numericValue));
+}
+
 export class MaskEffects {
   constructor(maskManager) {
     this.maskManager = maskManager;
@@ -15,10 +25,7 @@ export class MaskEffects {
       return;
     }
 
-    mask.alpha = Number(value) / 100;
-    if (mask.__maskMeta) {
-      mask.__maskMeta.alphaValue = Number(value);
-    }
+    this.setMaskOpacity(mask, Number(value) / 100);
   }
 
   updateZoom(sliderValue, targetMask = null) {
@@ -145,6 +152,46 @@ export class MaskEffects {
     return targetMask ?? this.maskManager.getCurrentMask();
   }
 
+  resolveMaskLayer(mask) {
+    if (!mask) {
+      return null;
+    }
+
+    if (mask === this.maskManager.getCurrentMask()) {
+      return this.maskManager.getCurrentMaskLayer();
+    }
+
+    return this.maskManager.layerManager
+      ?.getLayers()
+      ?.find((layer) => layer.container === mask.parent || layer.container?.children?.includes(mask)) ?? null;
+  }
+
+  getMaskOpacity(mask) {
+    const layer = this.resolveMaskLayer(mask);
+
+    if (layer) {
+      return layer.opacity ?? layer.container?.alpha ?? 1;
+    }
+
+    return mask?.alpha ?? 1;
+  }
+
+  setMaskOpacity(mask, opacity) {
+    const clampedOpacity = clamp01(opacity);
+    const layer = this.resolveMaskLayer(mask);
+
+    if (layer) {
+      mask.alpha = 1;
+      this.maskManager.layerManager.setLayerOpacity(layer.id, clampedOpacity);
+    } else if (mask) {
+      mask.alpha = clampedOpacity;
+    }
+
+    if (mask?.__maskMeta) {
+      mask.__maskMeta.alphaValue = Math.round(clampedOpacity * 100);
+    }
+  }
+
   getEffectStack(mask) {
     if (!mask.__effectStack) {
       mask.__effectStack = new EffectStack(mask.__maskEffectState ?? null);
@@ -245,7 +292,7 @@ export class MaskEffects {
     const invertEffect = effects.find((effect) => effect.type === 'invert');
 
     return {
-      alpha: mask.alpha,
+      alpha: this.getMaskOpacity(mask),
       scaleX: mask.scale.x,
       scaleY: mask.scale.y,
       rotation: mask.rotation,
@@ -263,14 +310,18 @@ export class MaskEffects {
       return;
     }
 
-    mask.alpha = snapshot.alpha;
+    const opacity = Number.isFinite(Number(snapshot.alpha))
+      ? Number(snapshot.alpha)
+      : this.getMaskOpacity(mask);
+
+    this.setMaskOpacity(mask, opacity);
     mask.scale.set(snapshot.scaleX, snapshot.scaleY);
     mask.rotation = snapshot.rotation;
     if (mask === this.maskManager.getCurrentMask()) {
       this.maskManager.currentZoomValue = snapshot.zoomValue;
     }
     if (mask.__maskMeta) {
-      mask.__maskMeta.alphaValue = Math.round(snapshot.alpha * 100);
+      mask.__maskMeta.alphaValue = Math.round(opacity * 100);
       mask.__maskMeta.zoomValue = snapshot.zoomValue;
     }
     const effects = snapshot.effects ?? this.buildLegacyEffects(snapshot);

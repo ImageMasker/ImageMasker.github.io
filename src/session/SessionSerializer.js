@@ -218,8 +218,9 @@ export class SessionSerializer {
 
     if (layerState.type === 'mask') {
       const layer = await app.maskManager.restoreMaskLayer(layerState, app.maskEffects);
+      const restoredOpacity = layer.opacity ?? layerState.opacity ?? 1;
       this.applyObjectState(layer.container, layerState.layerState);
-      app.layerManager.setLayerOpacity(layer.id, layerState.opacity ?? 1);
+      app.layerManager.setLayerOpacity(layer.id, restoredOpacity);
       app.brushTool.restoreLayerStrokes(layer.id, cloneJson(layerState.strokes ?? []));
       return layer;
     }

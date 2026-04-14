@@ -3,6 +3,26 @@ import { loadImageElement, loadImageElementFromSources } from '../utils/image.js
 
 const { Sprite, Texture } = PIXI;
 
+function clamp01(value, fallback = 1) {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.min(1, numericValue));
+}
+
+function clampPercent(value, fallback = 75) {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.min(100, numericValue));
+}
+
 export class MaskManager {
   constructor(canvasEngine, layerManager, eventBus) {
     this.canvasEngine = canvasEngine;
@@ -65,6 +85,16 @@ export class MaskManager {
     const sprite = new Sprite(texture);
     const zoomValue = this.resolveZoomValue(sprite, maskMeta.zoomValue ?? null);
     const scale = 0.25 * Math.exp(0.0277 * zoomValue);
+    const metaAlphaValue = clampPercent(maskMeta.alphaValue ?? 75);
+    const storedLayerOpacity = Number.isFinite(Number(layerState?.opacity))
+      ? clamp01(layerState.opacity)
+      : null;
+    const storedObjectAlpha = Number.isFinite(Number(objectState?.alpha))
+      ? clamp01(objectState.alpha)
+      : null;
+    const maskOpacity = storedLayerOpacity !== null
+      ? clamp01(storedLayerOpacity * (storedObjectAlpha ?? 1))
+      : metaAlphaValue / 100;
 
     sprite.anchor.set(0.5);
     sprite.position.set(
@@ -72,7 +102,7 @@ export class MaskManager {
       this.canvasEngine.canvasHeight / 2
     );
     sprite.scale.set(scale, scale);
-    sprite.alpha = (maskMeta.alphaValue ?? 75) / 100;
+    sprite.alpha = 1;
     sprite.eventMode = 'static';
     sprite.cursor = 'pointer';
     sprite.blendMode = layerState?.object?.blendMode ?? 'normal';
@@ -80,7 +110,7 @@ export class MaskManager {
     sprite.__maskMeta = {
       url,
       origin,
-      alphaValue: maskMeta.alphaValue ?? 75,
+      alphaValue: Math.round(maskOpacity * 100),
       zoomValue,
       applyDeform: maskMeta.applyDeform !== false,
     };
@@ -117,10 +147,6 @@ export class MaskManager {
         sprite.rotation = Number(objectState.rotation);
       }
 
-      if (Number.isFinite(Number(objectState.alpha))) {
-        sprite.alpha = Number(objectState.alpha);
-      }
-
       if (Number.isFinite(Number(objectState.skewX))) {
         sprite.skew.x = Number(objectState.skewX);
       }
@@ -146,6 +172,7 @@ export class MaskManager {
     layer.visible = layerState?.visible !== false;
     layer.locked = layerState?.locked === true;
     layer.container.visible = layer.visible;
+    this.layerManager.setLayerOpacity(layerId, maskOpacity);
     this.layerManager.setActiveLayer(layerId);
     this.setCurrentMask(sprite, layer, zoomValue);
 
