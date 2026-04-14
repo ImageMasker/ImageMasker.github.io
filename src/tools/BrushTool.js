@@ -517,18 +517,12 @@ export class BrushTool {
   }
 
   resolveTargetLayer() {
-    const activeLayer = this.layerManager.getActiveLayer();
-
-    if (this.canPaintLayer(activeLayer)) {
-      return activeLayer;
-    }
-
     const fallbackLayer = this.layerManager.getDrawingLayer();
     return this.canPaintLayer(fallbackLayer) ? fallbackLayer : null;
   }
 
   canPaintLayer(layer) {
-    return Boolean(layer && layer.visible !== false && layer.locked !== true && layer.type !== 'paint-effect');
+    return Boolean(layer && layer.type === 'drawing' && layer.visible !== false && layer.locked !== true);
   }
 
   attachSurfaceSprite(layer, sprite) {

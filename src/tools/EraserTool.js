@@ -9,6 +9,6 @@ export class EraserTool extends BrushTool {
   }
 
   canPaintLayer(layer) {
-    return Boolean(layer && layer.visible !== false && layer.locked !== true);
+    return Boolean(layer && layer.type === 'drawing' && layer.visible !== false && layer.locked !== true);
   }
 }
