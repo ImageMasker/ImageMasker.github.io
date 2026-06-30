@@ -11,6 +11,13 @@
         "width": 3840,
         "height": 2128
       },
+      "motif": {
+        "src": "images/flag-masks/motifs/eu.png",
+        "width": 209,
+        "height": 177,
+        "anchorX": 104.5,
+        "anchorY": 88.5
+      },
       "full": {
         "src": "images/flag-masks/full/eu.png",
         "width": 3840,
@@ -26,6 +33,13 @@
         "width": 3840,
         "height": 2128
       },
+      "motif": {
+        "src": "images/flag-masks/motifs/republic-of-gay.png",
+        "width": 198,
+        "height": 168,
+        "anchorX": 99.0,
+        "anchorY": 84.0
+      },
       "full": {
         "src": "images/flag-masks/full/republic-of-gay.png",
         "width": 3840,
@@ -40,6 +54,13 @@
       "source": {
         "width": 3840,
         "height": 2128
+      },
+      "motif": {
+        "src": "images/flag-masks/motifs/transnistria.png",
+        "width": 174,
+        "height": 148,
+        "anchorX": 87.0,
+        "anchorY": 74.0
       },
       "full": {
         "src": "images/flag-masks/full/transnistria.png",
@@ -1655,6 +1676,13 @@
       "source": {
         "width": 3840,
         "height": 2128
+      },
+      "motif": {
+        "src": "images/flag-masks/motifs/angola.png",
+        "width": 168,
+        "height": 144,
+        "anchorX": 84.0,
+        "anchorY": 72.0
       },
       "full": {
         "src": "images/flag-masks/full/angola.png",
@@ -10311,6 +10339,13 @@
         "width": 4000,
         "height": 3000
       },
+      "motif": {
+        "src": "images/flag-masks/motifs/catalonia.png",
+        "width": 155,
+        "height": 133,
+        "anchorX": 77.5,
+        "anchorY": 66.5
+      },
       "full": {
         "src": "images/flag-masks/full/catalonia.png",
         "width": 4000,
@@ -10325,6 +10360,13 @@
       "source": {
         "width": 4000,
         "height": 3000
+      },
+      "motif": {
+        "src": "images/flag-masks/motifs/catalonia-big.png",
+        "width": 400,
+        "height": 340,
+        "anchorX": 200.0,
+        "anchorY": 170.0
       },
       "full": {
         "src": "images/flag-masks/full/catalonia-big.png",
@@ -16101,6 +16143,13 @@
         "width": 3840,
         "height": 2128
       },
+      "motif": {
+        "src": "images/flag-masks/motifs/dreamland.png",
+        "width": 132,
+        "height": 132,
+        "anchorX": 66.0,
+        "anchorY": 66.0
+      },
       "full": {
         "src": "images/flag-masks/full/dreamland.png",
         "width": 3840,
@@ -19936,6 +19985,13 @@
       "source": {
         "width": 2000,
         "height": 1414
+      },
+      "motif": {
+        "src": "images/flag-masks/motifs/funwaa.png",
+        "width": 390,
+        "height": 288,
+        "anchorX": 195.0,
+        "anchorY": 144.0
       },
       "full": {
         "src": "images/flag-masks/full/funwaa.png",
@@ -43383,6 +43439,13 @@
         "width": 3840,
         "height": 2128
       },
+      "motif": {
+        "src": "images/flag-masks/motifs/ohio.png",
+        "width": 207,
+        "height": 138,
+        "anchorX": 103.5,
+        "anchorY": 69.0
+      },
       "full": {
         "src": "images/flag-masks/full/ohio.png",
         "width": 3840,
@@ -45957,6 +46020,13 @@
       "source": {
         "width": 2122,
         "height": 1710
+      },
+      "motif": {
+        "src": "images/flag-masks/motifs/picturegame.png",
+        "width": 169,
+        "height": 177,
+        "anchorX": 84.5,
+        "anchorY": 88.5
       },
       "full": {
         "src": "images/flag-masks/full/picturegame.png",
@@ -50772,6 +50842,13 @@
       "source": {
         "width": 3840,
         "height": 2128
+      },
+      "motif": {
+        "src": "images/flag-masks/motifs/scotland.png",
+        "width": 169,
+        "height": 129,
+        "anchorX": 84.5,
+        "anchorY": 64.5
       },
       "full": {
         "src": "images/flag-masks/full/scotland.png",
@@ -64227,6 +64304,13 @@
       "source": {
         "width": 3840,
         "height": 2128
+      },
+      "motif": {
+        "src": "images/flag-masks/motifs/wales.png",
+        "width": 168,
+        "height": 129,
+        "anchorX": 84.0,
+        "anchorY": 64.5
       },
       "full": {
         "src": "images/flag-masks/full/wales.png",

@@ -387,7 +387,7 @@ def process_unique_source(source_file: str, source_path: Path, output_name: str)
     verification = compare_visible_pixels(image, render_rows_for_verification(config))
 
     if verification["changed"] > 2.0 or verification["mae"] > 1.5:
-        motif_path.unlink(missing_ok=True)
+        # Keep the motif file for use as a dropdown miniature (do not unlink it)
         full = make_full_image(image, FULL_DIR / output_name)
         return {
             "renderMode": "full",
@@ -395,6 +395,7 @@ def process_unique_source(source_file: str, source_path: Path, output_name: str)
                 "width": image.width,
                 "height": image.height,
             },
+            "motif": motif,
             "full": full,
             "verification": {
                 "rowsChanged": round(verification["changed"], 3),
@@ -464,6 +465,7 @@ def main() -> None:
                     }
                     if config["renderMode"] == "rows"
                     else {
+                        "motif": config["motif"],
                         "full": config["full"],
                     }
                 ),

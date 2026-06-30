@@ -6,9 +6,204 @@
 }
 
 #country {
+  display: none !important;
+}
+
+/* Custom Dropdown Styling */
+.custom-dropdown {
+  position: relative;
   width: 100%;
+  margin-bottom: 8px;
+}
+
+.custom-dropdown-trigger {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
   background: var(--bg-country-select);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
   color: var(--text-primary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  user-select: none;
+}
+
+.custom-dropdown-trigger:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.custom-dropdown-trigger-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.custom-dropdown-trigger-thumb {
+  width: 24px;
+  height: 16px;
+  border-radius: 2px;
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.custom-dropdown-arrow {
+  display: inline-block;
+  margin-left: 8px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--text-primary);
+  transition: transform 0.2s;
+}
+
+.custom-dropdown.is-open .custom-dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.custom-dropdown-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin-top: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft);
+  display: none;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+}
+
+.custom-dropdown.is-open .custom-dropdown-panel {
+  display: flex;
+}
+
+.custom-dropdown-search-wrapper {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.custom-dropdown-search {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.custom-dropdown-search:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+}
+
+.custom-dropdown-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.custom-dropdown-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-dropdown-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-dropdown-grid::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+.custom-dropdown-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-slider-thumb);
+}
+
+.custom-dropdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.custom-dropdown-item:hover,
+.custom-dropdown-item:focus {
+  background-color: var(--bg-country-select);
+  border-color: var(--border-strong);
+  outline: none;
+}
+
+.custom-dropdown-item.is-selected {
+  background-color: var(--bg-button);
+  color: var(--text-button);
+}
+
+.custom-dropdown-item-thumb {
+  width: 100%;
+  aspect-ratio: 1.2 / 1;
+  object-fit: contain;
+  border: none;
+  background-color: transparent;
+  transition: transform 0.15s;
+}
+
+.custom-dropdown-item:hover .custom-dropdown-item-thumb {
+  transform: scale(1.05);
+}
+
+.custom-dropdown-item-name {
+  font-size: 0.66rem;
+  margin-top: 4px;
+  text-align: center;
+  width: 100%;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-height: 2.4em;
+}
+
+.custom-dropdown-item.is-selected .custom-dropdown-item-name {
+  font-weight: 500;
+  color: var(--text-button);
+}
+
+.custom-dropdown-no-results {
+  padding: 12px 6px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  display: none;
 }
 
 .mask-group {
