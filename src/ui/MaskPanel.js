@@ -1,9 +1,10 @@
-import { COUNTRY_FLAGS, PRESET_MASKS } from '../masks/maskData.js';
+import { PRESET_MASKS } from '../masks/maskData.js';
 import { el } from '../utils/dom.js';
 
 export class MaskPanel {
-  constructor(customMasks = []) {
+  constructor(customMasks = [], flagMasks = []) {
     this.customMasks = customMasks;
+    this.flagMasks = flagMasks;
     this.refs = {};
     this.element = this.render();
   }
@@ -11,9 +12,9 @@ export class MaskPanel {
   render() {
     this.refs.countrySelect = el('select', { id: 'country', name: 'country' }, [
       el('option', { value: '', textContent: '' }),
-      ...COUNTRY_FLAGS.map((flag) =>
+      ...this.flagMasks.map((flag) =>
         el('option', {
-          value: flag.url,
+          value: flag.id,
           textContent: flag.name,
         })
       ),

@@ -10,6 +10,7 @@ import { ExportManager } from './export/ExportManager.js';
 import { AiImageEditor } from './integrations/AiImageEditor.js';
 import { BackgroundRemover } from './integrations/BackgroundRemover.js';
 import { ImgurUploader } from './integrations/ImgurUploader.js';
+import { createFlagMaskSource, loadFlagMaskCatalog } from './masks/FlagMaskCatalog.js';
 import { MaskEffects } from './masks/MaskEffects.js';
 import { MaskManager } from './masks/MaskManager.js';
 import { PRESET_MASKS } from './masks/maskData.js';
@@ -67,6 +68,7 @@ export class App {
     this.settings = new Settings();
     this.themeManager = new ThemeManager(this.settings);
     this.maskStorage = new MaskStorage();
+    this.flagMaskCatalog = null;
     this.roundStorage = new RoundStorage();
     this.sessionStorage = new SessionStorage();
     this.canvasEngine = null;
@@ -145,6 +147,7 @@ export class App {
       throw new Error('App container "#app" was not found.');
     }
 
+    this.flagMaskCatalog = await loadFlagMaskCatalog();
     this.render();
     this.initializeResponsiveLayout();
     this.toolbar.refs.paintEffectAmountField.hidden = true;
@@ -167,7 +170,12 @@ export class App {
     this.savedRoundsController = new SavedRoundsController(this);
     this.sessionController = new SessionController(this);
     this.imgurUploader = new ImgurUploader(this.canvasEngine, this.settings);
-    this.maskManager = new MaskManager(this.canvasEngine, this.layerManager, this.eventBus);
+    this.maskManager = new MaskManager(
+      this.canvasEngine,
+      this.layerManager,
+      this.eventBus,
+      this.flagMaskCatalog
+    );
     this.maskEffects = new MaskEffects(this.maskManager);
 
     this.initializeTools();
@@ -192,7 +200,10 @@ export class App {
 
     this.toolbar = new Toolbar();
     this.layerPanel = new LayerPanel();
-    this.maskPanel = new MaskPanel(this.maskStorage.getMasks());
+    this.maskPanel = new MaskPanel(
+      this.maskStorage.getMasks(),
+      this.flagMaskCatalog?.flags ?? []
+    );
     this.backgroundRemovalPanel = new BackgroundRemovalPanel();
     this.aiEditPanel = new AiEditPanel();
     this.canvasArea = new CanvasArea();
@@ -1283,7 +1294,7 @@ export class App {
         return;
       }
 
-      await this.maskManager.loadMask(event.target.value, 75, 'country', 25, false);
+      await this.maskManager.loadMask(createFlagMaskSource(event.target.value), 75, 'country', 25, false);
     });
 
     this.maskPanel.refs.presetButtons.forEach((button) => {

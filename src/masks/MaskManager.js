@@ -1,5 +1,7 @@
 import { getCorsImageSourceCandidates } from '../integrations/CorsProxy.js';
 import { loadImageElement, loadImageElementFromSources } from '../utils/image.js';
+import { createFlagMaskSource } from './FlagMaskCatalog.js';
+import { renderFlagMaskToCanvas } from './FlagMaskRenderer.js';
 
 const { Sprite, Texture } = PIXI;
 
@@ -24,28 +26,31 @@ function clampPercent(value, fallback = 75) {
 }
 
 export class MaskManager {
-  constructor(canvasEngine, layerManager, eventBus) {
+  constructor(canvasEngine, layerManager, eventBus, flagMaskCatalog = null) {
     this.canvasEngine = canvasEngine;
     this.layerManager = layerManager;
     this.eventBus = eventBus;
+    this.flagMaskCatalog = flagMaskCatalog;
     this.currentMask = null;
     this.currentMaskLayer = null;
     this.currentZoomValue = 50;
   }
 
-  async loadMask(url, alphaValue = 75, origin = 'preset', zoomOverride = null, applyDeform = true) {
+  async loadMask(source, alphaValue = 75, origin = 'preset', zoomOverride = null, applyDeform = true) {
     if (!this.canvasEngine.imgWidth || !this.canvasEngine.imgHeight) {
       return null;
     }
 
     this.clearCurrentMask();
+    const maskSource = this.normalizeLoadSource(source);
     const { sprite, layer, zoomValue, sourceUrl } = await this.createMaskLayer({
       name: `Mask ${origin}`,
       visible: true,
       locked: false,
       object: {
         maskMeta: {
-          url,
+          url: typeof source === 'string' ? source : maskSource.url,
+          source: maskSource.source,
           origin,
           alphaValue,
           zoomValue: zoomOverride,
@@ -61,7 +66,7 @@ export class MaskManager {
       zoomValue,
       origin,
       sourceUrl,
-      displayUrl: url,
+      displayUrl: maskSource.url,
     });
 
     return sprite;
@@ -72,15 +77,8 @@ export class MaskManager {
     const objectState = layerState?.object ?? null;
     const url = maskMeta.url;
     const origin = maskMeta.origin ?? 'custom';
-    const sourceCandidates = origin === 'preset' ? [url] : getCorsImageSourceCandidates(url);
-    const { image, src: sourceUrl } = origin === 'preset'
-      ? {
-        image: await loadImageElement(url),
-        src: url,
-      }
-      : await loadImageElementFromSources(sourceCandidates, {
-        crossOrigin: 'anonymous',
-      });
+    const resolvedSource = await this.resolveImageSource(maskMeta, origin);
+    const { image, src: sourceUrl, flag } = resolvedSource;
     const texture = Texture.from(image);
     const sprite = new Sprite(texture);
     const zoomValue = this.resolveZoomValue(sprite, maskMeta.zoomValue ?? null);
@@ -108,7 +106,9 @@ export class MaskManager {
     sprite.blendMode = layerState?.object?.blendMode ?? 'normal';
     sprite.__toolType = 'mask';
     sprite.__maskMeta = {
-      url,
+      url: flag?.legacyUrl ?? url,
+      source: flag ? createFlagMaskSource(flag.id) : (maskMeta.source ?? null),
+      flagId: flag?.id ?? maskMeta.flagId ?? null,
       origin,
       alphaValue: Math.round(maskOpacity * 100),
       zoomValue,
@@ -182,6 +182,65 @@ export class MaskManager {
       zoomValue,
       sourceUrl,
     };
+  }
+
+  normalizeLoadSource(source) {
+    if (typeof source === 'string') {
+      return {
+        url: source,
+        source: null,
+      };
+    }
+
+    const flag = this.flagMaskCatalog?.resolve(source);
+
+    if (flag) {
+      return {
+        url: flag.legacyUrl,
+        source: createFlagMaskSource(flag.id),
+      };
+    }
+
+    return {
+      url: String(source?.url ?? ''),
+      source: source ?? null,
+    };
+  }
+
+  async resolveImageSource(maskMeta, origin) {
+    const flag = this.resolveFlagFromMaskMeta(maskMeta, origin);
+
+    if (flag) {
+      return {
+        image: await renderFlagMaskToCanvas(flag),
+        src: `flag-mask:${flag.id}`,
+        flag,
+      };
+    }
+
+    const url = maskMeta.url;
+    const sourceCandidates = origin === 'preset' ? [url] : getCorsImageSourceCandidates(url);
+
+    if (origin === 'preset') {
+      return {
+        image: await loadImageElement(url),
+        src: url,
+      };
+    }
+
+    return await loadImageElementFromSources(sourceCandidates, {
+      crossOrigin: 'anonymous',
+    });
+  }
+
+  resolveFlagFromMaskMeta(maskMeta, origin) {
+    if (!this.flagMaskCatalog) {
+      return null;
+    }
+
+    return this.flagMaskCatalog.resolve(maskMeta.source) ??
+      this.flagMaskCatalog.resolve(maskMeta.flagId) ??
+      (origin === 'country' ? this.flagMaskCatalog.resolve(maskMeta.url) : null);
   }
 
   async restoreMaskLayer(layerState, maskEffects = null) {
