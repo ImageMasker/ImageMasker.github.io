@@ -46,6 +46,8 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 1. Remove background from the picture (nothing selected) and from a pasted image layer.
 1. *Copy image & post to Reddit*: the Reddit image form opens with `[Round N] title`, CTRL+V attaches the picture.
 1. Upload with each host (Imgur, ImgBB with a key, Litterbox), then Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.
+2. Save round without uploading, then browse to it: post it with Copy image & post, upload it, open it in the editor, download it, delete it.
+2. Right-click the picture: every menu item works and Escape closes it. CTRL+C right after moving a slider copies the picture.
 2. Saved rounds: browse with the arrows and the left/right keys, update, delete, save from URL.
 
 ## Sessions and settings

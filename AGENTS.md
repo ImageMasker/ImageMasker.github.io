@@ -38,4 +38,4 @@ compositor, effects, patterns), `src/view` + `src/tools` (canvas interaction), `
 * Theme compatibility: keep the CSS variable names in `styles/main.css` and class names like
   `.panel-fieldset`, `.app-button`, `.tool-section`, `#settingsButton`; user JSON themes target them.
 * localStorage keys (`rounds`, `masks`, `accessToken`, `imagemasker.*`) are shared with `old/v2/`; do not
-  change their format. v3 sessions live in IndexedDB (`imagemasker-v3`).
+  change their format. v3 sessions and locally saved rounds (no upload) live in IndexedDB (`imagemasker-v3`, stores `sessions`, `assets`, `rounds`).
