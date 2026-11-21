@@ -23,11 +23,14 @@ export class SessionStore {
 
   async open() {
     if (!this.database) {
-      const opening = indexedDB.open(DB_NAME, 1);
+      const opening = indexedDB.open(DB_NAME, 2);
 
       opening.onupgradeneeded = () => {
-        opening.result.createObjectStore('sessions', { keyPath: 'id' });
-        opening.result.createObjectStore('assets');
+        const database = opening.result;
+
+        if (!database.objectStoreNames.contains('sessions')) database.createObjectStore('sessions', { keyPath: 'id' });
+        if (!database.objectStoreNames.contains('assets')) database.createObjectStore('assets');
+        if (!database.objectStoreNames.contains('rounds')) database.createObjectStore('rounds', { keyPath: 'id' });
       };
       this.database = await request(opening);
     }

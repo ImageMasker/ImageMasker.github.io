@@ -135,7 +135,7 @@ export class LibraryPanel {
           { className: 'mask-grid' },
           PRESET_MASKS.map((preset) =>
             this.tile({
-              label: `Classic ${preset.id}`,
+              label: preset.name,
               image: preset.thumb,
               onPick: (options) => this.app.addPresetMask(preset, options),
             })

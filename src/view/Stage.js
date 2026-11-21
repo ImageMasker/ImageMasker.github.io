@@ -425,7 +425,13 @@ export class Stage {
         this.tool?.onDoubleClick?.(this.eventFor(event));
       }
     });
-    canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+    canvas.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+
+      if (this.store.hasImage && !this.gesture) {
+        this.bus.emit('canvas-context', this.eventFor(event));
+      }
+    });
     canvas.addEventListener(
       'wheel',
       (event) => {

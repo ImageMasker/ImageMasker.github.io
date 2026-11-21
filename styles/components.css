@@ -564,3 +564,51 @@ select {
 .shortcut-capture-button {
   min-width: 120px;
 }
+
+/* ── context menu ──────────────────────────────────────────────────────── */
+
+.context-menu {
+  position: fixed;
+  z-index: 70;
+  min-width: 230px;
+  padding: 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+}
+
+.context-menu-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.context-menu-item:hover:not(:disabled),
+.context-menu-item:focus-visible {
+  background: var(--bg-button);
+  color: var(--text-button);
+  outline: none;
+}
+
+.context-menu-shortcut {
+  font-size: 0.72rem;
+  opacity: 0.65;
+}
+
+.context-menu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border-strong);
+}

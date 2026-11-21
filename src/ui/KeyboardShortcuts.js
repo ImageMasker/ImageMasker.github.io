@@ -160,13 +160,15 @@ export class KeyboardShortcuts {
     }
 
     const binding = this.eventToBinding(event);
-    const commandId = this.bindingToCommand.get(binding);
+    // On a Mac, Cmd works wherever a shortcut uses Ctrl.
+    const commandId = this.bindingToCommand.get(binding) ??
+      (event.metaKey && !event.ctrlKey ? this.bindingToCommand.get(binding.replace('Meta', 'Ctrl')) : undefined);
 
     if (!commandId) {
       return;
     }
 
-    if (this.isInputTarget(event.target)) {
+    if (commandId === 'copyCanvas' ? this.isTextEntry(event.target) || this.hasTextSelection() : this.isInputTarget(event.target)) {
       return;
     }
 
@@ -178,6 +180,19 @@ export class KeyboardShortcuts {
 
     event.preventDefault();
     handler(event);
+  }
+
+  /** Fields where Ctrl+C should copy text instead of the picture (sliders and buttons don't count). */
+  isTextEntry(target) {
+    if (target?.isContentEditable || target?.tagName === 'TEXTAREA') {
+      return true;
+    }
+
+    return target?.tagName === 'INPUT' && !['range', 'checkbox', 'radio', 'color', 'button', 'submit', 'file'].includes(target.type);
+  }
+
+  hasTextSelection() {
+    return Boolean(window.getSelection?.()?.toString().trim());
   }
 
   isInputTarget(target) {

@@ -18,6 +18,7 @@ import {
   rectLayer,
   removeLayers,
   textLayer,
+  topLayerAt,
   updateLayer,
 } from '../core/model.js';
 import { Store } from '../core/Store.js';
@@ -27,6 +28,7 @@ import { RedditPoster } from '../integrations/RedditPoster.js';
 import { RISChecker } from '../integrations/RISChecker.js';
 import { loadFlagMaskCatalog } from '../masks/FlagMaskCatalog.js';
 import { MaskStorage } from '../storage/MaskStorage.js';
+import { LocalRounds } from '../storage/LocalRounds.js';
 import { RoundStorage } from '../storage/RoundStorage.js';
 import { Settings } from '../storage/Settings.js';
 import { BrushTool } from '../tools/BrushTool.js';
@@ -34,6 +36,7 @@ import { CropTool } from '../tools/CropTool.js';
 import { RegionTool } from '../tools/RegionTool.js';
 import { SelectTool } from '../tools/SelectTool.js';
 import { TextEditor } from '../tools/TextEditor.js';
+import { ContextMenu } from '../ui/ContextMenu.js';
 import { Inspector } from '../ui/Inspector.js';
 import { KeyboardShortcuts } from '../ui/KeyboardShortcuts.js';
 import { button, icon, iconButton } from '../ui/kit.js';
@@ -77,6 +80,7 @@ export class App {
     this.maskStorage = new MaskStorage();
     this.roundStorage = new RoundStorage();
     this.sessionStore = new SessionStore();
+    this.localRounds = new LocalRounds(this.sessionStore);
     this.assets = new AssetStore();
     this.store = new Store();
     this.redditPoster = new RedditPoster();
@@ -135,7 +139,8 @@ export class App {
     this.refs.library.append(this.library.element);
     this.refs.sidePanels.edit.append(this.layersPanel.element, this.inspector.element);
     this.refs.sidePanels.share.append(this.sharePanel.element);
-    this.root.append(this.settingsUi.element, this.toasts.element);
+    this.contextMenu = new ContextMenu();
+    this.root.append(this.settingsUi.element, this.toasts.element, this.contextMenu.element);
 
     this.bindEvents();
     this.initKeyboard();
@@ -337,6 +342,7 @@ export class App {
     bus.on('view', (view) => {
       refs.zoomLabel.querySelector('span').textContent = `${Math.round(view.zoom * 100)}%`;
     });
+    bus.on('canvas-context', (event) => this.openCanvasMenu(event));
     bus.on('render-error', () => this.notify('The picture could not be rendered. Try a smaller image or fewer layers.', 'error', 5000));
 
     refs.settings.addEventListener('click', () => this.settingsUi.open('sessions'));
@@ -472,6 +478,80 @@ export class App {
       },
     });
     this.keyboard.init();
+  }
+
+  /** Right-click menu on the picture: output actions first, then the layer under the pointer. */
+  openCanvasMenu(event) {
+    const { store } = this;
+    const key = (command) => this.keyboard?.getBinding(command) ?? '';
+    const hit = topLayerAt(store.doc, event.x, event.y);
+
+    if (hit && !store.selection.includes(hit.id)) {
+      store.select([hit.id]);
+    }
+
+    const layer = store.selectedLayer;
+    const index = layer ? store.doc.layers.findIndex((entry) => entry.id === layer.id) : -1;
+    const title = this.sharePanel.refs.title.value;
+    const items = [
+      { label: 'Copy image', icon: 'clipboard', shortcut: key('copyCanvas'), action: () => this.copyImage() },
+      { label: 'Download image', icon: 'download', action: () => this.downloadImage() },
+      { label: 'Copy image & post to Reddit', icon: 'reddit', action: () => this.copyAndPost(title, this.sharePanel.refs.subreddit.value.trim() || 'picturegame') },
+      { label: 'Save round', icon: 'download', action: () => this.sharePanel.saveRound() },
+      { label: 'Paste image', icon: 'image', shortcut: 'Ctrl+V', disabled: !navigator.clipboard?.read, action: () => this.pasteFromClipboard() },
+      'separator',
+    ];
+
+    if (layer) {
+      items.push(
+        { label: `Duplicate “${layer.name}”`, icon: 'duplicate', shortcut: key('duplicate'), action: () => this.duplicateSelected() },
+        { label: 'Bring forward', icon: 'up', disabled: index >= store.doc.layers.length - 1, action: () => this.reorderSelected(1) },
+        { label: 'Send backward', icon: 'down', disabled: index <= 0, action: () => this.reorderSelected(-1) },
+        { label: 'Hide layer', icon: 'eyeOff', action: () => store.apply('Hide layer', (doc) => updateLayer(doc, layer.id, { visible: false })) },
+        { label: 'Delete layer', icon: 'trash', shortcut: key('delete'), disabled: Boolean(layer.base), action: () => this.deleteSelected() },
+        'separator'
+      );
+    }
+
+    items.push(
+      { label: 'Undo', icon: 'undo', shortcut: key('undo'), disabled: !store.undoStack.length, action: () => this.undo() },
+      { label: 'Fit to screen', icon: 'fit', shortcut: key('fitView'), action: () => this.stage.fit() },
+      {
+        label: this.stage.compare ? 'Show masks again' : 'Show original',
+        icon: 'compare',
+        shortcut: key('compare'),
+        action: () => {
+          this.stage.setCompare(!this.stage.compare);
+          this.refs.compare.classList.toggle('is-active', this.stage.compare);
+        },
+      }
+    );
+    this.contextMenu.open(event.original.clientX, event.original.clientY, items);
+  }
+
+  async pasteFromClipboard() {
+    try {
+      const items = await navigator.clipboard.read();
+      const item = items.find((entry) => entry.types.some((type) => type.startsWith('image/')));
+
+      if (item) {
+        const blob = await item.getType(item.types.find((type) => type.startsWith('image/')));
+
+        await (this.settings.getPasteImageAsLayer() ? this.addImageLayerFromBlob(blob, 'Pasted image') : this.openBlob(blob, 'Pasted image'));
+        return;
+      }
+
+      const textItem = items.find((entry) => entry.types.includes('text/plain'));
+      const text = textItem ? (await (await textItem.getType('text/plain')).text()).trim() : '';
+
+      if (text && this.isImageUrl(text)) {
+        await (this.settings.getPasteImageAsLayer() ? this.addImageLayerFromUrl(text) : this.openUrl(text));
+      } else {
+        this.notify('There is no image on the clipboard.', 'info');
+      }
+    } catch {
+      this.notify('The browser did not allow reading the clipboard. Press Ctrl+V instead.', 'warning', 4200);
+    }
   }
 
   isTyping(target) {
@@ -837,7 +917,7 @@ export class App {
   }
 
   addPresetMask(preset, options) {
-    return this.addAssetMask(() => this.assets.fromPath(preset.full, { name: `Classic ${preset.id}` }), { name: `Classic ${preset.id}` }, options);
+    return this.addAssetMask(() => this.assets.fromPath(preset.full, { name: preset.name }), { name: preset.name }, options);
   }
 
   addFlagMask(flag, options) {
@@ -1002,10 +1082,10 @@ export class App {
     return size === 'editor' ? Math.min(1, this.stage.fitZoom()) : 1;
   }
 
-  async exportBlob({ format = 'png', size = 'original', quality = 0.92 } = {}) {
+  async exportBlob({ format = 'png', size = 'original', quality = 0.92, scale = 1 } = {}) {
     this.textEditor.close();
 
-    let canvas = this.stage.renderToCanvas(this.store.doc, { scale: this.exportScale(size) });
+    let canvas = this.stage.renderToCanvas(this.store.doc, { scale: Math.min(scale, this.exportScale(size)) });
 
     if (format === 'jpeg') {
       const flat = document.createElement('canvas');
@@ -1083,8 +1163,8 @@ export class App {
    * Copies the picture and opens Reddit's image post form for the next round, title filled in,
    * so the round can be posted without an image host: paste (Ctrl+V) and submit.
    */
-  async copyAndPost(roundTitle, subreddit = 'picturegame') {
-    if (!this.requireImage('Load an image before posting.')) {
+  async copyAndPost(roundTitle, subreddit = 'picturegame', source = null) {
+    if (!source && !this.requireImage('Load an image before posting.')) {
       return null;
     }
 
@@ -1094,7 +1174,7 @@ export class App {
     }
 
     // Start both right away so the clipboard write still counts as part of the click.
-    const picture = this.exportBlob({ ...this.sharePanel.getExportOptions(), format: 'png' });
+    const picture = source ? this.toPng(source) : this.exportBlob({ ...this.sharePanel.getExportOptions(), format: 'png' });
     const round = this.redditPoster.nextRoundNumber().catch(() => null);
 
     try {
@@ -1119,6 +1199,56 @@ export class App {
       6200
     );
     return { url, opened: Boolean(opened) };
+  }
+
+  /** Browsers only accept PNG on the clipboard. */
+  async toPng(blob) {
+    if (blob.type === 'image/png') {
+      return blob;
+    }
+
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement('canvas');
+
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0);
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  }
+
+  /** Saves the finished picture with its title and answer in this browser (no upload, no layers). */
+  async saveLocalRound(title, answer) {
+    const doc = this.store.doc;
+    const scale = Math.min(1, 3840 / Math.max(doc.width, doc.height));
+    const blob = await this.exportBlob({ format: 'jpeg', size: 'original', quality: 0.9, scale });
+
+    return this.localRounds.add({ blob, title, answer, width: Math.round(doc.width * scale), height: Math.round(doc.height * scale) });
+  }
+
+  /** Opens a saved picture as a fresh document (undo brings the previous work back). */
+  async openAsNewDocument(blob, name = 'Saved round') {
+    try {
+      const asset = await this.assets.fromBlob(blob, { name });
+      const doc = createDoc(asset.width, asset.height);
+
+      doc.layers.push(imageLayer(doc, asset, { name: 'Base image', base: true }));
+
+      if (this.store.hasImage) {
+        this.textEditor.close();
+        this.store.apply('Open saved round', () => doc);
+        this.store.select([]);
+        this.afterImageChange();
+      } else {
+        this.replaceDocument(doc);
+      }
+
+      this.sharePanel.setUploaded('');
+      return true;
+    } catch (error) {
+      console.error(error);
+      this.notify('That picture could not be opened.', 'error');
+      return false;
+    }
   }
 
   copyYml({ roundTitle, roundAnswer, imageUrl }) {
