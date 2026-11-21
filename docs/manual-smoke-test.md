@@ -20,6 +20,8 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 2. Pattern overlay: background transparent by default; Density adds repeats without thickening lines.
 3. "Limit to a region", move / resize / rotate the region, change shape, soft edge, magnify, reflect. "Apply to whole picture".
 4. Add a pattern overlay, a classic mask, a flag mask and a custom URL mask. Change opacity, zoom, angle, blend mode, hue, invert, blur, noise, warp, tile.
+5. *Random mask* (header, Shift+R) a few times at each strength in its ▾ menu: each press swaps the previous random layers for new ones (one undo step each); Light is easy to recognise, Strong clearly harder. Untick kinds (only Glass, only Overlays): picks stay within them and don't repeat the last few.
+6. *Collage*: try several layouts, *Random cuts*, and *Draw cuts* (a long line slices across, a short one splits only its piece); undo a cut. Add pictures by clicking a piece, dropping files and pasting; drag and scroll to move/zoom inside a piece; change shape, gap and gap colour. *Create collage*: each picture gets its own mask clipped to its piece, Random mask rerolls them all, and a piece's mask can be selected and changed.
 
 ## Tools
 
@@ -43,12 +45,13 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 ## Sharing
 
 1. Check RIS with a URL containing `?a=1&b=2`: every search site gets the full URL.
+1. Header *Check RIS* (Shift+F): a waiting tab opens at once, the picture uploads to the chosen host, then the ticked sites open (all by default). Untick some in the ▾ menu: only those open, also from the Share tab. Pressing it again without changes reuses the upload.
+1. *Crop RIS* (Shift+C): drag a box over part of the picture; only that part is uploaded and searched. Esc cancels.
 1. Remove background from the picture (nothing selected) and from a pasted image layer.
 1. *Copy image & post to Reddit*: the Reddit image form opens with `[Round N] title`, CTRL+V attaches the picture.
 1. Upload with each host (Imgur, ImgBB with a key, Litterbox), then Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.
-2. Save round without uploading, then browse to it: post it with Copy image & post, upload it, open it in the editor, download it, delete it.
+2. *Rounds* (header): save with title and answer, kept in this browser and uploaded; save from URL. In *Saved rounds*: search, filter, show answers, open one, step with ← →, edit title/answer, post, Check RIS (a local round gets uploaded), upload, open in editor, download, delete.
 2. Right-click the picture: every menu item works and Escape closes it. CTRL+C right after moving a slider copies the picture.
-2. Saved rounds: browse with the arrows and the left/right keys, update, delete, save from URL.
 
 ## Sessions and settings
 

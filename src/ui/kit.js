@@ -38,6 +38,13 @@ const ICONS = {
   reset: '<path d="M4 4v6h6"/><path d="M4 10a8 8 0 1 1 2 6"/>',
   blur: '<path d="M12 3s6 6.200 6 11a6 6 0 0 1-12 0c0-4.800 6-11 6-11z"/><path d="M9.500 14.500a2.500 2.500 0 0 0 2.500 2.500"/>',
   pixel: '<rect x="4" y="4" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/><path d="M13 4h7v7M4 13v7h7" stroke-dasharray="2 2.500"/>',
+  search: '<circle cx="10.500" cy="10.500" r="6.500"/><path d="M21 21l-5.500-5.500"/>',
+  cropSearch: '<path d="M6 2v14h8M2 6h14v4"/><circle cx="17" cy="17" r="3.500"/><path d="M22 22l-2.500-2.500"/>',
+  bookmark: '<path d="M6 3h12v18l-6-4-6 4z"/>',
+  scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.100 15.900M14.500 14.500L20 20M8.100 8.100L12 12"/>',
+  left: '<path d="M15 5l-7 7 7 7"/>',
+  right: '<path d="M9 5l7 7-7 7"/>',
+  chevronDown: '<path d="M6 9l6 6 6-6"/>',
   dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.010M15 15h.010M15 9h.010M9 15h.010M12 12h.010"/>',
   reddit: '<circle cx="12" cy="13" r="7"/><path d="M9.500 12.500h.010M14.500 12.500h.010M9.500 15.500c1.500 1 3.500 1 5 0M12 6l1-3 4 1"/>',
 };

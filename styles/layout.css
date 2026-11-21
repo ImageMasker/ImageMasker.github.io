@@ -54,6 +54,20 @@
   flex: 1;
 }
 
+.app-header .header-button {
+  white-space: nowrap;
+}
+
+/* The header holds a lot; drop the labels that have obvious icons first. */
+@media (max-width: 1560px) {
+  .brand-name,
+  #compareButton > span:not(.icon),
+  #Copy > span:not(.icon),
+  #Download > span:not(.icon) {
+    display: none;
+  }
+}
+
 .zoom-label {
   min-width: 54px;
   font-variant-numeric: tabular-nums;

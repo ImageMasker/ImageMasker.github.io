@@ -7,6 +7,7 @@ import {
   cloneLayer,
   createDoc,
   effectLayer,
+  findLayer,
   imageLayer,
   insertLayer,
   insertMask,
@@ -25,7 +26,7 @@ import { Store } from '../core/Store.js';
 import { defaultParams, getEffect } from '../gl/effects.js';
 import { ImageHosts } from '../integrations/ImageHosts.js';
 import { RedditPoster } from '../integrations/RedditPoster.js';
-import { RISChecker } from '../integrations/RISChecker.js';
+import { RIS_ENGINES, RISChecker } from '../integrations/RISChecker.js';
 import { loadFlagMaskCatalog } from '../masks/FlagMaskCatalog.js';
 import { MaskStorage } from '../storage/MaskStorage.js';
 import { LocalRounds } from '../storage/LocalRounds.js';
@@ -34,20 +35,27 @@ import { Settings } from '../storage/Settings.js';
 import { BrushTool } from '../tools/BrushTool.js';
 import { CropTool } from '../tools/CropTool.js';
 import { RegionTool } from '../tools/RegionTool.js';
+import { RisCropTool } from '../tools/RisCropTool.js';
 import { SelectTool } from '../tools/SelectTool.js';
 import { TextEditor } from '../tools/TextEditor.js';
 import { ContextMenu } from '../ui/ContextMenu.js';
+import { choiceGroup, Dropdown } from '../ui/Dropdown.js';
 import { Inspector } from '../ui/Inspector.js';
 import { KeyboardShortcuts } from '../ui/KeyboardShortcuts.js';
 import { button, icon, iconButton } from '../ui/kit.js';
 import { LayersPanel } from '../ui/LayersPanel.js';
 import { LibraryPanel } from '../ui/LibraryPanel.js';
+import { Modal } from '../ui/Modal.js';
+import { RoundsDialog } from '../ui/RoundsDialog.js';
+import { CollageDialog } from '../ui/CollageDialog.js';
 import { SharePanel } from '../ui/SharePanel.js';
 import { ThemeManager } from '../ui/ThemeManager.js';
 import { ToastManager } from '../ui/ToastManager.js';
 import { el } from '../utils/dom.js';
 import { Stage } from '../view/Stage.js';
 import { BackgroundTools } from './backgroundRemoval.js';
+import { bandDistance, buildRandomMask, planRandomMask, RANDOM_KINDS, RANDOM_LEVELS, rememberPicks } from './randomMask.js';
+import { changeScore, renderSmall, unmaskedDoc } from './strengthMeter.js';
 import { AUTOSAVE_ID, describeSession, restoreSession, SessionStore } from './sessions.js';
 import { SettingsUi } from './settingsUi.js';
 
@@ -63,6 +71,7 @@ const TOOL_BUTTONS = [
   { id: 'text', icon: 'text', label: 'Add text', short: 'Text', command: 'addText', action: 'addText' },
   { id: 'crop', icon: 'crop', label: 'Crop / Resize', short: 'Crop', command: 'crop' },
 ];
+const RANDOM_SETTINGS_KEY = 'imagemasker.randomMask';
 const SIDE_TABS = [
   { id: 'edit', label: 'Edit' },
   { id: 'share', label: 'Share' },
@@ -128,6 +137,7 @@ export class App {
       paint: new BrushTool(this, 'paint'),
       region: new RegionTool(this),
       crop: new CropTool(this),
+      risCrop: new RisCropTool(this),
     };
 
     this.library = new LibraryPanel(this);
@@ -140,7 +150,9 @@ export class App {
     this.refs.sidePanels.edit.append(this.layersPanel.element, this.inspector.element);
     this.refs.sidePanels.share.append(this.sharePanel.element);
     this.contextMenu = new ContextMenu();
-    this.root.append(this.settingsUi.element, this.toasts.element, this.contextMenu.element);
+    this.roundsDialog = new RoundsDialog(this);
+    this.collage = new CollageDialog(this);
+    this.root.append(this.settingsUi.element, this.roundsDialog.element, this.collage.element, this.toasts.element, this.contextMenu.element);
 
     this.bindEvents();
     this.initKeyboard();
@@ -149,6 +161,8 @@ export class App {
     this.setTool('select');
     this.setSideTab('edit');
     this.syncChrome();
+    this.updateRisTitle();
+    this.updateRandomTitle();
     this.library.scheduleThumbs(50);
     void this.checkAutosave();
   }
@@ -165,7 +179,18 @@ export class App {
     refs.zoomLabel = button('100%', { id: 'zoomLabel', className: 'header-button zoom-label', title: 'Show at actual size', onClick: () => this.stage.setZoom(1) });
     refs.zoomIn = headerButton('zoomIn', 'Zoom in', () => this.stage.zoomAt(1.25));
     refs.fit = headerButton('fit', 'Fit picture to screen', () => this.stage.fit());
-    refs.compare = button('Original', { iconName: 'compare', className: 'header-button', title: 'Hold to see the picture without masks' });
+    refs.compare = button('Original', { id: 'compareButton', iconName: 'compare', className: 'header-button', title: 'Hold to see the picture without masks' });
+    refs.random = button('Random mask', { id: 'randomMask', iconName: 'dice', className: 'header-button split-button-main', onClick: () => this.randomizeMasks() });
+    refs.randomMenuButton = iconButton('chevronDown', 'Random mask strength and kinds', null, 'header-button split-button-toggle');
+    this.randomMenu = new Dropdown(refs.randomMenuButton, { label: 'Random mask options' });
+    this.renderRandomMenu();
+    refs.collage = button('Collage', { id: 'collageButton', iconName: 'grid', className: 'header-button', title: 'Build a collage of several pictures', onClick: () => this.collage.open() });
+    refs.cropRis = button('Crop RIS', { id: 'cropRis', iconName: 'cropSearch', className: 'header-button', onClick: () => this.startCropRis() });
+    refs.ris = button('Check RIS', { id: 'checkRisHeader', iconName: 'search', className: 'header-button split-button-main', onClick: () => this.checkRis() });
+    refs.risMenuButton = iconButton('chevronDown', 'Choose RIS sites', null, 'header-button split-button-toggle');
+    this.risMenu = new Dropdown(refs.risMenuButton, { label: 'RIS sites' });
+    this.renderRisMenu();
+    refs.rounds = button('Rounds', { id: 'roundsButton', iconName: 'bookmark', className: 'header-button', onClick: () => this.roundsDialog.open() });
     refs.copy = button('Copy', { id: 'Copy', iconName: 'clipboard', className: 'header-button', title: 'Copy image to clipboard', onClick: () => this.copyImage() });
     refs.download = button('Download', { id: 'Download', iconName: 'download', className: 'header-button', title: 'Download image', onClick: () => this.downloadImage() });
     refs.settings = el('button', { id: 'settingsButton', type: 'button', textContent: 'Settings', 'aria-label': 'Open settings' });
@@ -179,7 +204,10 @@ export class App {
       el('div', { className: 'header-group' }, [refs.undo, refs.redo]),
       el('div', { className: 'header-group' }, [refs.zoomOut, refs.zoomLabel, refs.zoomIn, refs.fit]),
       el('div', { className: 'header-group' }, [refs.compare]),
+      el('div', { className: 'header-group' }, [el('div', { className: 'split-button' }, [refs.random, refs.randomMenuButton]), refs.collage]),
       el('div', { className: 'header-spacer' }),
+      el('div', { className: 'header-group' }, [refs.cropRis, el('div', { className: 'split-button' }, [refs.ris, refs.risMenuButton])]),
+      el('div', { className: 'header-group' }, [refs.rounds]),
       el('div', { className: 'header-group header-group--export' }, [refs.copy, refs.download]),
       el('div', { className: 'chrome-controls' }, [refs.settings, refs.github]),
     ]);
@@ -253,6 +281,8 @@ export class App {
 
     this.root = el('div', { className: 'app-root', 'data-layout-columns': 'default', 'data-mobile-panel': 'masks' }, [
       header,
+      this.randomMenu.element,
+      this.risMenu.element,
       el('div', { id: 'container', className: 'app-grid' }, [
         refs.library,
         el('main', { id: 'preview' }, [
@@ -299,9 +329,12 @@ export class App {
     refs.undo.disabled = !store.undoStack.length;
     refs.redo.disabled = !store.redoStack.length;
 
-    for (const control of [refs.zoomOut, refs.zoomLabel, refs.zoomIn, refs.fit, refs.compare, refs.copy, refs.download]) {
+    for (const control of [refs.zoomOut, refs.zoomLabel, refs.zoomIn, refs.fit, refs.compare, refs.random, refs.randomMenuButton, refs.copy, refs.download]) {
       control.disabled = !loaded;
     }
+
+    refs.ris.disabled = !loaded || this.risBusy;
+    refs.cropRis.disabled = !loaded || this.risBusy;
 
     for (const toolButton of Object.values(refs.toolButtons)) {
       toolButton.disabled = !loaded;
@@ -318,6 +351,9 @@ export class App {
     }
 
     this.refs.undo.title = `Undo (${this.keyboard?.getBinding('undo') ?? ''})`;
+    this.refs.cropRis.title = `Search just part of the picture: drag a box over it (${this.keyboard?.getBinding('cropRis') ?? ''})`;
+    this.updateRisTitle();
+    this.updateRandomTitle();
     this.refs.redo.title = `Redo (${this.keyboard?.getBinding('redo') ?? ''})`;
   }
 
@@ -345,6 +381,7 @@ export class App {
     bus.on('canvas-context', (event) => this.openCanvasMenu(event));
     bus.on('render-error', () => this.notify('The picture could not be rendered. Try a smaller image or fewer layers.', 'error', 5000));
 
+    refs.ris.addEventListener('pointerenter', () => this.updateRisTitle());
     refs.settings.addEventListener('click', () => this.settingsUi.open('sessions'));
     refs.github.addEventListener('click', () => window.open('https://github.com/ImageMasker/ImageMasker.github.io'));
 
@@ -428,7 +465,7 @@ export class App {
   initKeyboard() {
     this.keyboard = new KeyboardShortcuts({
       settings: this.settings,
-      shouldIgnoreShortcut: () => this.settingsUi.isOpen || Boolean(this.textEditor.layerId),
+      shouldIgnoreShortcut: () => this.settingsUi.isOpen || Modal.anyOpen() || Boolean(this.textEditor.layerId),
       handlers: {
         undo: () => this.undo(),
         redo: () => this.redo(),
@@ -448,8 +485,8 @@ export class App {
         addRegion: () => this.setTool('region'),
         brushSizeUp: () => this.adjustBrushSize(5),
         brushSizeDown: () => this.adjustBrushSize(-5),
-        stepLeft: () => (this.sharePanel.roundsOpen ? this.sharePanel.stepRound(-1) : this.rotateSelected(-2)),
-        stepRight: () => (this.sharePanel.roundsOpen ? this.sharePanel.stepRound(1) : this.rotateSelected(2)),
+        stepLeft: () => this.rotateSelected(-2),
+        stepRight: () => this.rotateSelected(2),
         opacityDown: () => this.adjustOpacity(-0.1),
         opacityUp: () => this.adjustOpacity(0.1),
         nudgeLeft: () => this.nudgeSelected(-10, 0),
@@ -462,6 +499,9 @@ export class App {
           this.sharePanel.showSubredditInput();
         },
         fitView: () => this.store.hasImage && this.stage.fit(),
+        randomMask: () => void this.randomizeMasks(),
+        checkRis: () => void this.checkRis(),
+        cropRis: () => this.startCropRis(),
         compare: () => {
           if (this.store.hasImage) {
             this.stage.setCompare(!this.stage.compare);
@@ -469,7 +509,7 @@ export class App {
           }
         },
         deselect: () => {
-          if (this.toolName === 'crop' || this.toolName === 'region') {
+          if (this.toolName === 'crop' || this.toolName === 'region' || this.toolName === 'risCrop') {
             this.setTool('select');
           } else {
             this.store.select([]);
@@ -497,7 +537,10 @@ export class App {
       { label: 'Copy image', icon: 'clipboard', shortcut: key('copyCanvas'), action: () => this.copyImage() },
       { label: 'Download image', icon: 'download', action: () => this.downloadImage() },
       { label: 'Copy image & post to Reddit', icon: 'reddit', action: () => this.copyAndPost(title, this.sharePanel.refs.subreddit.value.trim() || 'picturegame') },
-      { label: 'Save round', icon: 'download', action: () => this.sharePanel.saveRound() },
+      { label: 'Check RIS', icon: 'search', shortcut: key('checkRis'), disabled: this.risBusy, action: () => this.checkRis() },
+      { label: 'Crop RIS…', icon: 'cropSearch', shortcut: key('cropRis'), disabled: this.risBusy, action: () => this.startCropRis() },
+      { label: 'Random mask', icon: 'dice', shortcut: key('randomMask'), action: () => this.randomizeMasks() },
+      { label: 'Save round…', icon: 'bookmark', action: () => this.roundsDialog.open('save') },
       { label: 'Paste image', icon: 'image', shortcut: 'Ctrl+V', disabled: !navigator.clipboard?.read, action: () => this.pasteFromClipboard() },
       'separator',
     ];
@@ -605,7 +648,9 @@ export class App {
       toolButton.setAttribute('aria-pressed', id === name ? 'true' : 'false');
     }
 
-    if (name !== 'select') {
+    this.refs.cropRis.classList.toggle('is-active', name === 'risCrop');
+
+    if (name !== 'select' && name !== 'risCrop') {
       this.setSideTab('edit');
     }
 
@@ -775,7 +820,7 @@ export class App {
     const target = event.target;
     const share = this.sharePanel.refs;
 
-    if (!items.length || this.settingsUi.isOpen) {
+    if (!items.length || this.settingsUi.isOpen || Modal.anyOpen()) {
       return;
     }
 
@@ -930,6 +975,117 @@ export class App {
 
   addFileMask(file) {
     return this.addAssetMask(() => this.assets.fromBlob(file, { name: file.name }), { name: file.name.replace(/\.[^.]+$/, '') || 'Mask' }, { stack: false });
+  }
+
+  /** Picture areas of a collage made with the Collage dialog, or null for a normal picture. */
+  collageCells(doc = this.store.doc) {
+    const base = doc.layers.find((layer) => layer.base);
+
+    // Cropping or resizing the canvas moves the picture; the stored areas no longer fit then.
+    if (!Array.isArray(base?.cells) || Math.abs(base.w - doc.width) > 0.5 || Math.abs(base.h - doc.height) > 0.5 || base.rotation) {
+      return null;
+    }
+
+    return base.cells.map(({ points }) => {
+      const xs = points.filter((_, index) => index % 2 === 0);
+      const ys = points.filter((_, index) => index % 2 === 1);
+      const rect = { x: Math.min(...xs), y: Math.min(...ys) };
+
+      rect.width = Math.max(...xs) - rect.x;
+      rect.height = Math.max(...ys) - rect.y;
+      return { rect, points };
+    });
+  }
+
+  /**
+   * Adds a random mask at the strength chosen in its menu. Candidates are rendered small and
+   * measured (strengthMeter.js) until one lands in the band for that strength. On a collage
+   * every picture gets its own mask. Pressing it again swaps the previous random layers for new
+   * ones in a single undo step, so it can be used to roll until one fits.
+   */
+  async randomizeMasks({ silent = false } = {}) {
+    if (!this.requireImage('Load an image before adding a mask.') || this.randomizing) {
+      return false;
+    }
+
+    this.randomizing = true;
+    this.randomMenu.close();
+
+    try {
+      const { level, kinds } = this.getRandomSettings();
+      const previous = (this.randomLayerIds ?? []).filter((id) => findLayer(this.store.doc, id));
+      const baseDoc = removeLayers(this.store.doc, previous);
+      const cells = this.collageCells(baseDoc);
+      const regions = cells ?? [null];
+      const size = cells ? 480 : 224;
+      const original = renderSmall(this.stage, unmaskedDoc(baseDoc), size);
+      const loadPreset = (preset) => this.assets.fromPath(preset.full, { name: preset.name });
+      const chosen = [];
+
+      for (const [index, region] of regions.entries()) {
+        let best = null;
+
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+          const plan = planRandomMask({ level, kinds, allowOverlay: !region });
+
+          if (!plan) {
+            break;
+          }
+
+          const built = await buildRandomMask(baseDoc, plan, loadPreset, region);
+          const candidate = built.layers.reduce((current, layer) => insertMask(current, layer), baseDoc);
+          const distance = bandDistance(level, changeScore(original, renderSmall(this.stage, candidate, size), region?.rect));
+
+          if (!best || distance < best.distance) {
+            best = { ...built, plan, distance };
+          }
+
+          if (distance === 0) {
+            break;
+          }
+        }
+
+        if (!best) {
+          this.notify(
+            region ? 'Collage pictures need an effect kind ticked in the Random mask menu (overlays would cover the whole collage).' : 'Nothing to pick from: tick more kinds in the Random mask menu.',
+            'warning',
+            4200
+          );
+          return false;
+        }
+
+        rememberPicks(best.plan);
+        chosen.push({
+          layers: region ? best.layers.map((layer) => ({ ...layer, name: `Picture ${index + 1}: ${layer.name}` })) : best.layers,
+          names: best.names,
+        });
+      }
+
+      const layers = chosen.flatMap((entry) => entry.layers);
+
+      this.textEditor.close();
+      this.store.apply(previous.length ? 'Reroll random mask' : 'Random mask', (doc) =>
+        layers.reduce((current, layer) => insertMask(current, layer), removeLayers(doc, previous))
+      );
+      this.randomLayerIds = layers.map((layer) => layer.id);
+      this.store.select([layers[layers.length - 1].id]);
+      this.setTool('select');
+      this.revealEditor();
+
+      if (!silent) {
+        const what = cells ? `${cells.length} pictures masked separately` : chosen[0].names.join(' + ');
+
+        this.notify(`Random ${level} mask: ${what}. Press again for another one.`, 'success', 3200);
+      }
+
+      return true;
+    } catch (error) {
+      console.error(error);
+      this.notify('The random mask could not be added.', 'error');
+      return false;
+    } finally {
+      this.randomizing = false;
+    }
   }
 
   retiltMask(layerId) {
@@ -1201,6 +1357,209 @@ export class App {
     return { url, opened: Boolean(opened) };
   }
 
+  // ── reverse image search ──────────────────────────────────────────────────
+
+  renderRisMenu() {
+    const selected = new Set(this.risChecker.getEngineIds());
+    const [title, ...items] = choiceGroup({
+      title: 'Search on',
+      options: RIS_ENGINES,
+      isChecked: (id) => selected.has(id),
+      onChange: (_, input, inputs) => {
+        const ids = RIS_ENGINES.filter((_, index) => inputs[index].checked).map((engine) => engine.id);
+
+        if (!ids.length) {
+          input.checked = true;
+          this.notify('Keep at least one RIS site ticked.', 'info');
+          return;
+        }
+
+        this.risChecker.setEngineIds(ids);
+        this.updateRisTitle();
+      },
+    });
+    const all = button('Tick all', {
+      className: 'dropdown-wide',
+      onClick: () => {
+        items.forEach((item) => (item.querySelector('input').checked = true));
+        this.risChecker.setEngineIds(RIS_ENGINES.map((engine) => engine.id));
+        this.updateRisTitle();
+      },
+    });
+
+    this.risMenu.element.replaceChildren(title, ...items, el('div', { className: 'context-menu-separator', role: 'separator' }), all);
+  }
+
+  getRandomSettings() {
+    const all = RANDOM_KINDS.map((kind) => kind.id);
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(RANDOM_SETTINGS_KEY) ?? 'null');
+      const kinds = Array.isArray(stored?.kinds) ? stored.kinds.filter((id) => all.includes(id)) : all;
+
+      return {
+        level: RANDOM_LEVELS.some((level) => level.id === stored?.level) ? stored.level : 'medium',
+        kinds: kinds.length ? kinds : all,
+      };
+    } catch {
+      return { level: 'medium', kinds: all };
+    }
+  }
+
+  setRandomSettings(patch) {
+    localStorage.setItem(RANDOM_SETTINGS_KEY, JSON.stringify({ ...this.getRandomSettings(), ...patch }));
+    this.updateRandomTitle();
+  }
+
+  renderRandomMenu() {
+    const settings = this.getRandomSettings();
+    const levels = choiceGroup({
+      title: 'Strength',
+      type: 'radio',
+      name: 'randomStrength',
+      options: RANDOM_LEVELS,
+      isChecked: (id) => id === settings.level,
+      onChange: (id) => this.setRandomSettings({ level: id }),
+    });
+    const kinds = choiceGroup({
+      title: 'Pick from',
+      options: RANDOM_KINDS,
+      isChecked: (id) => settings.kinds.includes(id),
+      onChange: (_, input, inputs) => {
+        const ids = RANDOM_KINDS.filter((_, index) => inputs[index].checked).map((kind) => kind.id);
+
+        if (!ids.length) {
+          input.checked = true;
+          this.notify('Keep at least one kind ticked.', 'info');
+          return;
+        }
+
+        this.setRandomSettings({ kinds: ids });
+      },
+    });
+
+    this.randomMenu.element.replaceChildren(...levels, el('div', { className: 'context-menu-separator', role: 'separator' }), ...kinds);
+  }
+
+  updateRandomTitle() {
+    const { level } = this.getRandomSettings();
+    const label = RANDOM_LEVELS.find((entry) => entry.id === level).label.toLowerCase();
+
+    this.refs.random.title = `Add a random ${label} mask (${this.keyboard?.getBinding('randomMask') ?? ''}). Press again for a different one.`;
+  }
+
+  updateRisTitle() {
+    const ids = this.risChecker.getEngineIds();
+    const names = RIS_ENGINES.filter((engine) => ids.includes(engine.id)).map((engine) => engine.label);
+    const host = this.imageHosts.getHost().label;
+
+    this.refs.ris.title = `Upload to ${host} and search ${names.length === RIS_ENGINES.length ? 'every RIS site' : names.join(', ')} (${this.keyboard?.getBinding('checkRis') ?? ''})`;
+  }
+
+  /** Remembers which version of the picture an uploaded URL shows, so it is not uploaded twice. */
+  noteUpload(doc, options, url) {
+    this.lastUpload = { doc, key: JSON.stringify([options, this.imageHosts.getHostId()]), url };
+  }
+
+  async uploadForRis() {
+    const doc = this.store.doc;
+    const options = this.sharePanel.getExportOptions();
+    const key = JSON.stringify([options, this.imageHosts.getHostId()]);
+
+    if (this.lastUpload?.doc === doc && this.lastUpload.key === key && this.lastUpload.url) {
+      return this.lastUpload.url;
+    }
+
+    const url = await this.imageHosts.upload(await this.exportBlob(options));
+
+    this.noteUpload(doc, options, url);
+    this.sharePanel.setUploaded(url);
+    this.queueAutosave();
+    return url;
+  }
+
+  /** Uploads the current picture in the background and opens the ticked RIS sites with it. */
+  async checkRis() {
+    if (!this.requireImage('Load an image before checking RIS.') || this.risBusy) {
+      return;
+    }
+
+    const label = this.refs.ris.querySelector('span:last-child');
+
+    this.risMenu.close();
+    this.risBusy = true;
+    this.refs.ris.disabled = true;
+    label.textContent = 'Uploading…';
+
+    try {
+      // Must run before the first await: the waiting tab is opened inside the click.
+      await this.risChecker.checkPending(() => this.uploadForRis());
+    } catch (error) {
+      console.error(error);
+      this.notify(`The upload for the RIS check failed. ${error.message} You can switch image host in the Share tab.`, 'error', 6200);
+    } finally {
+      this.risBusy = false;
+      label.textContent = 'Check RIS';
+      this.syncChrome();
+    }
+  }
+
+  startCropRis() {
+    if (!this.requireImage('Load an image before checking RIS.')) {
+      return;
+    }
+
+    if (this.toolName === 'risCrop') {
+      this.setTool('select');
+      return;
+    }
+
+    this.store.select([]);
+    this.setTool('risCrop');
+    this.notify(`Drag a box over the part to search (${this.risChecker.getEngineIds().length} RIS sites). Esc cancels.`, 'info', 4200);
+  }
+
+  /** Uploads just `rect` (document pixels) of the finished picture and searches it. */
+  async checkRisArea(rect) {
+    if (this.risBusy) {
+      return;
+    }
+
+    this.risBusy = true;
+    this.syncChrome();
+    this.textEditor.close();
+
+    try {
+      // No await before this call: the waiting tab has to open inside the pointer-up.
+      await this.risChecker.checkPending(async () => {
+        const doc = this.store.doc;
+        // Full resolution, but no more than about 2400 px across the crop.
+        const scale = Math.min(1, 2400 / Math.max(rect.width, rect.height));
+        const full = this.stage.renderToCanvas(doc, { scale });
+        const k = full.width / doc.width;
+        const crop = document.createElement('canvas');
+
+        crop.width = Math.max(1, Math.round(rect.width * k));
+        crop.height = Math.max(1, Math.round(rect.height * k));
+        crop.getContext('2d').drawImage(full, rect.x * k, rect.y * k, rect.width * k, rect.height * k, 0, 0, crop.width, crop.height);
+
+        const blob = await new Promise((resolve) => crop.toBlob(resolve, 'image/png'));
+
+        if (!blob) {
+          throw new Error('The area could not be encoded.');
+        }
+
+        return this.imageHosts.upload(blob);
+      });
+    } catch (error) {
+      console.error(error);
+      this.notify(`The upload for the RIS check failed. ${error.message} You can switch image host in the Share tab.`, 'error', 6200);
+    } finally {
+      this.risBusy = false;
+      this.syncChrome();
+    }
+  }
+
   /** Browsers only accept PNG on the clipboard. */
   async toPng(blob) {
     if (blob.type === 'image/png') {
@@ -1214,6 +1573,50 @@ export class App {
     canvas.height = bitmap.height;
     canvas.getContext('2d').drawImage(bitmap, 0, 0);
     return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  }
+
+  /**
+   * Makes a finished collage the base picture. `cells` are the pieces with a picture (flat point
+   * lists in collage pixels); they are kept on the base layer so Random mask masks each piece.
+   */
+  async openCollage(blob, { width, height, cells, mask = true }) {
+    try {
+      const asset = await this.assets.fromBlob(blob, { name: 'Collage' });
+      const k = asset.width / width;
+      const doc = createDoc(asset.width, asset.height);
+
+      doc.layers.push({
+        ...imageLayer(doc, asset, { name: 'Collage', base: true }),
+        cells: cells.map((points) => ({ points: points.map((value) => value * k) })),
+      });
+
+      if (this.store.hasImage) {
+        this.textEditor.close();
+        this.store.apply('New collage', () => doc);
+        this.store.select([]);
+        this.afterImageChange();
+      } else {
+        this.replaceDocument(doc);
+      }
+
+      this.sharePanel.setUploaded('');
+      this.randomLayerIds = [];
+
+      if (mask && cells.length) {
+        await this.randomizeMasks({ silent: true });
+      }
+
+      this.notify(
+        mask ? `Collage created: ${cells.length} pictures, each with its own mask. Random mask rerolls them; click a piece's mask to edit it.` : 'Collage created. Random mask gives each picture its own mask.',
+        'success',
+        5200
+      );
+      return true;
+    } catch (error) {
+      console.error(error);
+      this.notify('The collage could not be created.', 'error');
+      return false;
+    }
   }
 
   /** Saves the finished picture with its title and answer in this browser (no upload, no layers). */

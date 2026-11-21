@@ -29,6 +29,9 @@ export const SHORTCUT_COMMANDS = [
   { id: 'fitView', label: 'Fit picture to screen', category: 'Canvas', defaultBinding: 'F' },
   { id: 'compare', label: 'Show original (toggle)', category: 'Canvas', defaultBinding: 'O' },
   { id: 'deselect', label: 'Deselect / cancel', category: 'Edit', defaultBinding: 'Escape' },
+  { id: 'randomMask', label: 'Random mask', category: 'Insert', defaultBinding: 'Shift+R' },
+  { id: 'checkRis', label: 'Upload and check RIS', category: 'Export', defaultBinding: 'Shift+F' },
+  { id: 'cropRis', label: 'Crop RIS (search part of the picture)', category: 'Export', defaultBinding: 'Shift+C' },
 ];
 
 const COMMAND_MAP = new Map(SHORTCUT_COMMANDS.map((command) => [command.id, command]));

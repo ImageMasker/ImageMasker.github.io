@@ -612,3 +612,55 @@ select {
   margin: 4px 6px;
   background: var(--border-strong);
 }
+
+/* ── split button (Check RIS + site picker) ───────────────────────────── */
+
+.split-button {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.split-button > .split-button-main {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.split-button > .split-button-toggle {
+  width: 24px;
+  margin-left: 1px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.split-button > .split-button-toggle .icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.dropdown-menu {
+  min-width: 200px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+.dropdown-title {
+  padding: 4px 8px 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.dropdown-item {
+  grid-template-columns: 18px minmax(0, 1fr);
+}
+
+.dropdown-item input {
+  margin: 0;
+  accent-color: var(--bg-button);
+}
+
+.dropdown-wide {
+  width: 100%;
+}

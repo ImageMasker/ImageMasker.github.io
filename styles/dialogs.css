@@ -1,0 +1,371 @@
+/* Rounds and Collage dialogs. They reuse the Settings dialog classes (.settings-modal ...), so
+   JSON themes that style Settings style these too. */
+
+.app-modal {
+  width: min(1040px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.app-modal .settings-modal-header {
+  align-items: center;
+}
+
+.app-modal-header-extra {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.app-button--danger {
+  background: var(--bg-error);
+}
+
+/* ── rounds: save ─────────────────────────────────────────────────────── */
+
+.rounds-save {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.rounds-save-picture {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  border-radius: 12px;
+  background: var(--surface-tint);
+  overflow: hidden;
+}
+
+.rounds-save-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+}
+
+.rounds-save-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.rounds-save-form input[type='text'],
+.rounds-save-form input[type='url'] {
+  width: 100%;
+}
+
+.rounds-save-mode {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.rounds-save-mode label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.rounds-save-mode input {
+  margin: 0;
+  accent-color: var(--bg-button);
+}
+
+/* ── rounds: browse ───────────────────────────────────────────────────── */
+
+.rounds-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.rounds-search {
+  flex: 1 1 220px;
+}
+
+.rounds-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.rounds-toggle input {
+  margin: 0;
+  accent-color: var(--bg-button);
+}
+
+.rounds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.rounds-card {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 0 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-tint);
+  color: var(--text-primary);
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.rounds-card:hover,
+.rounds-card:focus-visible {
+  background: var(--surface-tint-strong);
+}
+
+.rounds-card-thumb {
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.rounds-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rounds-card-title,
+.rounds-card-answer {
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rounds-card-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.rounds-card-answer {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  filter: blur(4px);
+  transition: filter 0.2s ease;
+}
+
+.rounds-grid--answers .rounds-card-answer,
+.rounds-card:hover .rounds-card-answer {
+  filter: none;
+}
+
+.rounds-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-button);
+  color: var(--text-button);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.rounds-badge--local {
+  background: var(--bg-success);
+}
+
+.rounds-empty {
+  padding: 32px;
+  text-align: center;
+}
+
+.rounds-detail {
+  display: grid;
+  gap: 12px;
+}
+
+.rounds-detail-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rounds-detail-count {
+  flex: 1;
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.rounds-detail-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.rounds-detail-picture {
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--surface-tint);
+  overflow: hidden;
+}
+
+.rounds-detail-picture img {
+  display: block;
+  max-width: 100%;
+  max-height: 64vh;
+  object-fit: contain;
+}
+
+.rounds-detail-side input[type='text'] {
+  width: 100%;
+}
+
+.rounds-actions > * {
+  flex: 1 1 140px;
+}
+
+.rounds-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--surface-tint-strong);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+  .app-modal {
+    padding: 14px;
+  }
+
+  .app-modal .settings-modal-header {
+    flex-wrap: wrap;
+  }
+
+  .app-modal-header-extra {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+
+  .rounds-save,
+  .rounds-detail-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── collage ──────────────────────────────────────────────────────────── */
+
+.collage-modal {
+  width: min(1120px, calc(100vw - 32px));
+}
+
+.collage-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 18px;
+  align-items: start;
+}
+
+.collage-stage {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.collage-canvas-wrap {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 300px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface-tint);
+}
+
+.collage-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  touch-action: none;
+}
+
+.collage-tools {
+  justify-content: center;
+}
+
+.collage-hint {
+  margin: 0;
+  max-width: 620px;
+  text-align: center;
+}
+
+.collage-side {
+  gap: 14px;
+}
+
+.collage-group {
+  display: grid;
+  gap: 8px;
+}
+
+.collage-group .dropdown-title {
+  padding: 0;
+}
+
+.collage-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.collage-preset {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-tint);
+  cursor: pointer;
+}
+
+.collage-preset:hover,
+.collage-preset:focus-visible {
+  background: var(--surface-tint-strong);
+}
+
+.collage-preset svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  fill: var(--bg-button);
+}
+
+.collage-piece-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collage-side input[type='url'] {
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .collage-layout {
+    grid-template-columns: 1fr;
+  }
+}

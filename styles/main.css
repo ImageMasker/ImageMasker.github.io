@@ -1,6 +1,7 @@
 @import './components.css';
 @import './layout.css';
 @import './panels.css';
+@import './dialogs.css';
 @import './mobile.css';
 
 :root {

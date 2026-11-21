@@ -1,9 +1,8 @@
 // Output side of the workflow: export settings, clipboard/download, Imgur upload, RIS check,
-// Reddit submission, saved rounds and loading images by URL.
+// Reddit submission, shortcuts to the Rounds dialog and loading images by URL.
 
 import { el } from '../utils/dom.js';
 import { button, message, row, section, select, slider, toggle } from './kit.js';
-import { SavedRoundsPanel } from './SavedRoundsPanel.js';
 
 export const EXPORT_PRESETS = {
   original_png: { label: 'Original PNG', format: 'png', size: 'original', quality: 92 },
@@ -12,17 +11,11 @@ export const EXPORT_PRESETS = {
   original_jpeg: { label: 'Original JPEG', format: 'jpeg', size: 'original', quality: 92 },
 };
 
-function formatSize(bytes) {
-  return bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-}
-
 export class SharePanel {
   constructor(app) {
     this.app = app;
-    this.roundIndex = 0;
     this.options = { preset: 'original_png', ...EXPORT_PRESETS.original_png };
     this.refs = {};
-    this.rounds = new SavedRoundsPanel();
     const share = this.renderShare();
 
     share.append(this.renderExport());
@@ -32,7 +25,6 @@ export class SharePanel {
       this.renderRounds(),
     ]);
 
-    this.bindRounds();
     this.setUploaded('');
     app.store.on('doc', () => this.updateSizeInfo());
     app.bus.on('view', () => this.updateSizeInfo());
@@ -141,7 +133,7 @@ export class SharePanel {
     refs.copyUrl = button('Copy', { id: 'copyToClipboard', onClick: () => this.requireUrl('There is no uploaded URL to copy yet.') && app.copyText(refs.url.value, 'Image URL copied.') });
     refs.checkRis = button('Check RIS', { id: 'checkForRIS', onClick: () => this.requireUrl('Upload an image first to check RIS.') && app.risChecker.check(refs.url.value.trim()) });
     refs.post = button('Submit to /r/PictureGame', { id: 'PostReddit', onClick: () => this.postToReddit() });
-    refs.save = button('Save round', { id: 'Save', iconName: 'download', title: 'Keeps the round in this browser. Without an upload the finished picture is stored here (no layers or history).', onClick: () => this.saveRound() });
+    refs.save = button('Save round…', { id: 'Save', iconName: 'bookmark', title: 'Save the round with its title and answer (in this browser, or uploaded)', onClick: () => this.saveRound() });
     refs.yml = button('Copy YML', { id: 'Export', onClick: () => app.copyYml({ roundTitle: refs.title.value, roundAnswer: refs.answer.value, imageUrl: refs.url.value }) });
     refs.uploaded = el('div', { className: 'stack share-uploaded' }, [
       el('div', { className: 'input-row' }, [refs.url, refs.copyUrl, refs.checkRis]),
@@ -325,8 +317,13 @@ export class SharePanel {
     refs.shareMessage.set('');
 
     try {
-      const blob = await app.exportBlob(this.getExportOptions());
-      this.setUploaded(await app.imageHosts.upload(blob));
+      const doc = app.store.doc;
+      const options = this.getExportOptions();
+      const blob = await app.exportBlob(options);
+      const url = await app.imageHosts.upload(blob);
+
+      app.noteUpload(doc, options, url);
+      this.setUploaded(url);
       app.notify('Upload completed.', 'success');
       app.queueAutosave();
     } catch (error) {
@@ -362,37 +359,8 @@ export class SharePanel {
     this.refs.subreddit.focus();
   }
 
-  async saveRound() {
-    const app = this.app;
-    const refs = this.refs;
-
-    if (!app.requireImage('Load an image before saving a round.')) {
-      return;
-    }
-
-    if (refs.url.value.trim()) {
-      app.roundStorage.addRound(refs.url.value.trim(), refs.title.value, refs.answer.value);
-      app.flashButton(refs.save, 'Saved!');
-      app.notify('Round saved with its uploaded link.', 'success');
-    } else {
-      refs.save.disabled = true;
-
-      try {
-        const round = await app.saveLocalRound(refs.title.value, refs.answer.value);
-
-        app.flashButton(refs.save, 'Saved!');
-        app.notify(`Round saved in this browser (${formatSize(round.blob.size)}). Find it under Saved rounds.`, 'success', 3600);
-      } catch (error) {
-        console.error(error);
-        app.notify(`The round could not be saved. ${error?.message ?? ''}`.trim(), 'error', 4200);
-      } finally {
-        refs.save.disabled = !app.store.hasImage;
-      }
-    }
-
-    if (this.roundsOpen) {
-      await this.renderRound();
-    }
+  saveRound() {
+    this.app.roundsDialog.open('save');
   }
 
   // ── import ────────────────────────────────────────────────────────────────
@@ -430,223 +398,14 @@ export class SharePanel {
   // ── saved rounds ──────────────────────────────────────────────────────────
 
   renderRounds() {
-    return el('fieldset', { className: 'panel-fieldset' }, [el('legend', { textContent: 'Saved rounds' }), this.rounds.element]);
-  }
-
-  get roundsOpen() {
-    return !this.rounds.refs.savedRounds.classList.contains('hidden');
-  }
-
-  bindRounds() {
-    const refs = this.rounds.refs;
-    const app = this.app;
-
-    refs.info = el('div', { className: 'saved-round-info' });
-    refs.uploadRound = button('Upload', { iconName: 'upload', title: 'Upload to the image host chosen above and keep the round with its link', onClick: () => this.uploadCurrentRound() });
-    refs.openRound = button('Open in editor', { iconName: 'image', onClick: () => this.currentRound && app.openAsNewDocument(this.currentRound.blob) });
-    refs.downloadRound = button('Download', { iconName: 'download', onClick: () => this.downloadCurrentRound() });
-    refs.localActions = row([refs.uploadRound, refs.openRound, refs.downloadRound], 'button-row--fill');
-    refs.savedRounds.append(refs.info, refs.localActions);
-    refs.savedRoundsButton.classList.add('app-button');
-    refs.saveFromUrlButton.classList.add('app-button');
-    refs.savedRoundsButton.addEventListener('click', () => this.toggleRounds());
-    refs.saveFromUrlButton.addEventListener('click', () => {
-      const show = refs.saveExternalUrl.classList.contains('hidden');
-
-      refs.saveExternalUrl.classList.toggle('hidden', !show);
-      refs.emptyState.classList.add('hidden');
-      refs.confirmDelete.classList.add('hidden');
-      this.rounds.setMessage('');
-      this.rounds.setSaveFromUrlExpanded(show);
-    });
-    refs.saveExternal.addEventListener('click', () => {
-      const url = refs.saveFromURLURL.value.trim();
-
-      if (!url) {
-        this.rounds.setMessage('Enter an image URL before saving the round.', 'warning');
-        refs.saveFromURLURL.focus();
-        return;
-      }
-
-      app.roundStorage.addRound(url, refs.saveFromURLTitle.value, refs.saveFromURLAnswer.value);
-      app.flashButton(refs.saveExternal, 'Saved!');
-      this.rounds.setMessage('Round saved from URL.', 'success');
-
-      if (this.roundsOpen) {
-        void this.renderRound();
-      }
-    });
-    refs.left.addEventListener('click', () => this.stepRound(-1));
-    refs.right.addEventListener('click', () => this.stepRound(1));
-    refs.UpdateInfo.addEventListener('click', async () => {
-      const round = this.currentRound;
-
-      if (!round) return;
-
-      if (round.kind === 'local') {
-        await app.localRounds.update(round.id, { title: refs.displayedTitle.value, answer: refs.displayedAnswer.value });
-      } else {
-        app.roundStorage.updateRound(round.index, refs.displayedTitle.value, refs.displayedAnswer.value);
-      }
-
-      app.flashButton(refs.UpdateInfo, 'Updated!');
-    });
-    refs.delete.addEventListener('click', () => {
-      refs.confirmDelete.classList.remove('hidden');
-      refs.confirmDeleteButton.focus();
-    });
-    refs.cancelDeleteButton.addEventListener('click', () => refs.confirmDelete.classList.add('hidden'));
-    refs.confirmDeleteButton.addEventListener('click', async () => {
-      const round = this.currentRound;
-
-      if (round?.kind === 'local') {
-        await app.localRounds.remove(round.id);
-      } else if (round) {
-        app.roundStorage.deleteRound(round.index);
-      }
-
-      await this.renderRound();
-    });
-    refs.export.addEventListener('click', () =>
-      app.copyYml({ roundTitle: refs.displayedTitle.value, roundAnswer: refs.displayedAnswer.value, imageUrl: this.currentRound?.url ?? '' })
-    );
-    refs.PostReddit2.addEventListener('click', async () => {
-      const round = this.currentRound;
-
-      if (round?.kind === 'local') {
-        await app.copyAndPost(refs.displayedTitle.value, 'picturegame', round.blob);
-        return;
-      }
-
-      try {
-        await app.redditPoster.postToReddit(round?.url ?? '', refs.displayedTitle.value, 'picturegame');
-        app.notify('Opened Reddit submission page.', 'success');
-      } catch {
-        app.notify('Could not open Reddit submission flow.', 'error');
-      }
-    });
-
-    for (const input of [refs.saveFromURLURL, refs.saveFromURLTitle, refs.saveFromURLAnswer]) {
-      input.addEventListener('input', () => this.rounds.setMessage(''));
-    }
-  }
-
-  /** Uploaded rounds (localStorage, shared with v2) followed by rounds kept in this browser. */
-  async collectRounds() {
-    const uploaded = this.app.roundStorage.getRounds().map(([url, title, answer], index) => ({ kind: 'url', index, url, title, answer }));
-    let local = [];
-
-    try {
-      local = (await this.app.localRounds.list()).map((round) => ({ kind: 'local', ...round }));
-    } catch (error) {
-      console.warn('Local rounds are unavailable', error);
-    }
-
-    return [...uploaded, ...local];
-  }
-
-  toggleRounds() {
-    const refs = this.rounds.refs;
-
-    if (this.roundsOpen) {
-      refs.savedRounds.classList.add('hidden');
-      refs.confirmDelete.classList.add('hidden');
-      this.rounds.setSavedRoundsExpanded(false);
-      return;
-    }
-
-    this.roundIndex = 0;
-    void this.renderRound();
-  }
-
-  stepRound(delta) {
-    this.roundIndex += delta;
-    void this.renderRound();
-  }
-
-  async renderRound() {
-    const refs = this.rounds.refs;
-    const rounds = await this.collectRounds();
-
-    refs.confirmDelete.classList.add('hidden');
-
-    if (this.roundUrl) {
-      URL.revokeObjectURL(this.roundUrl);
-      this.roundUrl = '';
-    }
-
-    if (!rounds.length) {
-      this.currentRound = null;
-      refs.savedRounds.classList.add('hidden');
-      refs.emptyState.classList.remove('hidden');
-      this.rounds.setSavedRoundsExpanded(false);
-      return;
-    }
-
-    this.roundIndex = Math.max(0, Math.min(this.roundIndex, rounds.length - 1));
-
-    const round = rounds[this.roundIndex];
-    const local = round.kind === 'local';
-    const src = local ? (this.roundUrl = URL.createObjectURL(round.blob)) : round.url;
-
-    this.currentRound = round;
-    refs.emptyState.classList.add('hidden');
-    refs.savedRounds.classList.remove('hidden');
-    refs.displayedImagelink.href = src;
-    refs.displayedImage.src = src;
-    refs.displayedTitle.value = round.title ?? '';
-    refs.displayedAnswer.value = round.answer ?? '';
-    refs.left.style.visibility = this.roundIndex <= 0 ? 'hidden' : 'visible';
-    refs.right.style.visibility = this.roundIndex >= rounds.length - 1 ? 'hidden' : 'visible';
-    refs.info.textContent = `${this.roundIndex + 1} of ${rounds.length} · ${local ? `Saved in this browser · ${round.width} × ${round.height} · ${formatSize(round.blob.size)}` : 'Uploaded'}`;
-    refs.localActions.classList.toggle('hidden', !local);
-    refs.export.classList.toggle('hidden', local);
-    refs.PostReddit2.querySelector('span')?.remove();
-    refs.PostReddit2.textContent = local ? 'Copy image & post to /r/PictureGame' : 'Submit to /r/PictureGame';
-    this.rounds.setSavedRoundsExpanded(true);
-  }
-
-  async uploadCurrentRound() {
-    const round = this.currentRound;
-    const app = this.app;
-    const refs = this.rounds.refs;
-
-    if (round?.kind !== 'local') {
-      return;
-    }
-
-    refs.uploadRound.disabled = true;
-
-    try {
-      const url = await app.imageHosts.upload(round.blob);
-
-      app.roundStorage.addRound(url, refs.displayedTitle.value, refs.displayedAnswer.value);
-      await app.localRounds.remove(round.id);
-      this.roundIndex = app.roundStorage.getCount() - 1;
-      app.notify('Round uploaded. It now keeps its link instead of the local picture.', 'success', 3600);
-      await this.renderRound();
-    } catch (error) {
-      app.notify(`The upload failed. ${error.message}`, 'error', 4200);
-    } finally {
-      refs.uploadRound.disabled = false;
-    }
-  }
-
-  downloadCurrentRound() {
-    const round = this.currentRound;
-
-    if (round?.kind !== 'local') {
-      return;
-    }
-
-    const url = URL.createObjectURL(round.blob);
-    const name = (round.title || 'round').replace(/[^\w\- ]+/g, '').trim().slice(0, 60) || 'round';
-    const link = el('a', { href: url, download: `${name}.jpg` });
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    return el('fieldset', { className: 'panel-fieldset' }, [
+      el('legend', { textContent: 'Saved rounds' }),
+      el('p', { className: 'panel-intro-copy', textContent: 'Also under Rounds at the top.' }),
+      row([
+        button('Save round…', { iconName: 'bookmark', onClick: () => this.app.roundsDialog.open('save') }),
+        button('Browse rounds…', { iconName: 'grid', onClick: () => this.app.roundsDialog.open('browse') }),
+      ], 'button-row--fill'),
+    ]);
   }
 
   sync() {

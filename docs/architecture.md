@@ -9,6 +9,9 @@ src/app/App.js               layout, shared services, every editing command
 src/app/sessions.js          IndexedDB sessions, autosave, JSON export/import
 src/app/settingsUi.js        settings dialog (sessions, themes, shortcuts, about)
 src/app/backgroundRemoval.js background removal into a new layer
+src/app/randomMask.js        Random mask recipes, strengths and kinds
+src/app/strengthMeter.js     internal "how different does it look" score the random mask aims with
+src/collage/                 collage geometry (cuts → pieces, gaps, presets) and Canvas 2D drawing
 src/core/model.js            the document: plain immutable data + layer factories
 src/core/Store.js            current document, selection, undo/redo
 src/core/AssetStore.js       decoded images, referenced from layers by id
@@ -20,8 +23,9 @@ src/gl/effects.js            effect masks (one fragment shader each)
 src/gl/patterns.js           procedural overlay patterns
 src/raster/                  Canvas 2D rasterisers for strokes and text
 src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
-src/tools/                   select, brush/eraser/effect brush, region, crop, text editor
-src/ui/                      panels (library, layers, properties, share, ...)
+src/tools/                   select, brush/eraser/effect brush, region, crop, crop-RIS box, text editor
+src/ui/                      panels (library, layers, properties, share, ...), Rounds and Collage
+                             dialogs (Modal.js), header ▾ menus (Dropdown.js)
 src/integrations/, storage/  image hosts, RIS, Reddit, background removal model, localStorage wrappers
 dev/effect-sheet.html        contact sheet of every effect/pattern + shader errors
 old/v2/, old/                previous versions, kept working
@@ -38,6 +42,10 @@ Layer types: `image`, `mask` (`source: 'asset' | 'pattern'`), `effect`, `drawing
 An effect layer's `coverage` is `full`, `rect`, `ellipse`, `polygon` or `paint`. The hidden effect id
 `original` (used by the eraser's reveal mode) shows the base picture instead of running a shader;
 `insertMask()` keeps such layers on top when masks are added.
+
+A collage keeps its picture areas on the base layer (`cells: [{ points }]`, document pixels).
+Random mask then gives every piece its own effect layers with `polygon` coverage. The areas are
+ignored once the canvas is cropped or resized.
 
 ## Rendering
 

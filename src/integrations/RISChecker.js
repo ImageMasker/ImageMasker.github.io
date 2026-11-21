@@ -1,3 +1,5 @@
+const ENGINES_KEY = 'imagemasker.risEngines';
+
 function withParams(base, params) {
   const url = new URL(base);
 
@@ -8,15 +10,18 @@ function withParams(base, params) {
   return url.toString();
 }
 
+/** Reverse image search sites, each building its search page for an image URL. */
+export const RIS_ENGINES = [
+  { id: 'tineye', label: 'TinEye', build: (url) => withParams('https://www.tineye.com/search/', { url }) },
+  { id: 'yandex', label: 'Yandex', build: (url) => withParams('https://yandex.com/images/search', { url, rpt: 'imageview' }) },
+  { id: 'lens', label: 'Google Lens', build: (url) => withParams('https://lens.google.com/uploadbyurl', { url }) },
+  { id: 'google', label: 'Google Images', build: (url) => withParams('https://www.google.com/searchbyimage', { sbisrc: 'cr_1_5_2', image_url: url }) },
+  { id: 'bing', label: 'Bing', build: (url) => withParams('https://www.bing.com/images/searchbyimage', { cbir: 'ssbi', imgurl: url }) },
+];
+
 /** Reverse image search pages for an image URL, with the URL safely encoded as a parameter. */
-export function risUrls(imageUrl) {
-  return [
-    withParams('https://www.tineye.com/search/', { url: imageUrl }),
-    withParams('https://yandex.com/images/search', { url: imageUrl, rpt: 'imageview' }),
-    withParams('https://lens.google.com/uploadbyurl', { url: imageUrl }),
-    withParams('https://www.google.com/searchbyimage', { sbisrc: 'cr_1_5_2', image_url: imageUrl }),
-    withParams('https://www.bing.com/images/searchbyimage', { cbir: 'ssbi', imgurl: imageUrl }),
-  ];
+export function risUrls(imageUrl, engineIds = RIS_ENGINES.map((engine) => engine.id)) {
+  return RIS_ENGINES.filter((engine) => engineIds.includes(engine.id)).map((engine) => engine.build(imageUrl));
 }
 
 export class RISChecker {
@@ -24,9 +29,36 @@ export class RISChecker {
     this.notify = notify;
   }
 
-  check(imageUrl) {
+  /** The sites ticked in the header's RIS menu (all of them by default). */
+  getEngineIds() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(ENGINES_KEY) ?? 'null');
+
+      if (Array.isArray(stored)) {
+        const known = stored.filter((id) => RIS_ENGINES.some((engine) => engine.id === id));
+
+        if (known.length) {
+          return known;
+        }
+      }
+    } catch {
+      // Fall back to every site.
+    }
+
+    return RIS_ENGINES.map((engine) => engine.id);
+  }
+
+  setEngineIds(ids) {
+    localStorage.setItem(ENGINES_KEY, JSON.stringify(ids));
+  }
+
+  check(imageUrl, engineIds = this.getEngineIds()) {
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const urls = risUrls(imageUrl);
+    const urls = risUrls(imageUrl, engineIds);
+
+    if (!urls.length) {
+      return;
+    }
 
     if (isSafari) {
       urls.forEach((url) => {
@@ -38,11 +70,63 @@ export class RISChecker {
     const popUp = window.open(urls[0]);
 
     if (popUp == null || typeof popUp === 'undefined') {
-      this.notify('The other RIS sites were blocked by the browser. Please allow popups for this site.', 'warning');
+      this.notify('The RIS sites were blocked by the browser. Please allow popups for this site.', 'warning');
       return;
     }
 
     popUp.focus();
     urls.slice(1).forEach((url) => window.open(url));
+  }
+
+  /**
+   * Opens a waiting tab straight away (still inside the click, so popup blockers allow it), then
+   * points it at the first RIS site once `getUrl` resolves and opens the rest. Resolves to the URL.
+   */
+  async checkPending(getUrl, engineIds = this.getEngineIds()) {
+    const placeholder = window.open('', '_blank');
+
+    if (placeholder) {
+      try {
+        placeholder.document.title = 'Uploading…';
+        placeholder.document.body.style.cssText = 'font: 16px system-ui, sans-serif; padding: 2rem; color: #555';
+        placeholder.document.body.textContent = 'Uploading the picture for a reverse image search…';
+      } catch {
+        // Some browsers do not let the opener write into the new tab; it just stays blank.
+      }
+    }
+
+    let imageUrl;
+
+    try {
+      imageUrl = await getUrl();
+    } catch (error) {
+      placeholder?.close();
+      throw error;
+    }
+
+    const urls = risUrls(imageUrl, engineIds);
+    let blocked = 0;
+
+    urls.forEach((url, index) => {
+      if (index === 0 && placeholder && !placeholder.closed) {
+        placeholder.opener = null;
+        placeholder.location.href = url;
+        return;
+      }
+
+      if (!window.open(url)) {
+        blocked += 1;
+      }
+    });
+
+    if (blocked) {
+      this.notify(
+        `${blocked} RIS ${blocked === 1 ? 'site was' : 'sites were'} blocked by the browser. Allow popups for this site to open them all at once.`,
+        'warning',
+        5200
+      );
+    }
+
+    return imageUrl;
   }
 }
