@@ -1,15 +1,11 @@
-@import './toolbar.css';
-@import './layers.css';
-@import './masks.css';
-@import './canvas.css';
-@import './saved-rounds.css';
-@import './session.css';
-@import './settings-modal.css';
+@import './components.css';
+@import './layout.css';
+@import './panels.css';
 @import './mobile.css';
 
 :root {
-  --tools-column-width: 300px;
-  --masks-column-width: 260px;
+  --tools-column-width: 312px;
+  --masks-column-width: 300px;
   --bg-primary: rgb(240, 236, 228);
   --bg-panel: rgb(247, 229, 205);
   --bg-button: rgb(236, 140, 116);
@@ -40,6 +36,8 @@
   --slider-hover: rgb(236, 212, 192);
   --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.08);
   --focus-ring: rgba(224, 146, 82, 0.85);
+  --surface-tint: rgba(255, 255, 255, 0.22);
+  --surface-tint-strong: rgba(255, 255, 255, 0.42);
 }
 
 :root.dark {
@@ -73,6 +71,8 @@
   --slider-hover: rgb(71, 77, 146);
   --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.22);
   --focus-ring: rgba(255, 214, 168, 0.92);
+  --surface-tint: rgba(0, 0, 0, 0.14);
+  --surface-tint-strong: rgba(255, 255, 255, 0.12);
 }
 
 * {
@@ -104,202 +104,23 @@ input,
 select,
 textarea {
   border: 1px solid transparent;
+  border-radius: 6px;
   background: var(--bg-input);
   color: var(--text-button);
-  padding: 8px;
+  padding: 6px 8px;
+  min-width: 0;
 }
 
-input::placeholder {
-  color: var(--text-placeholder);
-}
-
+input::placeholder,
 textarea::placeholder {
   color: var(--text-placeholder);
 }
 
-.app-root {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  padding: 6px 8px;
-  overflow: hidden;
-}
-
-#app {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-#container.app-grid {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: var(--tools-column-width) 1fr var(--masks-column-width);
-  grid-template-areas: 'toolsDiv preview masksDiv';
-  flex: 1;
-  min-height: 0;
-}
-
-#container.app-grid > * {
-  min-width: 0;
-}
-
-.app-root[data-layout-columns='mirrored'] #container.app-grid {
-  grid-template-columns: var(--masks-column-width) 1fr var(--tools-column-width);
-  grid-template-areas: 'masksDiv preview toolsDiv';
-}
-
-#toolsDiv {
-  grid-area: toolsDiv;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-#preview {
-  grid-area: preview;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-#masksDiv {
-  grid-area: masksDiv;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.panel-fieldset {
-  margin: 0;
-  border: 2px solid var(--border-fieldset);
-  border-radius: 14px;
-  background: var(--bg-panel);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-soft);
-}
-
-.app-button,
-#displayRounds,
-#saveFromURL,
-#left,
-#right,
-#settingsButton,
-#github {
-  transition: background-color 0.5s ease, opacity 0.3s ease, color 0.5s ease;
-}
-
-.app-button {
-  border: none;
-  min-height: 30px;
-  border-radius: 6px;
-  padding: 4px 8px;
-  background: var(--bg-button);
-  color: var(--text-button);
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.app-button:hover {
-  background: var(--bg-button-hover);
-}
-
-.app-button.is-active {
-  background: var(--bg-slider-thumb);
-}
-
-.app-button.is-success {
-  background: var(--bg-success);
-}
-
-.chrome-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  margin-bottom: 8px;
-}
-
-.mobile-topbar,
-.mobile-bottom-shell,
-.mobile-panel-nav {
-  display: none;
-}
-
-#settingsButton,
-#github {
+input[type='color'] {
   width: 38px;
-  height: 38px;
-  border: none;
-  border-radius: 999px;
-  background: var(--bg-night-button);
+  height: 28px;
+  padding: 2px;
   cursor: pointer;
-  box-shadow: var(--shadow-soft);
-}
-
-#settingsButton {
-  width: auto;
-  min-width: 96px;
-  padding: 0 14px;
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  font-weight: 700;
-  justify-self: start;
-}
-
-#settingsButton:hover,
-#github:hover {
-  background-color: var(--bg-night-button-hover);
-}
-
-#github {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  color: var(--text-primary);
-}
-
-#github svg {
-  width: 18px;
-  height: 18px;
-  display: block;
-  fill: currentColor;
-}
-
-.field-label {
-  margin-bottom: 2px;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.smallBreak {
-  display: block;
-  border-bottom: 6px solid transparent;
-}
-
-.sliders {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 8px;
-  border: none;
-  padding: 8px;
-  background: var(--bg-slider);
-  opacity: 0.8;
-}
-
-.sliders:hover {
-  background: var(--slider-hover);
-}
-
-.sliders::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 5px;
-  height: 18px;
-  background: var(--bg-slider-thumb);
 }
 
 button:focus-visible,
@@ -307,9 +128,15 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible,
-a:focus-visible {
+a:focus-visible,
+.layer-row:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .hidden {
@@ -328,107 +155,9 @@ a:focus-visible {
   border: 0;
 }
 
-.text-editor-overlay {
-  position: fixed;
-  z-index: 20;
-  padding: 4px 8px;
-  border: 1px solid var(--bg-slider-thumb);
-  border-radius: 8px;
-  background: white;
-}
-
-.panel-intro-copy,
-.toolbar-intro-copy,
-.workflow-intro-copy,
-.workflow-status,
-.panel-empty-state {
-  color: var(--text-muted);
-}
-
-.panel-intro-copy,
-.toolbar-intro-copy,
-.workflow-intro-copy {
-  margin: 0;
-  line-height: 1.4;
-}
-
-.panel-empty-state {
-  padding: 8px 10px;
-  border: 1px dashed var(--border-strong);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.18);
-  line-height: 1.4;
-}
-
-:root.dark .panel-empty-state {
-  background: rgba(0, 0, 0, 0.14);
-}
-
-.panel-inline-message {
-  padding: 8px 10px;
-  border-radius: 10px;
-  line-height: 1.4;
-  background: rgba(255, 255, 255, 0.26);
-}
-
-.panel-inline-message--info {
-  border: 1px solid var(--border-strong);
-}
-
-.panel-inline-message--warning {
-  border: 1px solid rgba(214, 151, 73, 0.35);
-  background: rgba(214, 151, 73, 0.12);
-}
-
-.panel-inline-message--error {
-  border: 1px solid rgba(191, 92, 92, 0.38);
-  background: rgba(191, 92, 92, 0.14);
-}
-
-.panel-inline-message--success {
-  border: 1px solid rgba(125, 179, 120, 0.38);
-  background: rgba(125, 179, 120, 0.14);
-}
-
-.toast-stack {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 60;
-  display: grid;
-  gap: 8px;
-  max-width: min(360px, calc(100vw - 32px));
-}
-
-.toast {
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: white;
-  box-shadow: var(--shadow-soft);
-  opacity: 0.98;
-  transform: translateY(0);
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.toast--info {
-  background: rgba(48, 48, 56, 0.94);
-}
-
-.toast--success {
-  background: var(--bg-success);
-}
-
-.toast--warning {
-  background: var(--bg-warning);
-}
-
-.toast--error {
-  background: var(--bg-error);
-}
-
-.toast--leaving {
-  opacity: 0;
-  transform: translateY(6px);
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-slider-thumb) transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {

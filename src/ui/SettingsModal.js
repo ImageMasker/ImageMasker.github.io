@@ -1,45 +1,31 @@
 import { el } from '../utils/dom.js';
 
+const TABS = [
+  { id: 'sessions', label: 'Sessions' },
+  { id: 'themes', label: 'Themes' },
+  { id: 'shortcuts', label: 'Shortcuts' },
+  { id: 'about', label: 'About' },
+];
+
 export class SettingsModal {
   constructor() {
-    this.refs = {};
+    this.refs = { tabs: {}, panels: {} };
     this.element = this.render();
   }
 
   render() {
-    this.refs.sessionsTabButton = el('button', {
-      type: 'button',
-      className: 'settings-tab-button is-active',
-      textContent: 'Sessions',
-      'data-settings-tab': 'sessions',
-      'aria-pressed': 'true',
-    });
-    this.refs.themesTabButton = el('button', {
-      type: 'button',
-      className: 'settings-tab-button',
-      textContent: 'Themes',
-      'data-settings-tab': 'themes',
-      'aria-pressed': 'false',
-    });
-    this.refs.shortcutsTabButton = el('button', {
-      type: 'button',
-      className: 'settings-tab-button',
-      textContent: 'Shortcuts',
-      'data-settings-tab': 'shortcuts',
-      'aria-pressed': 'false',
-    });
-    this.refs.sessionsContent = el('div', {
-      className: 'settings-tab-panel',
-      'data-settings-panel': 'sessions',
-    });
-    this.refs.themesContent = el('div', {
-      className: 'settings-tab-panel hidden',
-      'data-settings-panel': 'themes',
-    });
-    this.refs.shortcutsContent = el('div', {
-      className: 'settings-tab-panel hidden',
-      'data-settings-panel': 'shortcuts',
-    });
+    for (const tab of TABS) {
+      this.refs.tabs[tab.id] = el('button', {
+        type: 'button',
+        className: 'settings-tab-button',
+        textContent: tab.label,
+        'data-settings-tab': tab.id,
+        'aria-pressed': 'false',
+      });
+      this.refs.tabs[tab.id].addEventListener('click', () => this.setActiveTab(tab.id));
+      this.refs.panels[tab.id] = el('div', { className: 'settings-tab-panel hidden', 'data-settings-panel': tab.id });
+    }
+
     this.refs.closeButton = el('button', {
       type: 'button',
       className: 'settings-modal-close',
@@ -54,37 +40,30 @@ export class SettingsModal {
     }, [
       el('div', { className: 'settings-modal-header' }, [
         el('div', { className: 'settings-modal-heading' }, [
-          el('h1', {
-            id: 'settingsModalTitle',
-            className: 'settings-modal-title',
-            textContent: 'Settings',
-          }),
+          el('h1', { id: 'settingsModalTitle', className: 'settings-modal-title', textContent: 'Settings' }),
           el('p', {
             className: 'panel-intro-copy',
-            textContent: 'Manage saved sessions and visual themes without leaving the editor.',
+            textContent: 'Manage saved sessions, visual themes and keyboard shortcuts without leaving the editor.',
           }),
         ]),
         this.refs.closeButton,
       ]),
-      el('div', { className: 'settings-tab-list' }, [
-        this.refs.sessionsTabButton,
-        this.refs.themesTabButton,
-        this.refs.shortcutsTabButton,
-      ]),
-      el('div', { className: 'settings-modal-body' }, [
-        this.refs.sessionsContent,
-        this.refs.themesContent,
-        this.refs.shortcutsContent,
-      ]),
+      el('div', { className: 'settings-tab-list' }, Object.values(this.refs.tabs)),
+      el('div', { className: 'settings-modal-body' }, Object.values(this.refs.panels)),
     ]);
-    this.refs.overlay = el('div', {
-      className: 'settings-modal-overlay hidden',
-      'aria-hidden': 'true',
-    }, [
-      this.refs.dialog,
-    ]);
-
+    this.refs.overlay = el('div', { className: 'settings-modal-overlay hidden', 'aria-hidden': 'true' }, [this.refs.dialog]);
+    this.refs.closeButton.addEventListener('click', () => this.setOpen(false));
+    this.refs.overlay.addEventListener('click', (event) => {
+      if (event.target === this.refs.overlay) {
+        this.setOpen(false);
+      }
+    });
+    this.setActiveTab('sessions');
     return this.refs.overlay;
+  }
+
+  get isOpen() {
+    return !this.refs.overlay.classList.contains('hidden');
   }
 
   setOpen(isOpen) {
@@ -94,19 +73,12 @@ export class SettingsModal {
   }
 
   setActiveTab(tab) {
-    const nextTab = ['sessions', 'themes', 'shortcuts'].includes(tab) ? tab : 'sessions';
-    const isSessions = nextTab === 'sessions';
-    const isThemes = nextTab === 'themes';
-    const isShortcuts = nextTab === 'shortcuts';
+    const active = this.refs.tabs[tab] ? tab : 'sessions';
 
-    this.refs.sessionsTabButton.classList.toggle('is-active', isSessions);
-    this.refs.sessionsTabButton.setAttribute('aria-pressed', isSessions ? 'true' : 'false');
-    this.refs.themesTabButton.classList.toggle('is-active', isThemes);
-    this.refs.themesTabButton.setAttribute('aria-pressed', isThemes ? 'true' : 'false');
-    this.refs.shortcutsTabButton.classList.toggle('is-active', isShortcuts);
-    this.refs.shortcutsTabButton.setAttribute('aria-pressed', isShortcuts ? 'true' : 'false');
-    this.refs.sessionsContent.classList.toggle('hidden', !isSessions);
-    this.refs.themesContent.classList.toggle('hidden', !isThemes);
-    this.refs.shortcutsContent.classList.toggle('hidden', !isShortcuts);
+    for (const { id } of TABS) {
+      this.refs.tabs[id].classList.toggle('is-active', id === active);
+      this.refs.tabs[id].setAttribute('aria-pressed', id === active ? 'true' : 'false');
+      this.refs.panels[id].classList.toggle('hidden', id !== active);
+    }
   }
 }

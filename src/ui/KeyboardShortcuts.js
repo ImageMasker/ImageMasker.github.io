@@ -7,8 +7,8 @@ export const SHORTCUT_COMMANDS = [
   { id: 'brush', label: 'Brush mode', category: 'Tools', defaultBinding: 'B' },
   { id: 'eraser', label: 'Eraser', category: 'Tools', defaultBinding: 'E' },
   { id: 'move', label: 'Move mode', category: 'Tools', defaultBinding: 'V' },
-  { id: 'blurBrush', label: 'Blur brush', category: 'Tools', defaultBinding: 'G' },
-  { id: 'pixelBrush', label: 'Pixel brush', category: 'Tools', defaultBinding: 'X' },
+  { id: 'blurBrush', label: 'Effect brush (blur)', category: 'Tools', defaultBinding: 'G' },
+  { id: 'pixelBrush', label: 'Effect brush (pixelate)', category: 'Tools', defaultBinding: 'X' },
   { id: 'crop', label: 'Crop / Resize', category: 'Tools', defaultBinding: 'C' },
   { id: 'addRectangle', label: 'Add rectangle', category: 'Insert', defaultBinding: 'R' },
   { id: 'addText', label: 'Add text', category: 'Insert', defaultBinding: 'T' },
@@ -24,6 +24,9 @@ export const SHORTCUT_COMMANDS = [
   { id: 'nudgeDown', label: 'Nudge down', category: 'Canvas', defaultBinding: 'Shift+ArrowDown' },
   { id: 'nudgeUp', label: 'Nudge up', category: 'Canvas', defaultBinding: 'Shift+ArrowUp' },
   { id: 'customSubreddit', label: 'Show custom subreddit', category: 'Panels', defaultBinding: 'Insert' },
+  { id: 'fitView', label: 'Fit picture to screen', category: 'Canvas', defaultBinding: 'F' },
+  { id: 'compare', label: 'Show original (toggle)', category: 'Canvas', defaultBinding: 'O' },
+  { id: 'deselect', label: 'Deselect / cancel', category: 'Edit', defaultBinding: 'Escape' },
 ];
 
 const COMMAND_MAP = new Map(SHORTCUT_COMMANDS.map((command) => [command.id, command]));

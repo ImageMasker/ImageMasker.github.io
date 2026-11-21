@@ -1,13 +1,15 @@
 import { IMGUR_UPLOAD_PROXY_CANDIDATES } from './CorsProxy.js';
 
 export class ImgurUploader {
-  constructor(canvasEngine, settings) {
-    this.canvasEngine = canvasEngine;
+  constructor(settings) {
     this.settings = settings;
   }
 
-  async upload(dataUrl) {
-    const { blob, mimeType } = this.dataUrlToBlob(dataUrl);
+  /** Accepts a Blob or a data URL. */
+  async upload(source) {
+    const { blob, mimeType } = source instanceof Blob
+      ? { blob: source, mimeType: source.type || 'image/png' }
+      : this.dataUrlToBlob(source);
     const fileName = `imagemasker-upload.${this.getFileExtension(mimeType)}`;
     const authHeader = this.getAuthorizationHeader();
     const uploadUrl = 'https://api.imgur.com/3/image';

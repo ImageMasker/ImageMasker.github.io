@@ -1,6 +1,10 @@
-import { App } from './App.js';
+import { App } from './app/App.js';
 
-const container = document.getElementById('app');
-const app = new App(container);
+const app = new App(document.getElementById('app'));
 
-app.init();
+app.init().catch((error) => {
+  console.error(error);
+});
+
+// Handy for debugging from the console.
+window.imageMasker = app;

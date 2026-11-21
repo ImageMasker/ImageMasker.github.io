@@ -1,89 +1,59 @@
-# Manual Smoke Test
+# Manual Smoke Test (v3)
 
-This is the lightweight browser checklist for ImageMasker after major feature or refactor work.
+Lightweight browser checklist after larger changes. Serve the repository over HTTP
+(`python -m http.server 8000`), open `http://localhost:8000/` and keep the DevTools console open.
 
-## Setup
+## Shaders
 
-Serve the repository over HTTP:
+1. Open `dev/effect-sheet.html`. No red error text, every tile shows a picture.
 
-```powershell
-python -m http.server 8000
-```
+## Loading
 
-Open:
+1. Load an image by clicking the canvas, by drag and drop, by pasting an image and by pasting / typing an image URL.
+2. With a picture loaded, paste another image: it becomes a layer. Turn off "Paste as new layer" and paste again: it replaces the base picture and the masks stay.
 
-- `http://localhost:8000/`
+## Masks
 
-Keep DevTools open and watch the Console for errors.
+1. Click several effect masks in a row: each click swaps the effect. Shift+click stacks a second one.
+2. Move the sliders, press Shuffle and Reset; undo and redo each.
+3. "Limit to a region", move / resize / rotate the region, change shape, soft edge, magnify, reflect. "Apply to whole picture".
+4. Add a pattern overlay, a classic mask, a flag mask and a custom URL mask. Change opacity, zoom, angle, blend mode, hue, invert, blur, noise, warp, tile.
 
-## Core editor
+## Tools
 
-1. Load an image from local file.
-2. Load an image from an external URL.
-3. Draw with brush, then erase part of the stroke.
-4. Add a preset mask, a flag mask, and a custom mask URL.
-5. Change mask opacity, zoom, angle, hue, invert, blur, noise, and warp.
-6. Add rectangle, text, blur region, and pixelate region layers.
-7. Select, move, resize, rotate, duplicate, and delete each layer type.
-8. Shift-click multiple layers, move them together, then undo and redo.
-9. Use `Crop / Resize` to crop inward, then expand the canvas outward on at least one edge. Confirm the background and all layers keep their relative placement, undo/redo works, and exporting matches the visible result.
+1. Brush with each brush type, then erase part of a stroke.
+2. Effect brush (G and X), then erase part of the painted area with the painted layer selected.
+3. Region tool with rectangle, ellipse and freehand.
+4. Rectangle and text. Double-click the text and edit it in place; try multiline, font, alignment, bold, italic, outline and shadow.
+5. Select, move, resize, rotate, duplicate and delete each layer type. Shift+click several layers and move them together.
+6. Crop inward, then extend the canvas past one edge. Undo/redo both. The export must match what is shown.
 
-## Text and layers
+## Layers
 
-1. Add text and edit it in place.
-2. Test multiline text.
-3. Change font, alignment, bold, italic, outline, and shadow.
-4. Rename a layer in the layer panel.
-5. Hide, lock, reorder, and delete layers from the layer panel.
+1. Rename (double-click), hide, lock, reorder (buttons and drag) and delete layers.
 
 ## Viewport and export
 
-1. Zoom with mouse wheel.
-2. Pan with middle mouse and with `Space` + drag.
-3. Use `Fit` and `100%`.
-4. Export as:
-   - `Original PNG`
-   - `Editor PNG`
-   - `Web JPEG`
-   - `Original JPEG`
-5. Confirm download, copy to clipboard, and Imgur upload all match the visible editor result.
+1. Mouse wheel zoom, Space+drag and middle-mouse pan, Fit, 100%, hold Original.
+2. Export each preset. Download, copy to clipboard and Imgur upload must match the editor.
 
-## Sessions and saved rounds
+## Sharing
 
-1. Save a session.
-2. Reload and restore autosave.
-3. Export session JSON and import it back.
-4. Save a round from the editor.
-5. Save a round from URL.
-6. Open saved rounds, navigate left/right, update title/answer, and delete one.
+1. Upload, Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.
+2. Saved rounds: browse with the arrows and the left/right keys, update, delete, save from URL.
 
-## Shortcuts
+## Sessions and settings
 
-1. `Ctrl+Z` / `Ctrl+Y`
-2. `Delete`
-3. `W` / `S`
-4. Arrow keys
-5. `Shift+Arrow`
-6. `Insert`
-
-Also verify shortcuts do not fire while typing inside a text input or textarea.
+1. Reload with work open: the restore banner appears and Restore brings everything back, local pictures included.
+2. Save, load, duplicate and delete a named session. Export the session JSON and import it again.
+3. Switch between the built-in themes, import and delete a JSON theme.
+4. Remap a shortcut and reset it. Shortcuts must not fire while typing in a field.
 
 ## Mobile / compact layout
 
-1. Switch DevTools to a narrow mobile viewport.
-2. Confirm the top area shows chrome controls and the canvas before the control panels.
-3. Confirm the sticky mobile tab bar stays reachable while scrolling.
-4. Confirm the `Output`, `Tools`, `Layers`, and `Masks` tabs each show only their intended content.
-5. Confirm the pre-load `Output` tab exposes the image URL input and paste mode toggle before an image is loaded.
-6. Confirm touch selection handles and layer controls are large enough to use.
-7. Confirm the mobile RIS input remains usable from the `Output` tab.
-8. Rotate the viewport after loading an image and confirm the canvas resizes without losing the current zoom.
+1. Narrow the window below 820px: picture on top, tool strip, one panel at a time, tab bar at the bottom.
+2. Pinch zoom and two-finger pan on a touch device.
 
-## Session restore limitation
+## Previous version
 
-Load a local file, create edits, and reload.
-
-Expected result:
-
-- the app reports that the autosave exists
-- the autosave cannot be restored automatically because the original local image is unavailable
+1. `old/v2/` still loads and works.

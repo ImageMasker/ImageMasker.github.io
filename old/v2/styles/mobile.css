@@ -1,0 +1,345 @@
+@media screen and (max-width: 820px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #app {
+    overflow: hidden;
+  }
+
+  .app-root {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding:
+      calc(10px + env(safe-area-inset-top, 0px))
+      10px
+      calc(10px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+  }
+
+  #container.app-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #toolsDiv,
+  #masksDiv {
+    display: none;
+  }
+
+  .mobile-topbar {
+    display: block;
+    flex: 0 0 auto;
+  }
+
+  .chrome-controls {
+    margin-bottom: 0;
+  }
+
+  #preview {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .canvas-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 14px;
+  }
+
+  #canvasDiv {
+    min-height: 0;
+    height: 100%;
+    border-radius: 14px;
+  }
+
+  .drop-overlay {
+    padding: 24px 18px;
+    text-align: center;
+  }
+
+  .mobile-bottom-shell {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    flex: 0 0 auto;
+    min-height: 200px;
+    max-height: 50%;
+    overflow: hidden;
+  }
+
+  .mobile-panel-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg-panel) 92%, white 8%);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .mobile-panel-button {
+    border: none;
+    min-height: 44px;
+    border-radius: 10px;
+    padding: 0 8px;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .mobile-panel-button.is-active {
+    background: var(--bg-slider-thumb);
+    color: var(--text-button);
+  }
+
+  .mobile-panel-group {
+    display: none;
+    min-height: 0;
+    overflow: auto;
+    padding-top: 10px;
+    padding-bottom: 4px;
+  }
+
+  .mobile-panel-group > * {
+    width: 100%;
+  }
+
+  .app-root[data-layout-mode='mobile'][data-mobile-panel='output'] .mobile-panel-group[data-mobile-group='output'],
+  .app-root[data-layout-mode='mobile'][data-mobile-panel='tools'] .mobile-panel-group[data-mobile-group='tools'],
+  .app-root[data-layout-mode='mobile'][data-mobile-panel='layers'] .mobile-panel-group[data-mobile-group='layers'],
+  .app-root[data-layout-mode='mobile'][data-mobile-panel='masks'] .mobile-panel-group[data-mobile-group='masks'] {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+  }
+
+  .app-root[data-layout-mode='mobile'] #mobilePaste,
+  .app-root[data-layout-mode='mobile'] #mobileRIS {
+    display: block;
+  }
+
+  .app-root[data-layout-mode='mobile'] .action-bar.is-preload .action-group--share,
+  .app-root[data-layout-mode='mobile'] .action-bar.is-preload .action-group--export,
+  .app-root[data-layout-mode='mobile'] .action-bar.is-preload .action-group--view {
+    display: none;
+  }
+
+  #tools,
+  #masks,
+  #layerPanel,
+  #backgroundRemovalPanel,
+  #aiEditPanel,
+  .action-group,
+  #savedRounds,
+  #saveExternalURL,
+  .delete-confirm {
+    font-size: 1rem;
+  }
+
+  #tools,
+  #masks,
+  #layerPanel,
+  #backgroundRemovalPanel,
+  #aiEditPanel {
+    margin-bottom: 0;
+  }
+
+  .tool-section {
+    border-radius: 12px;
+  }
+
+  .tool-section-summary {
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
+
+  .tool-section-body {
+    padding: 0 12px 12px;
+  }
+
+  .tool-button-cluster .app-button,
+  .action-group-controls .app-button,
+  .mobile-panel-button,
+  .layer-icon-button,
+  #displayRounds,
+  #saveFromURL,
+  #left,
+  #right,
+  #settingsButton,
+  #github {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .layer-icon-button,
+  #left,
+  #right,
+  #github {
+    width: 44px;
+    height: 44px;
+  }
+
+  #settingsButton {
+    min-width: 112px;
+  }
+
+  #tools button,
+  #preview button,
+  #masks button,
+  #layerPanel button {
+    font-size: 16px;
+  }
+
+  #tools input,
+  #preview input,
+  #masks input,
+  #tools select,
+  #preview select,
+  #masks select,
+  #aiEditPanel textarea,
+  #layerPanel input {
+    font-size: 16px;
+  }
+
+  #tools input:not([type='color']):not([type='range']),
+  #preview input:not([type='color']):not([type='range']),
+  #masks input:not([type='color']):not([type='range']),
+  #tools select,
+  #preview select,
+  #masks select,
+  #aiEditPanel textarea,
+  #layerPanel input:not([type='range']) {
+    min-height: 44px;
+  }
+
+  #tools .field-controls,
+  .action-group-controls,
+  .share-token-controls,
+  .layer-setting-controls,
+  .mask-custom-row,
+  .ai-edit-actions {
+    align-items: stretch;
+  }
+
+  .action-group-controls,
+  .share-token-controls,
+  .mask-custom-row,
+  .ai-edit-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .action-group-controls--view {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .field-controls > *,
+  .action-group-controls > *,
+  .share-token-controls > *,
+  .mask-custom-row > * {
+    min-width: 0;
+  }
+
+  .action-group-controls input,
+  .action-group-controls select,
+  .share-token-controls input,
+  .mask-custom-row input,
+  .mask-custom-row button,
+  .ai-edit-actions .app-button,
+  #mobilePaste input,
+  #mobileRIS input {
+    width: 100%;
+  }
+
+  .tool-button-cluster .app-button,
+  .action-group-controls .app-button {
+    flex: 1 1 100%;
+  }
+
+  .sliders,
+  #tools .sliders,
+  .layer-opacity-slider,
+  .layer-mask-slider,
+  #exportQuality {
+    width: 100% !important;
+  }
+
+  .sliders {
+    height: 36px;
+  }
+
+  .layer-row {
+    grid-template-columns: 1fr;
+  }
+
+  .layer-preview,
+  .layer-row-content,
+  .layer-row-header,
+  .layer-row-main,
+  .layer-row-actions {
+    width: 100%;
+  }
+
+  .layer-row-actions {
+    grid-template-columns: repeat(auto-fit, minmax(44px, 44px));
+    gap: 8px;
+  }
+
+  .layer-setting-header,
+  .layer-opacity-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .saved-rounds-shell {
+    margin-top: 0;
+  }
+
+  #savedRounds,
+  #saveExternalURL {
+    gap: 8px;
+  }
+
+  #displayedImage {
+    max-width: 100%;
+    max-height: 22vh;
+  }
+
+  .saved-rounds-empty-state,
+  .delete-confirm {
+    width: 100%;
+  }
+
+  .settings-modal-overlay {
+    align-items: flex-start;
+    padding:
+      calc(12px + env(safe-area-inset-top, 0px))
+      12px
+      calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .settings-modal {
+    width: 100%;
+    max-height: none;
+    min-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}

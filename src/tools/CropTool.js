@@ -1,260 +1,190 @@
-const { Graphics, Container } = PIXI;
+// Crop or extend the canvas. The frame may reach outside the picture to add empty space.
 
-const MIN_CROP_SIZE = 16;
+import { resizeCanvas } from '../core/model.js';
+import { svg } from '../view/Stage.js';
+
+const MIN_SIZE = 16;
+const EDGES = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
+const CURSORS = { nw: 'nwse-resize', se: 'nwse-resize', ne: 'nesw-resize', sw: 'nesw-resize', n: 'ns-resize', s: 'ns-resize', w: 'ew-resize', e: 'ew-resize' };
 
 export class CropTool {
-  constructor(canvasEngine, eventBus) {
-    this.canvasEngine = canvasEngine;
-    this.eventBus = eventBus;
-    this.overlayContainer = new Container();
-    this.overlayContainer.visible = false;
-    this.canvasEngine.overlayContainer.addChild(this.overlayContainer);
-    this.cropRect = null;
-    this.dragState = null;
-    this.handleRadius = this.getHandleRadius();
-    this.handles = [];
-
-    this.eventBus.on('viewport:changed', () => {
-      if (this.overlayContainer.visible) {
-        this.renderOverlay();
-      }
-    });
-
-    this.eventBus.on('canvas:resized', () => {
-      if (this.overlayContainer.visible) {
-        this.ensureMinimumCropRect();
-        this.renderOverlay();
-      }
-    });
+  constructor(app) {
+    this.app = app;
+    this.cursor = 'crosshair';
+    this.rect = null;
+    this.drag = null;
+    this.group = svg('g', { class: 'crop-overlay' });
+    app.stage.overlay.append(this.group);
+    app.bus.on('view', () => this.redraw());
   }
 
   activate() {
-    this.canvasEngine.app.canvas.style.cursor = 'crosshair';
+    const doc = this.app.store.doc;
 
-    if (!this.cropRect) {
-      this.resetCropRect();
-    }
-
-    this.renderOverlay();
+    this.rect = { x: 0, y: 0, width: doc.width, height: doc.height };
+    this.redraw();
+    this.app.bus.emit('crop-changed', this.rect);
   }
 
   deactivate() {
-    this.dragState = null;
-    this.overlayContainer.visible = false;
+    this.rect = null;
+    this.drag = null;
+    this.group.replaceChildren();
   }
 
-  onPointerDown(event) {
-    if (!this.cropRect) {
-      this.resetCropRect();
-    }
+  setRect(rect) {
+    const limit = this.app.assets.maxSize;
 
-    const handle = this.findHandleAt(event);
-
-    if (handle) {
-      this.dragState = {
-        kind: 'resize',
-        handle,
-        startRect: { ...this.cropRect },
-      };
-      return;
-    }
-
-    if (this.pointInRect(event.canvasX, event.canvasY, this.cropRect)) {
-      this.dragState = {
-        kind: 'move',
-        offsetX: event.canvasX - this.cropRect.x,
-        offsetY: event.canvasY - this.cropRect.y,
-        startRect: { ...this.cropRect },
-      };
-      return;
-    }
-
-    this.dragState = {
-      kind: 'draw',
-      anchorX: event.canvasX,
-      anchorY: event.canvasY,
+    this.rect = {
+      x: rect.x,
+      y: rect.y,
+      width: Math.max(MIN_SIZE, Math.min(limit, rect.width)),
+      height: Math.max(MIN_SIZE, Math.min(limit, rect.height)),
     };
-    this.cropRect = {
-      x: event.canvasX,
-      y: event.canvasY,
-      width: 1,
-      height: 1,
-    };
-    this.renderOverlay();
+    this.redraw();
+    this.app.bus.emit('crop-changed', this.rect);
   }
 
-  onPointerMove(event) {
-    if (!this.dragState || !this.cropRect) {
-      const handle = this.findHandleAt(event);
-      this.canvasEngine.app.canvas.style.cursor = handle?.cursor ?? (this.pointInRect(event.canvasX, event.canvasY, this.cropRect ?? { x: 0, y: 0, width: 0, height: 0 }) ? 'move' : 'crosshair');
+  /** Sets the frame size from the options bar, keeping it centred. */
+  setSize(width, height) {
+    const rect = this.rect;
+
+    if (!rect || !(width > 0) || !(height > 0)) {
       return;
     }
 
-    if (this.dragState.kind === 'move') {
-      this.cropRect.x = event.canvasX - this.dragState.offsetX;
-      this.cropRect.y = event.canvasY - this.dragState.offsetY;
-      this.ensureMinimumCropRect();
-      this.renderOverlay();
-      return;
-    }
-
-    if (this.dragState.kind === 'draw') {
-      this.cropRect = this.normalizeRect(
-        this.dragState.anchorX,
-        this.dragState.anchorY,
-        event.canvasX,
-        event.canvasY
-      );
-      this.ensureMinimumCropRect();
-      this.renderOverlay();
-      return;
-    }
-
-    const nextRect = { ...this.dragState.startRect };
-    const right = nextRect.x + nextRect.width;
-    const bottom = nextRect.y + nextRect.height;
-
-    if (this.dragState.handle.edge.includes('n')) {
-      nextRect.y = Math.min(event.canvasY, bottom - MIN_CROP_SIZE);
-      nextRect.height = bottom - nextRect.y;
-    }
-
-    if (this.dragState.handle.edge.includes('s')) {
-      nextRect.height = Math.max(MIN_CROP_SIZE, event.canvasY - nextRect.y);
-    }
-
-    if (this.dragState.handle.edge.includes('w')) {
-      nextRect.x = Math.min(event.canvasX, right - MIN_CROP_SIZE);
-      nextRect.width = right - nextRect.x;
-    }
-
-    if (this.dragState.handle.edge.includes('e')) {
-      nextRect.width = Math.max(MIN_CROP_SIZE, event.canvasX - nextRect.x);
-    }
-
-    this.cropRect = nextRect;
-    this.ensureMinimumCropRect();
-    this.renderOverlay();
+    this.setRect({ x: rect.x + (rect.width - width) / 2, y: rect.y + (rect.height - height) / 2, width, height });
   }
 
-  onPointerUp() {
-    this.dragState = null;
-  }
+  handles() {
+    const stage = this.app.stage;
+    const rect = this.rect;
 
-  resetCropRect() {
-    this.cropRect = {
-      x: 0,
-      y: 0,
-      width: Math.max(MIN_CROP_SIZE, this.canvasEngine.canvasWidth),
-      height: Math.max(MIN_CROP_SIZE, this.canvasEngine.canvasHeight),
-    };
-  }
+    return EDGES.map((edge) => {
+      const x = edge.includes('w') ? rect.x : edge.includes('e') ? rect.x + rect.width : rect.x + rect.width / 2;
+      const y = edge.includes('n') ? rect.y : edge.includes('s') ? rect.y + rect.height : rect.y + rect.height / 2;
 
-  getCropRect() {
-    if (!this.cropRect) {
-      return null;
-    }
-
-    return {
-      x: Math.round(this.cropRect.x),
-      y: Math.round(this.cropRect.y),
-      width: Math.max(MIN_CROP_SIZE, Math.round(this.cropRect.width)),
-      height: Math.max(MIN_CROP_SIZE, Math.round(this.cropRect.height)),
-    };
-  }
-
-  renderOverlay() {
-    if (!this.cropRect) {
-      this.overlayContainer.visible = false;
-      return;
-    }
-
-    this.overlayContainer.removeChildren().forEach((child) => child.destroy());
-
-    const rect = this.cropRect;
-    const topLeft = this.canvasEngine.documentToGlobalPoint(rect.x, rect.y);
-    const bottomRight = this.canvasEngine.documentToGlobalPoint(rect.x + rect.width, rect.y + rect.height);
-    const globalRect = {
-      x: topLeft.x,
-      y: topLeft.y,
-      width: Math.max(1, bottomRight.x - topLeft.x),
-      height: Math.max(1, bottomRight.y - topLeft.y),
-    };
-    const screen = new Graphics();
-
-    screen
-      .rect(0, 0, this.canvasEngine.app.renderer.width, this.canvasEngine.app.renderer.height)
-      .fill({ color: 0x111111, alpha: 0.45 });
-    screen
-      .rect(globalRect.x, globalRect.y, globalRect.width, globalRect.height)
-      .cut();
-
-    const border = new Graphics();
-    border.rect(globalRect.x, globalRect.y, globalRect.width, globalRect.height).stroke({
-      color: 0xffa155,
-      width: 2,
+      return { edge, ...stage.toScreen(x, y) };
     });
-
-    this.overlayContainer.addChild(screen);
-    this.overlayContainer.addChild(border);
-    this.handles = this.buildHandles(rect);
-
-    for (const handle of this.handles) {
-      const globalPoint = this.canvasEngine.documentToGlobalPoint(handle.x, handle.y);
-      const graphic = new Graphics();
-      const size = this.handleRadius * 2;
-      graphic.rect(-size / 2, -size / 2, size, size).fill({ color: 0xffa155, alpha: 1 });
-      graphic.position.set(globalPoint.x, globalPoint.y);
-      this.overlayContainer.addChild(graphic);
-    }
-
-    this.overlayContainer.visible = true;
   }
 
-  buildHandles(rect) {
-    return [
-      { x: rect.x, y: rect.y, edge: 'nw', cursor: 'nwse-resize' },
-      { x: rect.x + rect.width / 2, y: rect.y, edge: 'n', cursor: 'ns-resize' },
-      { x: rect.x + rect.width, y: rect.y, edge: 'ne', cursor: 'nesw-resize' },
-      { x: rect.x + rect.width, y: rect.y + rect.height / 2, edge: 'e', cursor: 'ew-resize' },
-      { x: rect.x + rect.width, y: rect.y + rect.height, edge: 'se', cursor: 'nwse-resize' },
-      { x: rect.x + rect.width / 2, y: rect.y + rect.height, edge: 's', cursor: 'ns-resize' },
-      { x: rect.x, y: rect.y + rect.height, edge: 'sw', cursor: 'nesw-resize' },
-      { x: rect.x, y: rect.y + rect.height / 2, edge: 'w', cursor: 'ew-resize' },
-    ];
-  }
+  redraw() {
+    this.group.replaceChildren();
 
-  findHandleAt(event) {
-    return this.handles.find((handle) =>
-      Math.abs(event.canvasX - handle.x) <= this.handleRadius &&
-      Math.abs(event.canvasY - handle.y) <= this.handleRadius
-    ) ?? null;
-  }
-
-  pointInRect(x, y, rect) {
-    return rect && x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
-  }
-
-  normalizeRect(x1, y1, x2, y2) {
-    return {
-      x: Math.min(x1, x2),
-      y: Math.min(y1, y2),
-      width: Math.max(MIN_CROP_SIZE, Math.abs(x2 - x1)),
-      height: Math.max(MIN_CROP_SIZE, Math.abs(y2 - y1)),
-    };
-  }
-
-  ensureMinimumCropRect() {
-    if (!this.cropRect) {
+    if (!this.rect) {
       return;
     }
 
-    this.cropRect.width = Math.max(MIN_CROP_SIZE, this.cropRect.width);
-    this.cropRect.height = Math.max(MIN_CROP_SIZE, this.cropRect.height);
+    const stage = this.app.stage;
+    const a = stage.toScreen(this.rect.x, this.rect.y);
+    const b = stage.toScreen(this.rect.x + this.rect.width, this.rect.y + this.rect.height);
+    const outer = `M0 0H${stage.width}V${stage.height}H0Z`;
+    const inner = `M${a.x} ${a.y}H${b.x}V${b.y}H${a.x}Z`;
+
+    this.group.append(svg('path', { d: `${outer} ${inner}`, 'fill-rule': 'evenodd', class: 'crop-shade' }));
+    this.group.append(svg('rect', { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y, class: 'crop-frame' }));
+
+    for (const handle of this.handles()) {
+      this.group.append(svg('rect', { x: handle.x - 5, y: handle.y - 5, width: 10, height: 10, rx: 2, class: 'selection-handle' }));
+    }
   }
 
-  getHandleRadius() {
-    const isTouch = window.matchMedia?.('(pointer: coarse)')?.matches ?? false;
-    return isTouch ? 10 : 6;
+  hitHandle(event) {
+    const reach = event.pointerType === 'touch' ? 18 : 10;
+
+    return this.handles().find((handle) => Math.hypot(event.sx - handle.x, event.sy - handle.y) <= reach) ?? null;
+  }
+
+  inside(event) {
+    const rect = this.rect;
+
+    return event.x >= rect.x && event.y >= rect.y && event.x <= rect.x + rect.width && event.y <= rect.y + rect.height;
+  }
+
+  onDown(event) {
+    if (!this.rect) {
+      return;
+    }
+
+    const handle = this.hitHandle(event);
+
+    this.drag = handle
+      ? { kind: 'resize', edge: handle.edge, start: { ...this.rect } }
+      : this.inside(event)
+        ? { kind: 'move', dx: event.x - this.rect.x, dy: event.y - this.rect.y }
+        : { kind: 'draw', x: event.x, y: event.y };
+  }
+
+  onMove(event) {
+    const drag = this.drag;
+
+    if (!drag) {
+      return;
+    }
+
+    if (drag.kind === 'move') {
+      this.setRect({ ...this.rect, x: event.x - drag.dx, y: event.y - drag.dy });
+      return;
+    }
+
+    if (drag.kind === 'draw') {
+      this.setRect({
+        x: Math.min(drag.x, event.x),
+        y: Math.min(drag.y, event.y),
+        width: Math.abs(event.x - drag.x),
+        height: Math.abs(event.y - drag.y),
+      });
+      return;
+    }
+
+    const start = drag.start;
+    let left = start.x;
+    let top = start.y;
+    let right = start.x + start.width;
+    let bottom = start.y + start.height;
+
+    if (drag.edge.includes('w')) left = Math.min(event.x, right - MIN_SIZE);
+    if (drag.edge.includes('e')) right = Math.max(event.x, left + MIN_SIZE);
+    if (drag.edge.includes('n')) top = Math.min(event.y, bottom - MIN_SIZE);
+    if (drag.edge.includes('s')) bottom = Math.max(event.y, top + MIN_SIZE);
+
+    this.setRect({ x: left, y: top, width: right - left, height: bottom - top });
+  }
+
+  onUp() {
+    this.drag = null;
+  }
+
+  onCancel() {
+    this.drag = null;
+  }
+
+  onHover(event) {
+    if (!this.rect) {
+      return;
+    }
+
+    const handle = this.hitHandle(event);
+
+    this.app.stage.updateCursor(handle ? CURSORS[handle.edge] : this.inside(event) ? 'move' : 'crosshair');
+  }
+
+  /** Commits the frame as the new canvas. Returns false when nothing would change. */
+  apply() {
+    const { store } = this.app;
+    const doc = store.doc;
+    const rect = {
+      x: Math.round(this.rect.x),
+      y: Math.round(this.rect.y),
+      width: Math.max(1, Math.round(this.rect.width)),
+      height: Math.max(1, Math.round(this.rect.height)),
+    };
+
+    if (rect.x === 0 && rect.y === 0 && rect.width === doc.width && rect.height === doc.height) {
+      return false;
+    }
+
+    store.apply('Resize canvas', (current) => resizeCanvas(current, rect));
+    return true;
   }
 }

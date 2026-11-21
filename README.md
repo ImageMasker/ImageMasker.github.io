@@ -2,11 +2,67 @@
 
 ### Image masker for /r/PictureGame
 
+Version 3 is a rewrite around a small custom WebGL2 engine (no canvas library, no build step). Everything is a non-destructive layer, the preview and the export share one render path, and exports are rendered at the full resolution of your picture.
+
+The previous version is kept, working, at [`old/v2/`](./old/v2/) (Settings → About links to it).
+
+### Loading an image
+
+* Click the canvas and pick a file, or use **Share → Add image**
+* Drag and drop anywhere on the page
+* Paste (CTRL+V) an image or an image URL, or type a URL into the URL box
+
+Once a picture is loaded, pasting adds new images as layers ("Paste as new layer" in **Share → Add image**; turn it off to replace the base picture instead). Replacing the base picture keeps your masks.
+
+### Masks
+
+The **Masks** library on the left has four tabs. Clicking a mask replaces the selected mask so you can browse quickly; Shift+click (or the + on a tile) stacks another one.
+
+* **Effects** – masks that reshape the picture instead of covering it: cut glass, stained glass, reeded glass, glass blocks, rainy window, jigsaw, shuffled tiles, hex mirrors, shattered, woven strips, turning rings, kaleidoscope, liquid warp, halftone, engraving, pointillism, pencil sketch, cross-stitch, glitch, VHS and more. Every effect has its own sliders and (where it makes sense) a **Shuffle** button for a new random arrangement. An effect can cover the whole picture, be limited to a rectangle / ellipse / freehand region, or be painted on with the effect brush.
+* **Overlays** – procedural patterns (lattice, mesh, honeycomb, stripes, zebra, polka dots, seigaiha, truchet, camo, …) with editable colours, plus the nine classic image masks.
+* **Flags** – the searchable flag masks.
+* **Custom** – your own mask URLs (saved in the browser) or a local image file.
+
+Overlay masks are slightly rotated and skewed when added so they are harder to subtract, and have opacity, zoom, angle, blend mode, hue, invert, blur, noise and warp controls.
+
+The little bar on each effect tile is a rough guide to how hard it scrambles the picture. **No mask is guaranteed to beat reverse image search** – always use *Check RIS* before posting.
+
+### Tools
+
+Move/select (resize and rotate with the handles, Shift+click for multi-select), brush (smooth, marker, dotted, spray), eraser, effect brush, effect region, rectangle, text (double-click to edit in place; font, alignment, bold/italic, outline, shadow) and crop/resize canvas (drag the frame past the edge to add space).
+
+Mouse wheel zooms, Space+drag or middle mouse pans. Hold **Original** in the header to see the picture without masks.
+
+### Sharing
+
+The **Share** tab holds the export settings (Original PNG, Editor PNG, Web JPEG, Original JPEG), copy to clipboard, download and **Upload to Imgur**. After an upload you get the image URL, *Copy*, *Check RIS* (opens Yandex, TinEye, Google Lens, Google and Bing – allow popups), round title / answer, *Submit to /r/PictureGame*, *Save round* and *Copy YML*. Saved rounds are listed at the bottom of the tab.
+
+**Settings** has saved sessions (stored in the browser, pictures included, with autosave and JSON export/import), themes (the built-in ones plus JSON themes) and remappable keyboard shortcuts. The **AI** tab has background removal and prompt-based AI edits.
+
+### Keyboard shortcuts (defaults, all remappable)
+
+* CTRL+Z / CTRL+Y: undo / redo
+* V, B, E: move, brush, eraser. G / X: effect brush (blur / pixelate). A: region. R: rectangle. T: text. C: crop
+* D: duplicate. Delete: delete selection
+* W / S: brush size up / down
+* Up / down: opacity of the selection (or of the top layer)
+* Left / right: rotate the selection; browse saved rounds while they are open
+* Shift+arrows: nudge the selection
+* F: fit to screen. O: toggle original. Escape: deselect
+* Insert: change the subreddit the round is submitted to
+
+### Adding an imgur token
+If you want your uploads to have a higher quality and a higher size limit you can put an imgur token (Share → Imgur access token).
+- go to https://api.imgur.com/oauth2/addclient
+- create an application and copy the client id
+- then go to https://api.imgur.com/oauth2/authorize?client_id=CLIENT_ID&response_type=token and put your client id in that url
+- authorize your own app to upload images
+- it will redirect you to a page with this url https://imgur.com/#access_token=tokenhere
+- copy the token and put it in the masker
+
 ### Local development
 
-The current app uses native ES modules, so it must be served over HTTP for local development. Opening the site with `file://` will not work correctly. GitHub Pages is unaffected because it already serves the site over HTTPS.
-
-Run any simple static server from the repo root, for example:
+The app uses native ES modules, so it must be served over HTTP (opening `index.html` from disk will not work):
 
 ```bash
 python -m http.server 8000
@@ -14,54 +70,10 @@ python -m http.server 8000
 npx serve .
 ```
 
-Then open `http://localhost:8000`.
+Then open `http://localhost:8000`. There is nothing to build or install.
 
-For a manual browser verification checklist after larger changes, use [`docs/manual-smoke-test.md`](./docs/manual-smoke-test.md).
+* `dev/effect-sheet.html` renders every effect and pattern on one page and lists shader compile errors. Open it after touching `src/gl/effects.js` or `src/gl/patterns.js` (`?img=URL`, `?only=id,id` and `?size=480` are supported).
+* [`docs/manual-smoke-test.md`](./docs/manual-smoke-test.md) is a browser checklist for larger changes.
+* [`docs/architecture.md`](./docs/architecture.md) explains how the pieces fit together and how to add an effect.
 
-Optional development assertions can be enabled with `?devAsserts=1` in the URL or by setting `localStorage['imagemasker.dev.asserts'] = '1'` in DevTools.
-
-ImageMasker can load images in different ways:
-* Clicking a button and selecting a file
-* Drag and drop anywhere in the screen
-* Paste the image directly (CTRL+V): you can paste an image from your clipboard (like a screenshot) or a URL
-
-Once the image is loaded, it will be displayed on a canvas. You can doodle on the canvas and add masks.
-Masks are slightly rotated and distorted to prevent other people from demasking them easily.
-There are a few default masks that you can choose, but you can also add your own masks and they will be saved in the browser.
-You can set the opacity of the mask and change its zoom. You can also change the color and size of the brush.
-If you want to change the image you don't need to reload, just paste a different image and it will replace the old image.
-
-After you're done masking, everything's ready to upload the final image! Press "Upload to Imgur" and the image will be uploaded. The upload button will disappear and you will see these new options in the menu:
-* Text input with the Imgur URL for the image
-* "Copy" button that will copy the link to your clipboard.
-* "Check RIS" button: It will open 4 new tabs to check reverse image search on Yandex, Tineye, Google and Bing. Make sure that your browser doesn't block the popups. If they were blocked you'll see an alert.
-* "Round title" and "Round Answer" text inputs. These are optional, they will be used for the "Save round" and "Submit" features.
-* "Submit to /r/PictureGame" button: This button will call the picturega.me API to get the round number and create a link with the round submission. A new tab will be opened, and if you're approved to post on /r/PictureGame you'll see that the URL for the image and the round title (if you set a title) will be already filled in, so all you need to do is submit the post!
-* "Save Round" button: this button will save the image link, the title and the answer to the localstorage of your browser. Saved rounds will be available through the main screen of the site. Just press "saved rounds" and you will see your rounds ready to be submitted to /r/PictureGame.
-* "Copy to clipboard": Copies the image currently displayed on the canvas to your clipboard. Sadly it doesn't work in Firefox yet.
-* "Download": Downloads the image to your PC.
-
-The site also has a dark/light theme switch on the top right, your choice will be saved in the localstorage of your browser.
-
-
-#### Possible issues:
-* On displays that aren't 16:9 (like mobile devices or 4:3 monitors) there might be problems with the layout of the site (I tried to fix it but looks like each phone and browser might display it differently, so I'm not sure if there's a consistent solution).
-
-#### Extra feature: Keyboard shortcuts
-These keyboard shortcuts are features that weren't important enough to get a UI element, but can still be useful for some people. I didn't want to clutter the site with more tools for stuff that most people won't use. These key listeners shouldn't slow down the site since the events are only triggered when the key is pressed.
-* CTRL+Z: Undo (same as the button)
-* SHIFT: Disable drawing mode so elements can be selected, resized and dragged. When SHIFT is pressed again drawing mode is turned back on.
-* Up/down arrow keys: Change the opacity of the last element added to the canvas, or the element(s) you selected.
-* Backslash: Clone selected object(s) (or last object added). This can be useful if you need to set a double mask (but it's better if you choose a different image).
-* Left/right arrow keys: Rotate the mask. If you're viewing your saved rounds you can use left/right to browse them too.
-* Insert: Edit default subreddit to which your image will be submitted (useful in case you want to save your rounds on a private subreddit).
-* W/S: Increase/decrease brush size
-
-### Adding an imgur token
-If you want your uploads to have a higher quality and a higher size limit you can put an imgur token. 
-- go to https://api.imgur.com/oauth2/addclient
-- create an application and copy the client id
-- then go to https://api.imgur.com/oauth2/authorize?client_id=CLIENT_ID&response_type=token and put your client id in that url
-- authorize your own app to upload images
-- it will redirect you to a page with this url https://imgur.com/#access_token=tokenhere
-- copy the token and put it in the masker
+WebGL2 is required (every current desktop and mobile browser has it).

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ImageMasker effect sheet</title>
+<style>
+  body { margin: 12px; font: 12px Arial, sans-serif; background: #f0ece4; color: #333; }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  figure { margin: 0; background: #f7e5cd; border-radius: 8px; padding: 6px; }
+  figure canvas { width: 100%; display: block; border-radius: 4px; }
+  figcaption { padding-top: 4px; font-weight: 700; }
+  #errors { color: #b00020; white-space: pre-wrap; font-family: monospace; }
+</style>
+</head>
+<body>
+<p>Every effect and pattern rendered with default settings. Options: <code>?img=URL</code>, <code>?only=id,id</code>, <code>?size=480</code>.</p>
+<pre id="errors"></pre>
+<div id="grid"></div>
+<script type="module">
+import { AssetStore } from '../src/core/AssetStore.js';
+import { Compositor } from '../src/gl/Compositor.js';
+import { EFFECTS, defaultParams } from '../src/gl/effects.js';
+import { GL } from '../src/gl/GL.js';
+import { PATTERNS } from '../src/gl/patterns.js';
+import { createSampleScene } from '../src/utils/sampleScene.js';
+import { loadImageElement } from '../src/utils/image.js';
+
+const query = new URLSearchParams(location.search);
+const size = Number(query.get('size')) || 360;
+const only = query.get('only')?.split(',');
+const errors = [];
+const glx = new GL(document.createElement('canvas'));
+const compositor = new Compositor(glx, new AssetStore());
+let picture = createSampleScene(size, Math.round(size * 0.68));
+
+if (query.get('img')) {
+  const image = await loadImageElement(query.get('img'));
+  const scale = size / Math.max(image.naturalWidth, image.naturalHeight);
+  picture = document.createElement('canvas');
+  picture.width = Math.round(image.naturalWidth * scale);
+  picture.height = Math.round(image.naturalHeight * scale);
+  picture.getContext('2d').drawImage(image, 0, 0, picture.width, picture.height);
+}
+
+const source = compositor.targetFromSource(picture, picture.width, picture.height);
+const grid = document.getElementById('grid');
+const add = (label, render) => {
+  const figure = document.createElement('figure');
+  const canvas = document.createElement('canvas');
+  canvas.width = picture.width;
+  canvas.height = picture.height;
+  try {
+    canvas.getContext('2d').putImageData(render(), 0, 0);
+  } catch (error) {
+    errors.push(`${label}: ${error.message}`);
+  }
+  const caption = document.createElement('figcaption');
+  caption.textContent = label;
+  figure.append(canvas, caption);
+  grid.append(figure);
+};
+
+add('original', () => compositor.readStraight(source));
+for (const effect of EFFECTS) {
+  if (!only || only.includes(effect.id)) {
+    add(`${effect.cat} / ${effect.id}`, () => compositor.effectPreview(effect, defaultParams(effect), 12.5, source));
+  }
+}
+for (const pattern of PATTERNS) {
+  if (!only || only.includes(pattern.id)) {
+    add(`pattern / ${pattern.id}`, () => compositor.patternPreview(pattern, defaultParams(pattern), 12.5, source));
+  }
+}
+document.getElementById('errors').textContent = errors.join('\n\n');
+window.__sheet = { errors, count: grid.children.length, glError: glx.gl.getError() };
+</script>
+</body>
+</html>
