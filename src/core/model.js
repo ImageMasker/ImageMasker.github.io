@@ -202,8 +202,15 @@ export function isBoxLayer(layer) {
   return true;
 }
 
+/** Collage piece a layer is limited to: `layer.clip = { piece, points }`, flat document pixels. */
+export function clipContains(layer, x, y) {
+  const points = layer.clip?.points;
+
+  return !(points?.length >= 6) || pointInPolygon(x, y, points);
+}
+
 export function hitLayer(layer, x, y) {
-  if (!isBoxLayer(layer)) {
+  if (!isBoxLayer(layer) || !clipContains(layer, x, y)) {
     return false;
   }
 
@@ -315,6 +322,21 @@ function shiftStrokes(strokes, dx, dy) {
   }));
 }
 
+function shiftClip(layer, rect) {
+  const shift = (points) => points.map((value, index) => value - (index % 2 === 0 ? rect.x : rect.y));
+  const patch = {};
+
+  if (layer.clip?.points) {
+    patch.clip = { ...layer.clip, points: shift(layer.clip.points) };
+  }
+
+  if (Array.isArray(layer.cells)) {
+    patch.cells = layer.cells.map((cell) => ({ ...cell, points: shift(cell.points) }));
+  }
+
+  return patch;
+}
+
 /** Crops or extends the canvas to `rect` (document pixels), keeping every layer in place. */
 export function resizeCanvas(doc, rect) {
   const next = createDoc(rect.width, rect.height);
@@ -328,10 +350,11 @@ export function resizeCanvas(doc, rect) {
         y: next.height / 2,
         w: next.width,
         h: next.height,
+        ...shiftClip(layer, rect),
       };
     }
 
-    return { ...layer, x: layer.x - rect.x, y: layer.y - rect.y };
+    return { ...layer, x: layer.x - rect.x, y: layer.y - rect.y, ...shiftClip(layer, rect) };
   });
 
   return next;

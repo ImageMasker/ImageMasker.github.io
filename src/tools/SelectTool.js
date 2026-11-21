@@ -29,6 +29,33 @@ export class SelectTool {
     app.bus.on('view', redraw);
     app.store.on('doc', redraw);
     app.store.on('selection', redraw);
+    app.bus.on('collage-target', redraw);
+  }
+
+  /** Outlines the collage piece the selected layer is limited to, or the one new masks go to. */
+  drawPiece() {
+    const { app } = this;
+    const cells = app.collageCells();
+    const layer = app.store.selectedLayer;
+    const piece = layer ? layer.clip?.piece : app.activeCollageTarget();
+    const cell = cells && piece !== null && piece !== undefined ? cells[piece] : null;
+
+    if (!cell) {
+      return;
+    }
+
+    const screen = [];
+
+    for (let index = 0; index < cell.points.length; index += 2) {
+      screen.push(app.stage.toScreen(cell.points[index], cell.points[index + 1]));
+    }
+
+    const points = screen.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ');
+    const corner = app.stage.toScreen(cell.rect.x, cell.rect.y);
+    const text = svg('text', { x: corner.x + 10, y: corner.y + 22, class: 'piece-label' });
+
+    text.textContent = layer ? `Picture ${piece + 1}` : `New masks → picture ${piece + 1}`;
+    this.group.append(svg('polygon', { points, class: 'piece-outline piece-outline--back' }), svg('polygon', { points, class: 'piece-outline' }), text);
   }
 
   activate() {
@@ -89,6 +116,8 @@ export class SelectTool {
     if (!this.active || !store.hasImage || this.app.textEditor?.layerId) {
       return;
     }
+
+    this.drawPiece();
 
     for (const layer of store.selectedLayers) {
       if (!isBoxLayer(layer) || !layer.visible) {

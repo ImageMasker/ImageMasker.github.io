@@ -52,6 +52,7 @@ export class Inspector {
     app.store.on('selection', update);
     app.bus.on('tool', update);
     app.bus.on('crop-changed', update);
+    app.bus.on('collage-target', update);
     this.update();
   }
 
@@ -62,6 +63,7 @@ export class Inspector {
     return [
       store.hasImage,
       this.app.toolName,
+      this.app.collageCells()?.length ?? 0,
       ...layers.map((layer) => [layer.id, layer.type, layer.effectId, layer.coverage, layer.source, layer.patternId, layer.base].join(':')),
     ].join('|');
   }
@@ -102,7 +104,11 @@ export class Inspector {
     const layers = store.selectedLayers;
 
     if (layers.length === 1) {
-      parts.push(...this.layerSections(layers[0]));
+      const sections = this.layerSections(layers[0]);
+
+      // The collage piece goes right under the layer's main settings.
+      sections.splice(1, 0, ...this.pieceSection(layers[0]));
+      parts.push(...sections);
     } else if (layers.length > 1) {
       parts.push(
         section(`${layers.length} layers selected`, [
@@ -115,11 +121,93 @@ export class Inspector {
     } else if (!toolPart) {
       parts.push(
         el('div', { className: 'panel-empty-state', textContent: 'Nothing selected. Click a layer on the canvas or in the list to edit it.' }),
+        ...this.collageTargetSection(),
         section('Picture', [this.backgroundRemovalRow(null)], { open: true })
       );
     }
 
     this.body.replaceChildren(...parts);
+  }
+
+  // ── collage pieces ────────────────────────────────────────────────────────
+
+  pieceOptions(cells) {
+    return [{ value: 'all', label: 'Whole collage' }, ...cells.map((_, index) => ({ value: String(index), label: `Picture ${index + 1}` }))];
+  }
+
+  /** Which collage piece the selected layer covers. */
+  pieceSection(layer) {
+    const app = this.app;
+    const cells = app.collageCells();
+
+    if (!cells || layer.base) {
+      return [];
+    }
+
+    const read = (entry) => (entry?.clip ? String(entry.clip.piece) : 'all');
+    const control = select({
+      label: 'Show on',
+      options: this.pieceOptions(cells),
+      value: read(layer),
+      onChange: (value) => app.setLayerPiece(layer.id, value === 'all' ? null : Number(value)),
+    });
+    const reroll = button('Random mask for this picture', {
+      iconName: 'dice',
+      title: 'Replace the random masks of this picture only',
+      onClick: () => {
+        const piece = app.store.layer(layer.id)?.clip?.piece;
+
+        if (piece !== undefined) {
+          void app.randomizeMasks({ piece });
+        }
+      },
+    });
+    const sync = () => {
+      const entry = app.store.layer(layer.id);
+
+      control.set(read(entry));
+      reroll.classList.toggle('hidden', !entry?.clip);
+    };
+
+    this.bindings.push(sync);
+    sync();
+    return [section('Collage piece', [control.element, row([reroll], 'button-row--fill')])];
+  }
+
+  /** Nothing selected on a collage: where new masks go. */
+  collageTargetSection() {
+    const app = this.app;
+    const cells = app.collageCells();
+
+    if (!cells) {
+      return [];
+    }
+
+    const read = () => (app.activeCollageTarget() === null ? 'all' : String(app.activeCollageTarget()));
+    const control = select({
+      label: 'Add masks to',
+      options: this.pieceOptions(cells),
+      value: read(),
+      onChange: (value) => app.setCollageTarget(value === 'all' ? null : Number(value), { quiet: true }),
+    });
+    const random = button('Random mask', { iconName: 'dice', onClick: () => void app.randomizeMasks() });
+    const label = random.querySelector('span:last-child');
+    const sync = () => {
+      const target = app.activeCollageTarget();
+
+      control.set(read());
+      label.textContent = target === null ? 'Random mask for every picture' : `Random mask for picture ${target + 1}`;
+    };
+
+    this.bindings.push(sync);
+    sync();
+    return [
+      section('Collage', [
+        control.element,
+        row([random], 'button-row--fill'),
+        el('p', { className: 'panel-intro-copy', textContent: 'Masks from the library, Random mask and its reroll go on the chosen picture. Right-click a picture for the same options; a selected layer can be moved to another picture under Collage piece.' }),
+      ], { open: true }),
+    ];
   }
 
   // ── binding helpers ───────────────────────────────────────────────────────

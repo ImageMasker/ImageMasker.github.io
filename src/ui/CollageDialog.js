@@ -116,7 +116,7 @@ export class CollageDialog {
   render() {
     const refs = this.refs;
 
-    refs.canvas = el('canvas', { className: 'collage-canvas', 'aria-label': 'Collage preview. Click a piece to choose its picture, drag to move the picture, scroll to zoom.' });
+    refs.canvas = el('canvas', { className: 'collage-canvas', 'aria-label': 'Collage preview. Click a piece to select it, drag a picture onto another piece to swap them, drag inside a piece to move the picture, scroll to zoom.' });
     refs.fileInput = el('input', { type: 'file', accept: 'image/*', multiple: '', className: 'visually-hidden', 'aria-label': 'Choose pictures' });
     refs.fileInput.addEventListener('change', () => {
       const files = [...(refs.fileInput.files ?? [])];
@@ -211,6 +211,8 @@ export class CollageDialog {
       value: this.app.getRandomSettings().level,
       onChange: (value) => this.app.setRandomSettings({ level: value }),
     });
+    refs.strip = el('div', { className: 'collage-strip', role: 'list', 'aria-label': 'Pictures in order. Drag one onto another to swap them.' });
+    refs.shuffle = button('Shuffle', { iconName: 'shuffle', title: 'Put the pictures in random pieces', onClick: () => this.shufflePictures() });
     refs.status = el('p', { className: 'panel-intro-copy' });
     refs.create = button('Create collage', { iconName: 'sparkle', className: 'app-button--primary', onClick: () => this.create() });
 
@@ -227,6 +229,7 @@ export class CollageDialog {
         el('div', { className: 'collage-side stack' }, [
           group('Layout', [refs.presets, refs.randomCuts]),
           group('Frame', [refs.aspect.element, refs.gap.element, el('label', { className: 'field field--inline' }, [el('span', { className: 'field-label', textContent: 'Gap colour' }), refs.background])]),
+          group('Pictures', [refs.strip, row([refs.shuffle], 'button-row--fill')]),
           group('Selected piece', [refs.pieceLabel, row([refs.choose, refs.remove], 'button-row--fill'), refs.url, refs.zoom.element]),
           group('Masks', [
             el('label', { className: 'rounds-toggle' }, [refs.maskToggle, el('span', { textContent: 'Give each picture its own random mask' })]),
@@ -263,11 +266,11 @@ export class CollageDialog {
     this.mode = mode;
     this.refs.arrange.classList.toggle('is-active', mode === 'arrange');
     this.refs.cut.classList.toggle('is-active', mode === 'cut');
-    this.refs.canvas.style.cursor = mode === 'cut' ? 'crosshair' : 'pointer';
+    this.refs.canvas.style.cursor = mode === 'cut' ? 'crosshair' : 'grab';
     this.refs.hint.textContent =
       mode === 'cut'
         ? 'Drag a line through the pieces you want to split. A long line slices right across; a short one only splits the piece it is drawn on.'
-        : 'Click a piece to choose its picture (or drop / paste one). Drag to move a picture inside its piece, scroll to zoom.';
+        : 'Drag a picture onto another piece to swap them (or into an empty one to move it). Drag inside a piece to reposition, scroll to zoom. Add pictures with Choose…, or drop / paste them.';
     this.draw();
   }
 
@@ -290,7 +293,11 @@ export class CollageDialog {
     const filled = this.slots.filter(Boolean).length;
     const empty = this.pieces.length - filled;
 
-    refs.pieceLabel.textContent = `Piece ${this.selected + 1} of ${this.pieces.length}${slot ? ` · ${slot.name || 'picture'}` : ' · empty'}`;
+    const number = this.pictureNumbers()[this.selected];
+
+    refs.pieceLabel.textContent = slot ? `Picture ${number}${slot.name ? ` · ${slot.name}` : ''}` : `Empty piece (${this.selected + 1} of ${this.pieces.length})`;
+    refs.shuffle.disabled = filled < 2;
+    this.renderStrip();
     refs.zoom.set(slot?.zoom ?? 1);
     refs.zoom.element.classList.toggle('hidden', !slot);
     refs.remove.disabled = !slot;
@@ -330,15 +337,42 @@ export class CollageDialog {
 
     drawCollage(ctx, { width, height, pieces: this.pieces, slots: this.slots, background: this.background, scale: s, emptyFill: 'rgba(127, 127, 127, 0.28)' });
 
+    const numbers = this.pictureNumbers();
+    const swapTo = this.panDrag?.swapTo ?? -1;
+
     this.pieces.forEach(({ polygon, raw }, index) => {
       const centre = centroid(polygon ?? raw);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
 
       if (!this.slots[index]) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
         ctx.font = `${Math.round(13 * ratio)}px system-ui, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`+ Picture ${index + 1}`, centre.x * s, centre.y * s);
+        ctx.fillText('Empty', centre.x * s, centre.y * s);
+      } else if (numbers[index]) {
+        // Same numbers as the editor's "Picture N" layers.
+        const radius = 11 * ratio;
+
+        ctx.beginPath();
+        ctx.arc(centre.x * s, centre.y * s, radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `600 ${Math.round(12 * ratio)}px system-ui, sans-serif`;
+        ctx.fillText(String(numbers[index]), centre.x * s, centre.y * s + 0.5 * ratio);
+      }
+
+      if (index === swapTo) {
+        tracePolygon(ctx, polygon ?? raw, s);
+        ctx.fillStyle = 'rgba(236, 140, 116, 0.35)';
+        ctx.fill();
+        ctx.lineWidth = 4 * ratio;
+        ctx.strokeStyle = 'rgba(236, 140, 116, 1)';
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `600 ${Math.round(14 * ratio)}px system-ui, sans-serif`;
+        ctx.fillText(this.slots[index] ? '⇄ Swap' : 'Move here', centre.x * s, (centre.y + 26 / this.previewScale()) * s);
       }
 
       if (index === this.selected && this.mode === 'arrange') {
@@ -396,8 +430,10 @@ export class CollageDialog {
         return;
       }
 
+      const slot = this.slots[index];
+
       this.selected = index;
-      this.panDrag = { index, last: point, moved: 0 };
+      this.panDrag = { index, last: point, moved: 0, swapTo: -1, start: slot ? { fx: slot.fx, fy: slot.fy } : null };
       this.syncControls();
       this.draw();
     });
@@ -414,6 +450,26 @@ export class CollageDialog {
       const slot = drag && this.slots[drag.index];
 
       if (!slot) {
+        return;
+      }
+
+      const over = this.pieceAt(point);
+      const swapTo = over >= 0 && over !== drag.index ? over : -1;
+
+      if (swapTo !== drag.swapTo) {
+        drag.swapTo = swapTo;
+        canvas.style.cursor = swapTo >= 0 ? 'copy' : 'grabbing';
+
+        if (swapTo >= 0 && drag.start) {
+          // Leaving the piece: the drag is a swap, not a reposition.
+          Object.assign(slot, drag.start);
+        }
+
+        this.draw();
+      }
+
+      if (swapTo >= 0) {
+        drag.last = point;
         return;
       }
 
@@ -447,21 +503,17 @@ export class CollageDialog {
       const drag = this.panDrag;
 
       this.panDrag = null;
+      canvas.style.cursor = this.mode === 'cut' ? 'crosshair' : 'grab';
 
-      if (drag && event.type === 'pointerup' && drag.moved * this.previewScale() < 4 && !this.slots[drag.index]) {
-        this.pick(drag.index);
+      if (drag && drag.swapTo >= 0 && event.type === 'pointerup' && this.slots[drag.index]) {
+        this.swapPictures(drag.index, drag.swapTo);
+      } else if (drag?.swapTo >= 0) {
+        this.draw();
       }
     };
 
     canvas.addEventListener('pointerup', finish);
     canvas.addEventListener('pointercancel', finish);
-    canvas.addEventListener('dblclick', (event) => {
-      const index = this.pieceAt(this.toCollage(event));
-
-      if (index >= 0 && this.mode === 'arrange') {
-        this.pick(index);
-      }
-    });
     canvas.addEventListener(
       'wheel',
       (event) => {
@@ -485,24 +537,149 @@ export class CollageDialog {
       { passive: false }
     );
     canvas.addEventListener('dragover', (event) => {
-      if ([...(event.dataTransfer?.types ?? [])].includes('Files')) {
+      const types = [...(event.dataTransfer?.types ?? [])];
+
+      if (types.includes('Files') || types.includes('application/x-collage-piece')) {
         event.preventDefault();
         event.stopPropagation();
       }
     });
     canvas.addEventListener('drop', (event) => {
       const files = [...(event.dataTransfer?.files ?? [])].filter((file) => file.type.startsWith('image/'));
+      const piece = event.dataTransfer?.getData('application/x-collage-piece');
 
       event.preventDefault();
       event.stopPropagation();
 
-      if (files.length) {
+      if (piece) {
+        this.swapPictures(Number(piece), this.pieceAt(this.toCollage(event)));
+      } else if (files.length) {
         void this.addFiles(files, this.pieceAt(this.toCollage(event)), { replace: true });
       }
     });
   }
 
   // ── pictures ──────────────────────────────────────────────────────────────
+
+  /** Piece index → the picture number the editor will use ("Picture N"), for pieces that become pictures. */
+  pictureNumbers() {
+    const { width, height } = this.size();
+    const numbers = {};
+    let next = 1;
+
+    this.pieces.forEach(({ polygon }, index) => {
+      if (polygon && this.slots[index] && Math.abs(area(polygon)) > width * height * 0.002) {
+        numbers[index] = next;
+        next += 1;
+      }
+    });
+
+    return numbers;
+  }
+
+  /** Swaps the pictures of two pieces (or moves one into an empty piece). */
+  swapPictures(from, to) {
+    if (from === to || from < 0 || to < 0 || from >= this.slots.length || to >= this.slots.length) {
+      return;
+    }
+
+    [this.slots[from], this.slots[to]] = [this.slots[to], this.slots[from]];
+
+    for (const index of [from, to]) {
+      const slot = this.slots[index];
+
+      if (slot) {
+        slot.fx = 0.5;
+        slot.fy = 0.5;
+        this.anchor(slot, index);
+      }
+    }
+
+    this.selected = to;
+    this.syncControls();
+    this.draw();
+  }
+
+  shufflePictures() {
+    const filled = this.slots.map((slot, index) => (slot ? index : -1)).filter((index) => index >= 0);
+    const pictures = filled.map((index) => this.slots[index]);
+
+    for (let index = pictures.length - 1; index > 0; index -= 1) {
+      const other = Math.floor(Math.random() * (index + 1));
+
+      [pictures[index], pictures[other]] = [pictures[other], pictures[index]];
+    }
+
+    filled.forEach((index, order) => {
+      const slot = pictures[order];
+
+      slot.fx = 0.5;
+      slot.fy = 0.5;
+      this.slots[index] = slot;
+      this.anchor(slot, index);
+    });
+    this.syncControls();
+    this.draw();
+  }
+
+  thumbnail(slot) {
+    if (!slot.thumb) {
+      const size = 96;
+      const canvas = el('canvas', { width: String(size), height: String(size), className: 'collage-strip-thumb' });
+      const k = Math.max(size / slot.width, size / slot.height);
+
+      canvas.getContext('2d').drawImage(slot.source, (size - slot.width * k) / 2, (size - slot.height * k) / 2, slot.width * k, slot.height * k);
+      slot.thumb = canvas;
+    }
+
+    return slot.thumb;
+  }
+
+  /** One tile per piece, in piece order; drag a tile onto another to swap the two pictures. */
+  renderStrip() {
+    const numbers = this.pictureNumbers();
+
+    this.refs.strip.replaceChildren(
+      ...this.pieces.map((_, index) => {
+        const slot = this.slots[index];
+        const tile = el('button', {
+          type: 'button',
+          role: 'listitem',
+          className: `collage-strip-tile${index === this.selected ? ' is-active' : ''}${slot ? '' : ' is-empty'}`,
+          title: slot ? `Picture ${numbers[index] ?? '–'}${slot.name ? `: ${slot.name}` : ''}. Drag onto another tile to swap.` : 'Empty piece',
+          draggable: slot ? 'true' : 'false',
+        }, [slot ? this.thumbnail(slot) : el('span', { className: 'collage-strip-empty', textContent: '+' }), el('span', { className: 'collage-strip-number', textContent: slot ? String(numbers[index] ?? '–') : '' })]);
+
+        tile.addEventListener('click', () => {
+          this.selected = index;
+          this.syncControls();
+          this.draw();
+        });
+        tile.addEventListener('dragstart', (event) => {
+          event.dataTransfer.setData('application/x-collage-piece', String(index));
+          event.dataTransfer.effectAllowed = 'move';
+        });
+        tile.addEventListener('dragover', (event) => {
+          if ([...event.dataTransfer.types].includes('application/x-collage-piece')) {
+            event.preventDefault();
+            tile.classList.add('is-drop');
+          }
+        });
+        tile.addEventListener('dragleave', () => tile.classList.remove('is-drop'));
+        tile.addEventListener('drop', (event) => {
+          const from = Number(event.dataTransfer.getData('application/x-collage-piece'));
+
+          event.preventDefault();
+          tile.classList.remove('is-drop');
+
+          if (Number.isInteger(from)) {
+            this.swapPictures(from, index);
+          }
+        });
+        return tile;
+      })
+    );
+  }
 
   pick(index) {
     this.pickTarget = index;

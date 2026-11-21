@@ -15,7 +15,6 @@ export const RIS_ENGINES = [
   { id: 'tineye', label: 'TinEye', build: (url) => withParams('https://www.tineye.com/search/', { url }) },
   { id: 'yandex', label: 'Yandex', build: (url) => withParams('https://yandex.com/images/search', { url, rpt: 'imageview' }) },
   { id: 'lens', label: 'Google Lens', build: (url) => withParams('https://lens.google.com/uploadbyurl', { url }) },
-  { id: 'google', label: 'Google Images', build: (url) => withParams('https://www.google.com/searchbyimage', { sbisrc: 'cr_1_5_2', image_url: url }) },
   { id: 'bing', label: 'Bing', build: (url) => withParams('https://www.bing.com/images/searchbyimage', { cbir: 'ssbi', imgurl: url }) },
 ];
 

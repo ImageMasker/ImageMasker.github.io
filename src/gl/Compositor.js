@@ -167,6 +167,59 @@ export class Compositor {
     return item.entry;
   }
 
+  /** Coverage of a layer's collage piece, in document space (row 0 = top). */
+  clipTexture(ctx, layer) {
+    const fit = Math.min(1, 2048 / Math.max(ctx.W, ctx.H));
+    const width = Math.max(8, Math.round(ctx.W * fit));
+    const height = Math.max(8, Math.round(ctx.H * fit));
+    const item = this.cached(`${layer.id}:clip`);
+    const points = layer.clip.points;
+
+    if (item.points !== points || item.sig !== `${width}x${height}`) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      const kx = width / ctx.doc.width;
+      const ky = height / ctx.doc.height;
+
+      canvas.width = width;
+      canvas.height = height;
+      context.beginPath();
+
+      for (let index = 0; index < points.length; index += 2) {
+        context[index === 0 ? 'moveTo' : 'lineTo'](points[index] * kx, points[index + 1] * ky);
+      }
+
+      context.closePath();
+      context.fillStyle = '#ffffff';
+      context.fill();
+      this.upload(item, canvas);
+      item.points = points;
+      item.sig = `${width}x${height}`;
+    }
+
+    return item.entry;
+  }
+
+  /** Keeps `next` (acc with the layer applied) only inside the layer's collage piece. */
+  clipTo(ctx, acc, next, layer) {
+    const out = this.glx.acquire(ctx.W, ctx.H);
+
+    this.glx.draw(this.glx.program('mix', MIX_SHADER), out, {
+      uDst: acc,
+      uSrc: next,
+      uCov: this.clipTexture(ctx, layer),
+      uDocSize: ctx.docSize,
+      uInv: ctx.docInv,
+      uBoxPx: [ctx.W, ctx.H],
+      uKind: 4,
+      uFeather: 0,
+      uOpacity: 1,
+      uBlend: 0,
+    });
+    this.glx.release(next);
+    return out;
+  }
+
   /** Drops rasters that were not needed by the most recent frames (old scales, deleted layers). */
   prune() {
     for (const [key, item] of this.cache) {
@@ -212,7 +265,11 @@ export class Compositor {
         continue;
       }
 
-      const next = layer.type === 'effect' ? this.drawEffect(ctx, acc, layer) : this.drawContent(ctx, acc, layer);
+      let next = layer.type === 'effect' ? this.drawEffect(ctx, acc, layer) : this.drawContent(ctx, acc, layer);
+
+      if (next !== acc && layer.clip?.points?.length >= 6) {
+        next = this.clipTo(ctx, acc, next, layer);
+      }
 
       if (next !== acc) {
         glx.release(acc);

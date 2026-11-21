@@ -344,6 +344,28 @@
   stroke-dasharray: none;
 }
 
+.piece-outline {
+  fill: none;
+  stroke: var(--bg-button);
+  stroke-width: 2;
+  stroke-dasharray: 10 6;
+}
+
+.piece-outline--back {
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 4;
+  stroke-dasharray: none;
+}
+
+.piece-label {
+  fill: white;
+  font: 600 13px system-ui, sans-serif;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.7);
+  stroke-width: 3px;
+  pointer-events: none;
+}
+
 .selection-stem {
   stroke: white;
   stroke-width: 1.5;
@@ -414,4 +436,8 @@
   stroke: white;
   stroke-width: 1.5;
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+}
+
+.library-collage-bar {
+  margin: 0 0 8px;
 }

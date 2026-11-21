@@ -54,7 +54,8 @@ import { ToastManager } from '../ui/ToastManager.js';
 import { el } from '../utils/dom.js';
 import { Stage } from '../view/Stage.js';
 import { BackgroundTools } from './backgroundRemoval.js';
-import { bandDistance, buildRandomMask, planRandomMask, RANDOM_KINDS, RANDOM_LEVELS, rememberPicks } from './randomMask.js';
+import { bandDistance, buildRandomMask, planRandomMask, RANDOM_KINDS, RANDOM_LEVELS, regionOptions, rememberPicks } from './randomMask.js';
+import { pointInPolygon } from '../core/geometry.js';
 import { changeScore, renderSmall, unmaskedDoc } from './strengthMeter.js';
 import { AUTOSAVE_ID, describeSession, restoreSession, SessionStore } from './sessions.js';
 import { SettingsUi } from './settingsUi.js';
@@ -109,6 +110,8 @@ export class App {
     this.autosaveTimer = 0;
     this.restoring = false;
     this.flagCatalogPromise = null;
+    // Collage piece new masks are added to (index into collageCells), or null for the whole picture.
+    this.collageTarget = null;
   }
 
   async init() {
@@ -533,6 +536,29 @@ export class App {
     const layer = store.selectedLayer;
     const index = layer ? store.doc.layers.findIndex((entry) => entry.id === layer.id) : -1;
     const title = this.sharePanel.refs.title.value;
+    const piece = this.collagePieceAt(event.x, event.y);
+    const pieceItems = [];
+
+    if (piece >= 0) {
+      const target = this.activeCollageTarget();
+
+      pieceItems.push(
+        { label: `Random mask for picture ${piece + 1}`, icon: 'dice', action: () => this.randomizeMasks({ piece }) },
+        target === piece
+          ? { label: 'Add new masks to the whole collage', icon: 'grid', action: () => this.setCollageTarget(null) }
+          : { label: `Add new masks to picture ${piece + 1} only`, icon: 'grid', action: () => this.setCollageTarget(piece) }
+      );
+
+      if (layer && !layer.base) {
+        pieceItems.push(
+          layer.clip?.piece === piece
+            ? { label: `Apply “${layer.name}” to the whole collage`, icon: 'fit', action: () => this.setLayerPiece(layer.id, null) }
+            : { label: `Limit “${layer.name}” to picture ${piece + 1}`, icon: 'region', action: () => this.setLayerPiece(layer.id, piece) }
+        );
+      }
+
+      pieceItems.push('separator');
+    }
     const items = [
       { label: 'Copy image', icon: 'clipboard', shortcut: key('copyCanvas'), action: () => this.copyImage() },
       { label: 'Download image', icon: 'download', action: () => this.downloadImage() },
@@ -544,6 +570,8 @@ export class App {
       { label: 'Paste image', icon: 'image', shortcut: 'Ctrl+V', disabled: !navigator.clipboard?.read, action: () => this.pasteFromClipboard() },
       'separator',
     ];
+
+    items.push(...pieceItems);
 
     if (layer) {
       items.push(
@@ -776,6 +804,8 @@ export class App {
   }
 
   afterImageChange() {
+    this.collageTarget = null;
+    this.bus.emit('collage-target');
     this.stage.fit();
     this.syncChrome();
     this.refs.restoreBanner.classList.add('hidden');
@@ -874,7 +904,7 @@ export class App {
       return;
     }
 
-    const layer = effectLayer(this.store.doc, effectId);
+    const layer = this.targeted(effectLayer(this.store.doc, effectId));
 
     this.store.apply('Add effect mask', (doc) => insertMask(doc, layer));
     this.store.select([layer.id]);
@@ -900,6 +930,7 @@ export class App {
     this.store.apply(full ? 'Apply to whole picture' : 'Limit to region', (current) =>
       updateLayer(current, layerId, {
         coverage,
+        ...(full ? { clip: null } : {}),
         center: null,
         points: null,
         strokes: null,
@@ -919,11 +950,14 @@ export class App {
   }
 
   /** Inserts an overlay mask; replaces the selected overlay mask unless stacking. */
-  placeMask(layer, { stack = false } = {}) {
+  placeMask(made, { stack = false } = {}) {
     const selected = this.store.selectedLayer;
+    let layer = made;
 
     if (!stack && selected?.type === 'mask') {
-      const carried = { ...layer, opacity: selected.opacity, blend: selected.blend };
+      const carried = { ...layer, opacity: selected.opacity, blend: selected.blend, clip: selected.clip ?? null };
+
+      layer = carried;
 
       this.store.apply('Change mask', (doc) => {
         const index = doc.layers.findIndex((entry) => entry.id === selected.id);
@@ -931,6 +965,7 @@ export class App {
         return insertLayer(removeLayers(doc, [selected.id]), carried, index);
       });
     } else {
+      layer = this.targeted(layer);
       this.store.apply('Add mask', (doc) => insertMask(doc, layer));
     }
 
@@ -986,15 +1021,86 @@ export class App {
       return null;
     }
 
-    return base.cells.map(({ points }) => {
+    return base.cells.map(({ points }, piece) => {
       const xs = points.filter((_, index) => index % 2 === 0);
       const ys = points.filter((_, index) => index % 2 === 1);
       const rect = { x: Math.min(...xs), y: Math.min(...ys) };
 
       rect.width = Math.max(...xs) - rect.x;
       rect.height = Math.max(...ys) - rect.y;
-      return { rect, points };
+      return { rect, points, piece };
     });
+  }
+
+  /** Index of the collage piece under a document point, or -1. */
+  collagePieceAt(x, y, doc = this.store.doc) {
+    return (this.collageCells(doc) ?? []).findIndex((cell) => pointInPolygon(x, y, cell.points));
+  }
+
+  /** The piece new masks go to, when the picture is still a collage. */
+  activeCollageTarget() {
+    const cells = this.collageCells();
+
+    return cells && this.collageTarget !== null && this.collageTarget < cells.length ? this.collageTarget : null;
+  }
+
+  setCollageTarget(piece, { quiet = false } = {}) {
+    this.collageTarget = piece === null || piece < 0 ? null : piece;
+    this.bus.emit('collage-target');
+
+    if (!quiet) {
+      this.notify(this.collageTarget === null ? 'New masks cover the whole collage.' : `New masks go on picture ${this.collageTarget + 1} only.`, 'info', 2400);
+    }
+  }
+
+  /** Patch that limits `layer` to collage piece `piece` (null = the whole picture). */
+  piecePatch(layer, piece, doc = this.store.doc) {
+    const cells = this.collageCells(doc);
+    const cell = piece === null ? null : cells?.[piece];
+    // An effect whose area is a whole piece (Random mask, or targeted when added) follows the piece.
+    const fitted =
+      layer.type === 'effect' &&
+      layer.coverage === 'polygon' &&
+      (layer.clip || cells?.some(({ rect }) => Math.abs(rect.x + rect.width / 2 - layer.x) < 1 && Math.abs(rect.y + rect.height / 2 - layer.y) < 1 && Math.abs(rect.width - layer.w) < 1));
+
+    if (!cell) {
+      const patch = { clip: null };
+
+      if (fitted) {
+        Object.assign(patch, { coverage: 'full', points: null, center: null, x: doc.width / 2, y: doc.height / 2, w: doc.width, h: doc.height, rotation: 0, skewX: 0, skewY: 0 });
+      }
+
+      return patch;
+    }
+
+    const patch = { clip: { piece, points: cell.points } };
+
+    // Effects are fitted to the piece so centred ones (swirl, ripple...) centre on it.
+    if (layer.type === 'effect' && (layer.coverage === 'full' || fitted)) {
+      const { rect, ...region } = regionOptions(cell);
+
+      Object.assign(patch, region, { center: null, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, w: rect.width, h: rect.height, rotation: 0, skewX: 0, skewY: 0 });
+    }
+
+    return patch;
+  }
+
+  /** Moves a layer onto one collage piece, or back onto the whole picture. */
+  setLayerPiece(layerId, piece) {
+    const layer = findLayer(this.store.doc, layerId);
+
+    if (!layer || layer.base) {
+      return;
+    }
+
+    this.store.apply(piece === null ? 'Apply to whole collage' : `Limit to picture ${piece + 1}`, (doc) => updateLayer(doc, layerId, this.piecePatch(layer, piece, doc)));
+  }
+
+  /** A new layer as it should be added: limited to the targeted collage piece, if any. */
+  targeted(layer) {
+    const piece = this.activeCollageTarget();
+
+    return piece === null ? layer : { ...layer, ...this.piecePatch(layer, piece) };
   }
 
   /**
@@ -1003,7 +1109,7 @@ export class App {
    * every picture gets its own mask. Pressing it again swaps the previous random layers for new
    * ones in a single undo step, so it can be used to roll until one fits.
    */
-  async randomizeMasks({ silent = false } = {}) {
+  async randomizeMasks({ silent = false, piece = this.activeCollageTarget() } = {}) {
     if (!this.requireImage('Load an image before adding a mask.') || this.randomizing) {
       return false;
     }
@@ -1013,9 +1119,17 @@ export class App {
 
     try {
       const { level, kinds } = this.getRandomSettings();
-      const previous = (this.randomLayerIds ?? []).filter((id) => findLayer(this.store.doc, id));
+      const allCells = this.collageCells();
+      const onePiece = Boolean(allCells) && piece !== null && piece >= 0 && piece < allCells.length;
+      // Rerolling one piece keeps the random masks of the others.
+      const previous = (this.randomLayerIds ?? []).filter((id) => {
+        const layer = findLayer(this.store.doc, id);
+
+        return layer && (!onePiece || layer.clip?.piece === piece);
+      });
+      const kept = (this.randomLayerIds ?? []).filter((id) => !previous.includes(id) && findLayer(this.store.doc, id));
       const baseDoc = removeLayers(this.store.doc, previous);
-      const cells = this.collageCells(baseDoc);
+      const cells = allCells && (onePiece ? [allCells[piece]] : allCells);
       const regions = cells ?? [null];
       const size = cells ? 480 : 224;
       const original = renderSmall(this.stage, unmaskedDoc(baseDoc), size);
@@ -1026,7 +1140,7 @@ export class App {
         let best = null;
 
         for (let attempt = 0; attempt < 10; attempt += 1) {
-          const plan = planRandomMask({ level, kinds, allowOverlay: !region });
+          const plan = planRandomMask({ level, kinds });
 
           if (!plan) {
             break;
@@ -1047,7 +1161,7 @@ export class App {
 
         if (!best) {
           this.notify(
-            region ? 'Collage pictures need an effect kind ticked in the Random mask menu (overlays would cover the whole collage).' : 'Nothing to pick from: tick more kinds in the Random mask menu.',
+            'Nothing to pick from: tick more kinds in the Random mask menu.',
             'warning',
             4200
           );
@@ -1056,7 +1170,7 @@ export class App {
 
         rememberPicks(best.plan);
         chosen.push({
-          layers: region ? best.layers.map((layer) => ({ ...layer, name: `Picture ${index + 1}: ${layer.name}` })) : best.layers,
+          layers: region ? best.layers.map((layer) => ({ ...layer, name: `Picture ${region.piece + 1}: ${layer.name}` })) : best.layers,
           names: best.names,
         });
       }
@@ -1067,13 +1181,13 @@ export class App {
       this.store.apply(previous.length ? 'Reroll random mask' : 'Random mask', (doc) =>
         layers.reduce((current, layer) => insertMask(current, layer), removeLayers(doc, previous))
       );
-      this.randomLayerIds = layers.map((layer) => layer.id);
+      this.randomLayerIds = [...kept, ...layers.map((layer) => layer.id)];
       this.store.select([layers[layers.length - 1].id]);
       this.setTool('select');
       this.revealEditor();
 
       if (!silent) {
-        const what = cells ? `${cells.length} pictures masked separately` : chosen[0].names.join(' + ');
+        const what = onePiece ? `picture ${piece + 1}, ${chosen[0].names.join(' + ')}` : cells ? `${cells.length} pictures masked separately` : chosen[0].names.join(' + ');
 
         this.notify(`Random ${level} mask: ${what}. Press again for another one.`, 'success', 3200);
       }

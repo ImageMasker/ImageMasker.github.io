@@ -44,8 +44,11 @@ An effect layer's `coverage` is `full`, `rect`, `ellipse`, `polygon` or `paint`.
 `insertMask()` keeps such layers on top when masks are added.
 
 A collage keeps its picture areas on the base layer (`cells: [{ points }]`, document pixels).
-Random mask then gives every piece its own effect layers with `polygon` coverage. The areas are
-ignored once the canvas is cropped or resized.
+Any other layer can be limited to one piece with `clip: { piece, points }` (flat document pixels);
+the compositor keeps that layer's result only inside the polygon, and hit-testing ignores it outside.
+Random mask gives every piece (or only the piece chosen under *Masks → Add to*) its own layers with
+`clip`; effects are also fitted to the piece (`polygon` coverage) so centred effects centre on it.
+Cropping shifts `cells` and `clip`, but the collage tools are hidden once the canvas size changes.
 
 ## Rendering
 

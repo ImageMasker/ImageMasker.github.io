@@ -31,6 +31,37 @@ export class LibraryPanel {
     this.setTab('effects');
 
     app.bus.on('image-changed', () => this.scheduleThumbs(250));
+
+    const syncTarget = () => this.syncCollageBar();
+
+    app.bus.on('collage-target', syncTarget);
+    app.bus.on('image-changed', syncTarget);
+    app.store.on('doc', syncTarget);
+    syncTarget();
+  }
+
+  /** On a collage: which picture new masks go to. */
+  syncCollageBar() {
+    const cells = this.app.collageCells?.();
+    const bar = this.collageBar;
+    const count = cells?.length ?? 0;
+
+    bar.classList.toggle('hidden', !count);
+
+    if (!count) {
+      return;
+    }
+
+    if (this.collageSelect.options.length !== count + 1) {
+      this.collageSelect.replaceChildren(
+        el('option', { value: 'all', textContent: 'Whole collage' }),
+        ...cells.map((_, index) => el('option', { value: String(index), textContent: `Picture ${index + 1}` }))
+      );
+    }
+
+    const target = this.app.activeCollageTarget();
+
+    this.collageSelect.value = target === null ? 'all' : String(target);
   }
 
   render() {
@@ -51,8 +82,20 @@ export class LibraryPanel {
     this.panels.flags = this.renderFlags();
     this.panels.custom = this.renderCustom();
 
+    this.collageSelect = el('select', { 'aria-label': 'Add masks to' });
+    this.collageSelect.addEventListener('change', () => {
+      const value = this.collageSelect.value;
+
+      this.app.setCollageTarget(value === 'all' ? null : Number(value), { quiet: true });
+    });
+    this.collageBar = el('label', { className: 'field field--inline library-collage-bar hidden', title: 'On a collage, masks you pick go on this picture only' }, [
+      el('span', { className: 'field-label', textContent: 'Add to' }),
+      this.collageSelect,
+    ]);
+
     return el('fieldset', { id: 'masks', className: 'panel-fieldset library-panel' }, [
       el('legend', { textContent: 'Masks' }),
+      this.collageBar,
       tabs,
       el('div', { className: 'library-scroll' }, Object.values(this.panels)),
     ]);

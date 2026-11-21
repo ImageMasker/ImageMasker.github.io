@@ -105,7 +105,7 @@ function weighted(list) {
 
 /**
  * Chooses what to add, or null when the ticked kinds leave nothing to choose from.
- * `kinds` are RANDOM_KINDS ids; `allowOverlay` is false for collage cells (overlays cover everything).
+ * `kinds` are RANDOM_KINDS ids; `allowOverlay` false leaves overlay masks out.
  */
 export function planRandomMask({ level = 'medium', kinds = RANDOM_KINDS.map((kind) => kind.id), allowOverlay = true } = {}) {
   const overlays = allowOverlay && kinds.includes('overlays');
@@ -149,7 +149,7 @@ function planOverlay(range) {
 }
 
 /** `region` = { rect, points? } in document pixels limits the effect to one collage piece. */
-function regionOptions(region) {
+export function regionOptions(region) {
   if (!region) {
     return {};
   }
@@ -179,6 +179,17 @@ function buildEffect(doc, definition, factor, region) {
  * of a classic mask picture. With `region` (a collage piece) the effects only cover that area.
  */
 export async function buildRandomMask(doc, plan, loadPreset, region = null) {
+  const built = await buildLayers(doc, plan, loadPreset, region);
+
+  if (region?.points) {
+    // Every layer, overlays included, stays inside its collage piece.
+    built.layers = built.layers.map((layer) => ({ ...layer, clip: { piece: region.piece, points: region.points } }));
+  }
+
+  return built;
+}
+
+async function buildLayers(doc, plan, loadPreset, region) {
   const effects = plan.effects.map(([definition, factor]) => buildEffect(doc, definition, factor, region));
   const names = plan.effects.map(([definition]) => definition.name);
 
