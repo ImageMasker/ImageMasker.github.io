@@ -1,14 +1,23 @@
 // Freehand tools. One class covers three modes:
 //   brush  - paints into a drawing layer
-//   eraser - erases from a drawing layer or from a painted effect's coverage
+//   eraser - erases from a drawing layer or from a painted effect's coverage; it can also
+//            "reveal" the original picture through every mask, or restore what was revealed
 //   paint  - brushes an effect (blur, pixelate, cut glass, ...) onto the picture
 
-import { drawingLayer, effectLayer, insertLayer, updateLayer } from '../core/model.js';
+import { drawingLayer, effectLayer, insertLayer, insertMask, updateLayer } from '../core/model.js';
+import { defaultParams, getEffect } from '../gl/effects.js';
+
+/** The one slider the blur / pixel brushes expose, per effect. */
+export const PAINT_AMOUNT = {
+  blur: { key: 'amount', label: 'Blur amount', min: 1, max: 100, step: 1 },
+  pixelate: { key: 'size', label: 'Pixel size', min: 0.2, max: 12, step: 0.1 },
+};
 
 export class BrushTool {
-  constructor(app, mode) {
+  constructor(app, mode, { effectId = null } = {}) {
     this.app = app;
     this.mode = mode;
+    this.effectId = effectId;
     this.cursor = 'crosshair';
     this.stroke = null;
     this.layerId = null;
@@ -63,12 +72,36 @@ export class BrushTool {
     const selected = store.selectedLayer;
     const usable = (layer) => layer && layer.visible && !layer.locked;
 
+    const painted = (effectId) => (layer) =>
+      usable(layer) && layer.type === 'effect' && layer.coverage === 'paint' && layer.effectId === effectId;
+    const topmost = (test) => [...doc.layers].reverse().find(test);
+
     if (this.mode === 'paint') {
-      if (usable(selected) && selected.type === 'effect' && selected.coverage === 'paint') {
-        return { layer: selected };
+      const effectId = this.paintEffectId();
+      const existing = painted(effectId)(selected) ? selected : topmost(painted(effectId));
+
+      if (existing) {
+        return { layer: existing };
       }
 
-      return { create: effectLayer(doc, this.app.toolState.paint.effectId, { coverage: 'paint' }) };
+      const amount = PAINT_AMOUNT[effectId];
+      const params = amount
+        ? { ...defaultParams(getEffect(effectId)), [amount.key]: this.app.toolState.paint.amounts[effectId] }
+        : null;
+
+      return { create: effectLayer(doc, effectId, { coverage: 'paint', params }) };
+    }
+
+    const eraserMode = this.mode === 'eraser' ? this.app.toolState.eraser.mode : '';
+
+    if (eraserMode === 'reveal' || eraserMode === 'restore') {
+      const existing = topmost(painted('original'));
+
+      if (existing || eraserMode === 'restore') {
+        return existing ? { layer: existing } : null;
+      }
+
+      return { create: { ...effectLayer(doc, 'original', { coverage: 'paint' }), name: 'Revealed original' } };
     }
 
     if (this.mode === 'eraser') {
@@ -96,25 +129,39 @@ export class BrushTool {
     return { create: drawingLayer(doc, count ? `Drawing ${count + 1}` : 'Drawing') };
   }
 
+  paintEffectId() {
+    return this.effectId ?? this.app.toolState.paint.effectId;
+  }
+
+  /** The painted layer the next stroke would go into, if it already exists. */
+  existingTarget() {
+    return this.resolveTarget()?.layer ?? null;
+  }
+
   onDown(event) {
     const { store, toolState } = this.app;
     const target = this.resolveTarget();
+    const reveal = this.mode === 'eraser' && toolState.eraser.mode === 'reveal';
 
     this.moveRing(event);
 
     if (!target) {
-      this.app.notify('There is nothing to erase yet.', 'info');
+      this.app.notify(
+        this.mode === 'eraser' && toolState.eraser.mode === 'restore' ? 'Nothing has been revealed yet.' : 'There is nothing to erase yet.',
+        'info'
+      );
       return;
     }
 
     const brush = toolState.brush;
+    const erasing = this.mode === 'eraser' && !reveal;
 
     this.stroke = {
-      tool: this.mode === 'eraser' ? 'eraser' : 'brush',
+      tool: erasing ? 'eraser' : 'brush',
       type: this.mode === 'brush' ? brush.type : 'smooth',
-      color: this.mode === 'paint' ? '#ffffff' : brush.color,
+      color: this.mode === 'brush' ? brush.color : '#ffffff',
       size: this.size(),
-      opacity: this.mode === 'eraser' ? 1 : brush.opacity / 100,
+      opacity: erasing ? 1 : brush.opacity / 100,
       seed: Math.random(),
       points: [event.x, event.y],
     };
@@ -124,7 +171,7 @@ export class BrushTool {
     store.begin();
 
     if (target.create) {
-      store.set(insertLayer(store.doc, target.create));
+      store.set(target.create.type === 'effect' ? insertMask(store.doc, target.create) : insertLayer(store.doc, target.create));
     }
 
     store.set(updateLayer(store.doc, this.layerId, (layer) => ({ strokes: [...layer.strokes, this.stroke] })));
@@ -163,7 +210,19 @@ export class BrushTool {
     const { store } = this.app;
 
     this.stroke = null;
-    store.end(this.mode === 'eraser' ? 'Erase' : this.mode === 'paint' ? 'Paint effect' : 'Brush stroke');
+    const eraserMode = this.app.toolState.eraser.mode;
+    const label =
+      this.mode === 'paint'
+        ? 'Paint effect'
+        : this.mode === 'brush'
+          ? 'Brush stroke'
+          : eraserMode === 'reveal'
+            ? 'Reveal original'
+            : eraserMode === 'restore'
+              ? 'Restore masks'
+              : 'Erase';
+
+    store.end(label);
 
     if (this.created && this.mode === 'paint') {
       store.select([this.layerId]);

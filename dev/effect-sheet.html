@@ -62,7 +62,7 @@ const add = (label, render) => {
 
 add('original', () => compositor.readStraight(source));
 for (const effect of EFFECTS) {
-  if (!only || only.includes(effect.id)) {
+  if (!effect.hidden && (!only || only.includes(effect.id))) {
     add(`${effect.cat} / ${effect.id}`, () => compositor.effectPreview(effect, defaultParams(effect), 12.5, source));
   }
 }

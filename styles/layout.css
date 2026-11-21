@@ -159,6 +159,9 @@
   gap: 4px;
   flex: none;
   align-self: flex-start;
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
   padding: 6px 5px;
   border: 2px solid var(--border-fieldset);
   border-radius: 14px;
@@ -172,8 +175,9 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
+  flex: none;
   width: 56px;
-  height: 48px;
+  height: 46px;
   border: none;
   border-radius: 9px;
   background: transparent;

@@ -1,6 +1,6 @@
 // Drag out a rectangle, ellipse or freehand shape; it becomes an effect region.
 
-import { effectLayer, insertLayer } from '../core/model.js';
+import { effectLayer, insertMask } from '../core/model.js';
 import { svg } from '../view/Stage.js';
 
 export class RegionTool {
@@ -125,7 +125,7 @@ export class RegionTool {
 
     const layer = effectLayer(doc, toolState.region.effectId, { coverage, rect, points });
 
-    store.apply('Add region', (current) => insertLayer(current, layer));
+    store.apply('Add region', (current) => insertMask(current, layer));
     store.select([layer.id]);
     this.app.setTool('select');
   }

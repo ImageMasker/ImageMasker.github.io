@@ -120,28 +120,75 @@ export class SharePanel {
   renderShare() {
     const refs = this.refs;
     const app = this.app;
+    const hosts = app.imageHosts;
 
-    refs.upload = button('Upload to Imgur', { id: 'uploadbutton', iconName: 'upload', className: 'app-button--primary', onClick: () => this.upload() });
+    refs.title = el('input', { id: 'roundTitle', type: 'text', placeholder: 'Round Title', maxlength: '285', 'aria-label': 'Round title' });
+    refs.answer = el('input', { id: 'roundAnswer', type: 'text', placeholder: 'Round Answer', 'aria-label': 'Round answer' });
+    refs.subreddit = el('input', { id: 'newSubInput', type: 'text', value: 'picturegame', placeholder: 'Subreddit', className: 'hidden', 'aria-label': 'Subreddit' });
+    refs.subreddit.addEventListener('input', () => this.updatePostLabel());
+    refs.copyPost = button('Copy image & post to Reddit', { id: 'copyAndPost', iconName: 'reddit', className: 'app-button--primary', onClick: () => this.copyAndPost() });
+    refs.copyPostHint = el('p', {
+      className: 'panel-intro-copy',
+      textContent: 'No image host needed: copies the picture, opens the Reddit image post with the next round number in the title, then you paste (Ctrl+V) and submit.',
+    });
+    refs.upload = button('Upload', { id: 'uploadbutton', iconName: 'upload', className: 'app-button--primary', onClick: () => this.upload() });
     refs.url = el('input', { id: 'uploadedUrl', type: 'text', 'aria-label': 'Uploaded image URL', placeholder: 'Uploaded image URL' });
     refs.copyUrl = button('Copy', { id: 'copyToClipboard', onClick: () => this.requireUrl('There is no uploaded URL to copy yet.') && app.copyText(refs.url.value, 'Image URL copied.') });
     refs.checkRis = button('Check RIS', { id: 'checkForRIS', onClick: () => this.requireUrl('Upload an image first to check RIS.') && app.risChecker.check(refs.url.value.trim()) });
-    refs.title = el('input', { id: 'roundTitle', type: 'text', placeholder: 'Round Title', maxlength: '285', 'aria-label': 'Round title' });
-    refs.answer = el('input', { id: 'roundAnswer', type: 'text', placeholder: 'Round Answer', 'aria-label': 'Round answer' });
     refs.post = button('Submit to /r/PictureGame', { id: 'PostReddit', onClick: () => this.postToReddit() });
-    refs.subreddit = el('input', { id: 'newSubInput', type: 'text', value: 'picturegame', placeholder: 'Subreddit', className: 'hidden', 'aria-label': 'Subreddit' });
-    refs.subreddit.addEventListener('input', () => this.updatePostLabel());
     refs.save = button('Save round', { id: 'Save', onClick: () => this.saveRound() });
     refs.yml = button('Copy YML', { id: 'Export', onClick: () => app.copyYml({ roundTitle: refs.title.value, roundAnswer: refs.answer.value, imageUrl: refs.url.value }) });
     refs.uploaded = el('div', { className: 'stack share-uploaded' }, [
       el('div', { className: 'input-row' }, [refs.url, refs.copyUrl, refs.checkRis]),
-      refs.title,
-      refs.answer,
-      refs.subreddit,
       row([refs.post, refs.save, refs.yml], 'button-row--fill'),
     ]);
     refs.shareMessage = message();
 
+    refs.host = select({
+      label: 'Upload to',
+      options: hosts.hosts.map((host) => ({ value: host.id, label: host.label })),
+      value: hosts.getHostId(),
+      onChange: (value) => {
+        hosts.setHostId(value);
+        this.syncHost();
+      },
+    });
+    refs.hostNote = el('p', { className: 'panel-intro-copy' });
+    refs.imgbbKey = el('input', { type: 'text', placeholder: 'ImgBB API key', 'aria-label': 'ImgBB API key', autocomplete: 'off' });
+    refs.imgbbKey.value = hosts.getImgbbKey();
+    refs.imgbbKey.addEventListener('change', () => {
+      hosts.setImgbbKey(refs.imgbbKey.value.trim());
+      app.notify(refs.imgbbKey.value.trim() ? 'ImgBB key saved.' : 'ImgBB key removed.', 'success');
+    });
+    refs.imgbbBlock = el('div', { className: 'stack' }, [
+      refs.imgbbKey,
+      el('a', { className: 'panel-intro-copy', href: 'https://api.imgbb.com/', target: '_blank', rel: 'noopener', textContent: 'Get a free key at api.imgbb.com' }),
+    ]);
     refs.token = el('input', { id: 'accessTokenInput', type: 'text', placeholder: 'Imgur access token', 'aria-label': 'Imgur access token', autocomplete: 'off' });
+    refs.imgurBlock = el('div', { className: 'stack' }, [
+      el('p', { className: 'panel-intro-copy', textContent: 'Optional Imgur token: uploads keep their quality and get a higher size limit.' }),
+      refs.token,
+      row([
+        button('Save token', {
+          id: 'accessTokenSubmit',
+          onClick: () => {
+            app.settings.setAccessToken(refs.token.value.trim());
+            refs.token.value = '';
+            refs.token.placeholder = 'Access token saved';
+            app.notify('Imgur access token saved.', 'success');
+          },
+        }),
+        button('Delete token', {
+          id: 'accessTokenDelete',
+          onClick: () => {
+            app.settings.deleteAccessToken();
+            refs.token.value = '';
+            refs.token.placeholder = 'Access token deleted';
+            app.notify('Imgur access token deleted.', 'success');
+          },
+        }),
+      ]),
+    ]);
     refs.ris = el('input', { id: 'mobileRISURL', type: 'url', placeholder: 'Paste an URL here to check for RIS', 'aria-label': 'Paste URL to check for RIS' });
 
     const checkRisUrl = () => {
@@ -166,37 +213,43 @@ export class SharePanel {
       refs.token.placeholder = 'Access token saved';
     }
 
-    return el('fieldset', { className: 'panel-fieldset' }, [
+    const fieldset = el('fieldset', { className: 'panel-fieldset' }, [
       el('legend', { textContent: 'Share' }),
+      refs.title,
+      refs.answer,
+      refs.subreddit,
+      refs.copyPost,
+      refs.copyPostHint,
       refs.upload,
       refs.shareMessage.element,
       refs.uploaded,
+      section('Upload settings', [refs.host.element, refs.hostNote, refs.imgbbBlock, refs.imgurBlock], { open: false }),
       section('Check any URL for RIS', [el('div', { className: 'input-row' }, [refs.ris, button('Check', { onClick: checkRisUrl })])], { open: false }),
-      section('Imgur access token', [
-        el('p', { className: 'panel-intro-copy', textContent: 'Optional. With your own token uploads keep their quality and get a higher size limit.' }),
-        refs.token,
-        row([
-          button('Save token', {
-            id: 'accessTokenSubmit',
-            onClick: () => {
-              app.settings.setAccessToken(refs.token.value.trim());
-              refs.token.value = '';
-              refs.token.placeholder = 'Access token saved';
-              app.notify('Imgur access token saved.', 'success');
-            },
-          }),
-          button('Delete token', {
-            id: 'accessTokenDelete',
-            onClick: () => {
-              app.settings.deleteAccessToken();
-              refs.token.value = '';
-              refs.token.placeholder = 'Access token deleted';
-              app.notify('Imgur access token deleted.', 'success');
-            },
-          }),
-        ]),
-      ], { open: false }),
     ]);
+
+    this.syncHost();
+    return fieldset;
+  }
+
+  syncHost() {
+    const refs = this.refs;
+    const host = this.app.imageHosts.getHost();
+
+    refs.hostNote.textContent = host.note;
+    refs.imgbbBlock.classList.toggle('hidden', host.id !== 'imgbb');
+    refs.imgurBlock.classList.toggle('hidden', host.id !== 'imgur');
+    this.setUploaded(refs.url.value);
+  }
+
+  async copyAndPost() {
+    const result = await this.app.copyAndPost(this.refs.title.value, this.refs.subreddit.value.trim() || 'picturegame');
+
+    if (result && !result.opened) {
+      const link = el('a', { href: result.url, target: '_blank', rel: 'noopener', textContent: 'Open the Reddit post form' });
+
+      this.refs.shareMessage.set('The picture is on your clipboard. ', 'warning');
+      this.refs.shareMessage.element.append(link);
+    }
   }
 
   requireUrl(warning) {
@@ -211,7 +264,7 @@ export class SharePanel {
   setUploaded(url) {
     this.refs.url.value = url;
     this.refs.uploaded.classList.toggle('hidden', !url);
-    this.refs.upload.querySelector('span:last-child').textContent = url ? 'Reupload' : 'Upload to Imgur';
+    this.refs.upload.querySelector('span:last-child').textContent = `${url ? 'Reupload' : 'Upload'} to ${this.app.imageHosts.getHost().label}`;
   }
 
   getShareState() {
@@ -270,15 +323,13 @@ export class SharePanel {
 
     try {
       const blob = await app.exportBlob(this.getExportOptions());
-      const result = await app.imgurUploader.upload(blob);
-
-      this.setUploaded(result.url);
+      this.setUploaded(await app.imageHosts.upload(blob));
       app.notify('Upload completed.', 'success');
       app.queueAutosave();
     } catch (error) {
       this.setUploaded(refs.url.value);
-      refs.shareMessage.set(`Error uploading to Imgur. Reason: ${error.message}`, 'error');
-      app.notify('Error uploading to Imgur.', 'error', 3600);
+      refs.shareMessage.set(`The upload failed. Reason: ${error.message} You can switch host under Upload settings, or use "Copy image & post to Reddit".`, 'error');
+      app.notify('The upload failed.', 'error', 3600);
     } finally {
       refs.upload.disabled = false;
     }
@@ -305,7 +356,6 @@ export class SharePanel {
 
   showSubredditInput() {
     this.refs.subreddit.classList.remove('hidden');
-    this.refs.uploaded.classList.remove('hidden');
     this.refs.subreddit.focus();
   }
 
@@ -477,7 +527,7 @@ export class SharePanel {
   sync() {
     const enabled = this.app.store.hasImage;
 
-    for (const control of [this.refs.copyImage, this.refs.download, this.refs.upload]) {
+    for (const control of [this.refs.copyImage, this.refs.download, this.refs.upload, this.refs.copyPost]) {
       control.disabled = !enabled;
     }
 

@@ -36,6 +36,10 @@ const ICONS = {
   pencil: '<path d="M4 20l1-5L16 4l4 4L9 19z"/>',
   grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
   reset: '<path d="M4 4v6h6"/><path d="M4 10a8 8 0 1 1 2 6"/>',
+  blur: '<path d="M12 3s6 6.200 6 11a6 6 0 0 1-12 0c0-4.800 6-11 6-11z"/><path d="M9.500 14.500a2.500 2.500 0 0 0 2.500 2.500"/>',
+  pixel: '<rect x="4" y="4" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/><path d="M13 4h7v7M4 13v7h7" stroke-dasharray="2 2.500"/>',
+  dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.010M15 15h.010M15 9h.010M9 15h.010M12 12h.010"/>',
+  reddit: '<circle cx="12" cy="13" r="7"/><path d="M9.500 12.500h.010M14.500 12.500h.010M9.500 15.500c1.500 1 3.500 1 5 0M12 6l1-3 4 1"/>',
 };
 
 export function icon(name) {

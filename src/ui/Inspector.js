@@ -2,16 +2,27 @@
 // rebuilt only when the kind of thing being edited changes; otherwise their values are synced.
 
 import { fitText, updateLayer, zoomFactor } from '../core/model.js';
-import { EFFECT_CATEGORIES, EFFECTS, getEffect } from '../gl/effects.js';
+import { EFFECT_CATEGORIES, EFFECTS, getEffect, intensityParams } from '../gl/effects.js';
 import { BLEND_MODES } from '../gl/glsl.js';
 import { getPattern } from '../gl/patterns.js';
 import { BRUSH_TYPES } from '../raster/strokes.js';
+import { PAINT_AMOUNT } from '../tools/BrushTool.js';
 import { FONTS } from '../raster/text.js';
 import { el } from '../utils/dom.js';
 import { button, color, row, section, select, slider, toggle } from './kit.js';
 
 const percent = (value) => `${Math.round(value)}%`;
 const degrees = (value) => `${Math.round(value)}°`;
+const ERASER_MODES = [
+  { value: 'erase', label: 'Erase drawings' },
+  { value: 'reveal', label: 'Reveal original' },
+  { value: 'restore', label: 'Restore masks' },
+];
+const ERASER_HINTS = {
+  erase: 'Erases drawings, or the painted area of the selected effect.',
+  reveal: 'Brushes through every mask and effect to show the original picture underneath.',
+  restore: 'Paints the masks back over areas you revealed.',
+};
 const REGION_SHAPES = [
   { value: 'rect', label: 'Rectangle' },
   { value: 'ellipse', label: 'Ellipse' },
@@ -20,7 +31,7 @@ const REGION_SHAPES = [
 
 export function effectOptions() {
   return EFFECT_CATEGORIES.flatMap((category) =>
-    EFFECTS.filter((effect) => effect.cat === category.id).map((effect) => ({ value: effect.id, label: `${category.label} · ${effect.name}` }))
+    EFFECTS.filter((effect) => effect.cat === category.id && !effect.hidden).map((effect) => ({ value: effect.id, label: `${category.label} · ${effect.name}` }))
   );
 }
 
@@ -234,11 +245,34 @@ export class Inspector {
           color({ label: 'Colour', value: state.brush.color, onInput: (value) => { state.brush.color = value; } }).element,
           select({ label: 'Brush type', options: BRUSH_TYPES.map((type) => ({ value: type.id, label: type.label })), value: state.brush.type, onChange: (value) => { state.brush.type = value; } }).element,
         ], { className: 'tool-section--primary' });
-      case 'eraser':
+      case 'eraser': {
+        const hint = el('p', { className: 'panel-intro-copy', textContent: ERASER_HINTS[state.eraser.mode] });
+        const mode = select({
+          label: 'Mode',
+          options: ERASER_MODES,
+          value: state.eraser.mode,
+          onChange: (value) => {
+            state.eraser.mode = value;
+            hint.textContent = ERASER_HINTS[value];
+          },
+        });
+
+        this.bindings.push(() => {
+          mode.set(state.eraser.mode);
+          hint.textContent = ERASER_HINTS[state.eraser.mode];
+        });
         return section('Eraser', [
+          mode.element,
           sizeSlider(),
-          el('p', { className: 'panel-intro-copy', textContent: 'Erases drawings, or the painted area of the selected effect.' }),
+          this.toolSlider({ label: 'Strength', min: 1, max: 100, format: percent }, () => state.brush.opacity, (value) => {
+            state.brush.opacity = value;
+          }),
+          hint,
         ], { className: 'tool-section--primary' });
+      }
+      case 'blurBrush':
+      case 'pixelBrush':
+        return this.amountBrushSection(app.toolName === 'blurBrush' ? 'blur' : 'pixelate', sizeSlider);
       case 'paint':
         return section('Effect brush', [
           select({ label: 'Effect', options: effectOptions(), value: state.paint.effectId, onChange: (value) => { state.paint.effectId = value; } }).element,
@@ -246,7 +280,7 @@ export class Inspector {
           this.toolSlider({ label: 'Strength', min: 1, max: 100, format: percent }, () => state.brush.opacity, (value) => {
             state.brush.opacity = value;
           }),
-          el('p', { className: 'panel-intro-copy', textContent: 'Paint where the effect should show. Keep the painted layer selected to add more to it.' }),
+          el('p', { className: 'panel-intro-copy', textContent: 'Paint where the effect should show. Strokes with the same effect share one layer; its sliders appear when you select it.' }),
         ], { className: 'tool-section--primary' });
       case 'region':
         return section('Region', [
@@ -259,6 +293,50 @@ export class Inspector {
       default:
         return null;
     }
+  }
+
+  /** Blur brush / pixel brush: size, strength and the one amount slider that matters. */
+  amountBrushSection(effectId, sizeSlider) {
+    const app = this.app;
+    const state = app.toolState;
+    const amount = PAINT_AMOUNT[effectId];
+    const tool = app.tools[app.toolName];
+    const control = slider({
+      label: amount.label,
+      min: amount.min,
+      max: amount.max,
+      step: amount.step,
+      value: state.paint.amounts[effectId],
+      onInput: (value) => {
+        const layer = tool.existingTarget();
+
+        state.paint.amounts[effectId] = value;
+
+        if (layer) {
+          app.store.updateLayer(layer.id, (entry) => ({ params: { ...entry.params, [amount.key]: value } }));
+        }
+      },
+      onChange: () => app.store.end(amount.label),
+    });
+
+    this.bindings.push(() => {
+      const layer = tool.existingTarget();
+
+      if (layer) {
+        state.paint.amounts[effectId] = layer.params[amount.key];
+      }
+
+      control.set(state.paint.amounts[effectId]);
+    });
+
+    return section(effectId === 'blur' ? 'Blur brush' : 'Pixel brush', [
+      sizeSlider(),
+      control.element,
+      this.toolSlider({ label: 'Strength', min: 1, max: 100, format: percent }, () => state.brush.opacity, (value) => {
+        state.brush.opacity = value;
+      }),
+      el('p', { className: 'panel-intro-copy', textContent: 'Paint over what should be hidden. The eraser removes it again while the painted layer is selected.' }),
+    ], { className: 'tool-section--primary' });
   }
 
   cropSection() {
@@ -342,18 +420,34 @@ export class Inspector {
     const app = this.app;
     const definition = getEffect(layer.effectId);
     const region = layer.coverage === 'rect' || layer.coverage === 'ellipse' || layer.coverage === 'polygon';
+
+    if (layer.effectId === 'original') {
+      return [
+        section('Revealed original', [
+          el('p', { className: 'panel-intro-copy', textContent: 'Shows the untouched picture through the masks below. Use the eraser in "Reveal original" mode to add, "Restore masks" to take away.' }),
+          this.layerSlider(layer.id, { label: 'Opacity', min: 0, max: 100, format: percent }, (entry) => entry.opacity * 100, (value) => ({ opacity: value / 100 }), 'Change opacity'),
+          row([button('Clear revealed area', { iconName: 'trash', onClick: () => app.store.apply('Clear revealed area', (doc) => updateLayer(doc, layer.id, { strokes: [] })) })]),
+        ], { className: 'tool-section--primary' }),
+      ];
+    }
+
+    const intensity = (label, factor, title) =>
+      button(label, { title, onClick: () => app.store.apply(`${label} ${definition.name.toLowerCase()}`, (doc) => updateLayer(doc, layer.id, { params: intensityParams(definition, factor) })) });
     const settings = [
       select({ label: 'Effect', options: effectOptions(), value: layer.effectId, onChange: (value) => app.changeEffect(layer.id, value) }).element,
+      this.layerSlider(layer.id, { label: 'Mix with original', min: 0, max: 100, format: percent }, (entry) => entry.opacity * 100, (value) => ({ opacity: value / 100 }), 'Change mix'),
+      row([
+        intensity('Gentle', 0.5, 'Keep the picture easy to recognise'),
+        intensity('Default', 1, 'Back to the default settings'),
+        intensity('Strong', 1.7, 'Scramble harder'),
+      ], 'button-row--fill'),
       ...this.paramControls(layer.id, definition),
     ];
 
     if (definition.seeded) {
       settings.push(row([
         button('Shuffle', { iconName: 'shuffle', title: 'New random arrangement', onClick: () => app.store.apply('Shuffle', (doc) => updateLayer(doc, layer.id, { seed: Math.random() * 100 })) }),
-        button('Reset', { iconName: 'reset', onClick: () => app.changeEffect(layer.id, layer.effectId) }),
       ]));
-    } else {
-      settings.push(row([button('Reset', { iconName: 'reset', onClick: () => app.changeEffect(layer.id, layer.effectId) })]));
     }
 
     const area = [];
@@ -391,7 +485,9 @@ export class Inspector {
     return [
       section(definition.name, settings, { className: 'tool-section--primary' }),
       section('Area', area),
-      section('Blend', this.commonControls(layer)),
+      section('Blend', [
+        this.layerSelect(layer.id, 'Blend mode', BLEND_MODES.map((mode) => ({ value: mode.id, label: mode.label })), (entry) => entry.blend, (value) => ({ blend: value })),
+      ], { open: false }),
     ];
   }
 

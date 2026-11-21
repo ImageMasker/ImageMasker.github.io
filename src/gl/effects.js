@@ -18,11 +18,13 @@ const O = (key, label, options, value = 0) => ({ key, label, type: 'select', opt
 
 export const EFFECT_CATEGORIES = [
   { id: 'glass', label: 'Glass' },
+  { id: 'water', label: 'Water' },
   { id: 'tiles', label: 'Scramble' },
   { id: 'warp', label: 'Warp' },
   { id: 'art', label: 'Print & paint' },
   { id: 'retro', label: 'Glitch & colour' },
   { id: 'basic', label: 'Classic' },
+  { id: 'heavy', label: 'Heavy (hard to recognise)' },
 ];
 
 export const EFFECTS = [
@@ -36,13 +38,15 @@ export const EFFECTS = [
     desc: 'Leaded panes that each bend the picture a different way.',
     params: [
       R('size', 'Pane size', 4, 40, 15),
-      R('shift', 'Shift', 0, 100, 45),
-      R('twist', 'Twist', 0, 100, 35),
-      R('zoom', 'Zoom', 0, 100, 35),
+      R('shift', 'Shift', 0, 100, 30),
+      R('twist', 'Twist', 0, 100, 20),
+      R('zoom', 'Zoom', 0, 100, 25),
       R('bevel', 'Bevel', 0, 100, 55),
       R('lead', 'Lead lines', 0, 100, 40),
-      R('ripple', 'Ripple', 0, 100, 30),
-      R('tone', 'Tone variation', 0, 100, 25),
+      R('texture', 'Surface texture', 0, 100, 35),
+      R('dispersion', 'Colour fringes', 0, 100, 30),
+      R('gloss', 'Gloss', 0, 100, 50),
+      R('tone', 'Tone variation', 0, 100, 15),
     ],
     frag: `
 vec4 fx(vec2 q) {
@@ -56,17 +60,19 @@ vec4 fx(vec2 q) {
   vec2 off = (hash22(v.id + SEEDV + 9.7) - 0.5) * cs * p_shift * 0.016;
   float e = v.edge * cs;
   float bev = 1.0 - smoothstep(0.0, cs * 0.22, e);
-  p -= v.n * bev * bev * cs * p_bevel * 0.004;
-  float ph = q.y * 380.0 + h.y * TAU;
-  p.y += sin(ph) * 0.00004 * p_ripple;
-  vec4 col = S(c + p + off);
+  // Each pane is tilted a little, has a bevelled rim and the uneven surface of hand-made glass.
+  vec2 tilt = (hash22(v.id + SEEDV + 5.3) - 0.5) * 0.6;
+  vec2 grain = glassSlope(q * 45.0 + h.xy * 30.0, 2) * p_texture * 0.012;
+  vec2 bevel = -v.n * bev * bev * p_bevel * 0.03;
+  vec4 col = refractS(c + p + off, grain * 0.012 + bevel * cs * 0.13 + tilt * cs * 0.04, p_dispersion * 0.006);
   float tone = (h.y - 0.5) * p_tone * 0.008;
   col.rgb = mix(col.rgb, vec3(luma(col.rgb)), clamp(abs(tone) * 1.5, 0.0, 1.0)) * (1.0 + tone);
-  col.rgb *= 1.0 + 0.0012 * p_ripple * cos(ph);
+  vec2 lt = glassLight(tilt * 0.6 + grain + bevel, 70.0);
+  float gl = p_gloss * 0.01;
+  col.rgb *= 1.0 + lt.x * 0.4 * gl;
+  col.rgb += col.a * lt.y * 0.45 * gl;
   float lw = p_lead * 0.00012;
   float aa = uPx * 1.5;
-  float rim = (1.0 - smoothstep(lw, lw + cs * 0.07, e)) * dot(v.n, vec2(0.6, 0.8));
-  col.rgb += col.a * rim * 0.0045 * p_bevel;
   float line = (1.0 - smoothstep(lw - aa, lw + aa, e)) * step(0.5, p_lead);
   float glint = (1.0 - smoothstep(lw * 0.25, lw * 0.6 + aa, abs(e - lw * 0.55))) * max(dot(v.n, vec2(0.6, 0.8)), 0.0);
   col.rgb = mix(col.rgb, vec3(0.17, 0.21, 0.23) * col.a, line);
@@ -78,29 +84,36 @@ vec4 fx(vec2 q) {
     id: 'stainedGlass',
     name: 'Stained glass',
     cat: 'glass',
-    strength: 3,
+    strength: 2,
     seeded: true,
-    desc: 'Flat tinted panes held together by dark leading.',
+    desc: 'Lightly tinted, rippled panes held together by dark leading.',
     params: [
       R('size', 'Pane size', 2, 40, 11),
-      R('flatten', 'Flatten', 0, 100, 60),
-      R('tint', 'Tint', 0, 100, 40),
-      R('glow', 'Glow', 0, 100, 45),
-      R('lead', 'Lead lines', 0, 100, 45),
+      R('flatten', 'Flatten', 0, 100, 20),
+      R('tint', 'Tint', 0, 100, 18),
+      R('glow', 'Glow', 0, 100, 20),
+      R('lead', 'Lead lines', 0, 100, 30),
+      R('texture', 'Surface texture', 0, 100, 45),
+      R('gloss', 'Gloss', 0, 100, 40),
     ],
     frag: `
 vec4 fx(vec2 q) {
   float cs = p_size * 0.01;
   Vor v = voronoi(q / cs, 0.9);
   vec2 c = v.center * cs;
+  vec3 h = hash32(v.id + SEEDV);
+  vec2 grain = glassSlope(q * 30.0 + h.xy * 50.0, 3) * p_texture * 0.012;
   float k = cs * 0.2;
   vec4 avg = (S(c) * 2.0 + S(c + vec2(k, 0.0)) + S(c - vec2(k, 0.0)) + S(c + vec2(0.0, k)) + S(c - vec2(0.0, k))) / 6.0;
-  vec4 col = mix(S(q), avg, p_flatten * 0.01);
-  vec3 h = hash32(v.id + SEEDV);
+  vec4 col = mix(S(q + grain * 0.012), avg, p_flatten * 0.01);
   vec3 tintc = hsv2rgb(vec3(h.x, 0.6, 1.0));
   col.rgb = mix(col.rgb, col.rgb * tintc * 1.3 + tintc * 0.06 * col.a, p_tint * 0.01);
   float e = v.edge * cs;
   col.rgb *= mix(1.0, 0.7 + 0.45 * smoothstep(0.0, cs * 0.35, e), p_glow * 0.01);
+  vec2 lt = glassLight(grain + (h.yz - 0.5) * 0.5, 40.0);
+  float gl = p_gloss * 0.01;
+  col.rgb *= 1.0 + lt.x * 0.4 * gl;
+  col.rgb += col.a * lt.y * 0.6 * gl;
   float lw = p_lead * 0.00012;
   float aa = uPx * 1.5;
   float line = (1.0 - smoothstep(lw - aa, lw + aa, e)) * step(0.5, p_lead);
@@ -115,25 +128,39 @@ vec4 fx(vec2 q) {
     cat: 'glass',
     strength: 2,
     centered: true,
-    desc: 'Vertical flutes that squeeze and mirror thin slices.',
+    desc: 'Vertical flutes that squeeze, mirror and catch the light.',
     params: [
-      R('width', 'Flute width', 0.5, 20, 3.5, 0.1),
-      R('strength', 'Refraction', 0, 100, 65),
+      R('width', 'Flute width', 0.5, 20, 3, 0.1),
+      R('strength', 'Refraction', 0, 100, 45),
       R('angle', 'Angle', 0, 180, 0),
-      R('shade', 'Shading', 0, 100, 45),
+      R('dispersion', 'Colour fringes', 0, 100, 30),
+      R('gloss', 'Gloss', 0, 100, 50),
     ],
     frag: `
 vec4 fx(vec2 q) {
   mat2 m = rot(radians(p_angle));
+  mat2 mt = transpose(m);
   vec2 p = m * (q - uCenter);
   float w = p_width * 0.01;
   float i = floor(p.x / w);
   float f = fract(p.x / w) - 0.5;
   float k = mix(1.0, -3.2, p_strength * 0.01);
-  p.x = (i + 0.5) * w + f * (1.0 + 2.0 * f * f) * w * k;
-  vec4 col = S(transpose(m) * p + uCenter);
-  float sh = 1.0 - 0.9 * f * f * 4.0 * 0.6 + 0.3 * (1.0 - smoothstep(0.0, 0.2, abs(f + 0.22)));
-  col.rgb *= mix(1.0, sh, p_shade * 0.01);
+  float bend = f * (1.0 + 2.0 * f * f) * k;
+  // Drawn glass is never perfectly straight: every flute wanders a little along its length.
+  float wob = (vnoise(vec2(i * 7.3, p.y * 5.0)) - 0.5) * 0.25 * p_strength * 0.01;
+  vec2 origin = mt * vec2((i + 0.5) * w, p.y) + uCenter;
+  vec2 ax = mt * vec2(w, 0.0);
+  float d = p_dispersion * 0.004;
+  vec4 col = S(origin + ax * (bend + wob));
+  if (d > 0.002) {
+    col.r = S(origin + ax * (bend * (1.0 - d) + wob)).r;
+    col.b = S(origin + ax * (bend * (1.0 + d) + wob)).b;
+  }
+  vec2 lt = glassLight(mt * vec2(-f * 2.4 + wob * 2.0, 0.0), 30.0);
+  float gl = p_gloss * 0.01;
+  col.rgb *= 1.0 + lt.x * 0.5 * gl;
+  col.rgb *= 1.0 - 0.35 * gl * smoothstep(0.38, 0.5, abs(f));
+  col.rgb += col.a * lt.y * 0.55 * gl;
   return clamp(col, 0.0, 1.0);
 }`,
   },
@@ -143,12 +170,15 @@ vec4 fx(vec2 q) {
     cat: 'glass',
     strength: 3,
     seeded: true,
-    desc: 'A wall of thick glass bricks, each one its own lens.',
+    desc: 'A wall of thick, wavy glass bricks, each one its own lens.',
     params: [
       R('size', 'Block size', 2, 40, 10),
-      R('lens', 'Lens', 0, 100, 60),
-      R('jitter', 'Jitter', 0, 100, 30),
+      R('lens', 'Lens', 0, 100, 35),
+      R('jitter', 'Jitter', 0, 100, 15),
       R('mortar', 'Mortar', 0, 100, 35),
+      R('texture', 'Surface texture', 0, 100, 40),
+      R('dispersion', 'Colour fringes', 0, 100, 30),
+      R('gloss', 'Gloss', 0, 100, 45),
     ],
     frag: `
 vec4 fx(vec2 q) {
@@ -158,8 +188,13 @@ vec4 fx(vec2 q) {
   vec2 f = fract(g) - 0.5;
   vec2 h = hash22(id + SEEDV);
   float t = p_lens * 0.01;
-  vec2 d = f * mix(1.0, 3.0, t) * (1.0 + 0.9 * dot(f, f)) + sin(f.yx * TAU * 1.5 + h * TAU) * 0.05 * t;
-  vec4 col = S((id + 0.5 + d + (h - 0.5) * p_jitter * 0.012) * cs);
+  vec2 wav = glassSlope(g * 1.6 + h * 20.0, 2) * p_texture * 0.01;
+  vec2 d = f * mix(1.0, 3.0, t) * (1.0 + 0.9 * dot(f, f)) + wav * 0.07;
+  vec4 col = refractS((id + 0.5 + (h - 0.5) * p_jitter * 0.012) * cs, d * cs, p_dispersion * 0.003);
+  vec2 lt = glassLight(wav - f * 1.6 * t, 60.0);
+  float gl = p_gloss * 0.01;
+  col.rgb *= 1.0 + lt.x * 0.4 * gl;
+  col.rgb += col.a * lt.y * 0.4 * gl;
   float e = 0.5 - max(abs(f.x), abs(f.y));
   float mw = p_mortar * 0.0012;
   float aa = uPx / cs * 1.5;
@@ -177,58 +212,111 @@ vec4 fx(vec2 q) {
     cat: 'glass',
     strength: 2,
     seeded: true,
-    desc: 'Grainy privacy glass that scatters every pixel.',
+    desc: 'Grainy privacy glass that scatters every pixel and sparkles a little.',
     blur: (p) => p.amount * 0.00003,
     params: [
       R('amount', 'Amount', 0, 100, 45),
       R('grain', 'Grain size', 0, 100, 35),
+      R('sparkle', 'Sparkle', 0, 100, 25),
     ],
     frag: `
 vec4 fx(vec2 q) {
   float sc = mix(700.0, 30.0, p_grain * 0.01);
   vec2 n = noise2(q * sc + SEEDV) - 0.5;
   vec2 n2 = hash22(floor(q / uPx) + SEEDV) - 0.5;
-  return S(q + (n * 0.8 + n2 * 0.45) * p_amount * 0.0009);
+  vec4 col = S(q + (n * 0.8 + n2 * 0.45) * p_amount * 0.0009);
+  col.rgb *= 1.0 + n.x * 0.12;
+  col.rgb += col.a * pow(hash21(floor(q * 900.0) + SEEDV + 3.0), 40.0) * p_sparkle * 0.006;
+  return clamp(col, 0.0, 1.0);
+}`,
+  },
+  {
+    id: 'privacyGlass',
+    thumb: { scale: 9 },
+    name: 'Textured glass',
+    cat: 'glass',
+    strength: 2,
+    seeded: true,
+    desc: 'Patterned window glass: hammered, pebbled, hand-blown, rippled or seedy.',
+    params: [
+      O('pattern', 'Pattern', ['Hammered', 'Pebbled', 'Flemish', 'Rippled', 'Seedy'], 0),
+      R('scale', 'Pattern size', 1, 30, 4, 0.5),
+      R('depth', 'Depth', 0, 100, 45),
+      R('dispersion', 'Colour fringes', 0, 100, 30),
+      R('gloss', 'Gloss', 0, 100, 50),
+      R('tint', 'Bottle tint', 0, 100, 15),
+    ],
+    frag: `
+vec4 fx(vec2 q) {
+  float cs = p_scale * 0.01;
+  vec2 slope = glassSlope(q / cs, int(p_pattern + 0.5)) * p_depth * 0.02;
+  vec4 col = refractS(q, slope * cs * 0.22, p_dispersion * 0.006);
+  vec2 lt = glassLight(slope, 60.0);
+  float gl = p_gloss * 0.01;
+  col.rgb *= 1.0 + lt.x * 0.45 * gl;
+  col.rgb += col.a * lt.y * 0.45 * gl;
+  col.rgb = mix(col.rgb, col.rgb * vec3(0.86, 0.97, 0.93), p_tint * 0.01);
+  return clamp(col, 0.0, 1.0);
 }`,
   },
   {
     id: 'rain',
     name: 'Rainy window',
-    cat: 'glass',
+    cat: 'water',
     strength: 2,
     seeded: true,
-    desc: 'A fogged pane covered in droplets that flip the view.',
+    desc: 'A misted pane with droplets that flip the view and runs that wipe it clear.',
     blur: (p) => 0.0008 + p.fog * 0.00022,
     params: [
       R('density', 'Drops', 0, 100, 60),
       R('size', 'Drop size', 10, 100, 50),
-      R('fog', 'Fog', 0, 100, 45),
+      R('fog', 'Fog', 0, 100, 30),
+      R('trails', 'Running drops', 0, 100, 40),
     ],
     frag: `
+// One droplet: a small dome that shows the scene upside down, with a highlight and a dark rim.
+void drop(inout vec4 col, vec2 q, vec2 d, float r) {
+  float dist = length(d) / r;
+  if (dist >= 1.0) return;
+  vec2 nrm = d / r;
+  float hz = sqrt(max(1.0 - dist * dist, 0.0));
+  vec4 lens = O(q - nrm * r * (2.2 + 1.6 * dist * dist));
+  vec2 lt = glassLight(-nrm / max(hz, 0.35) * 0.9, 70.0);
+  lens.rgb *= 1.0 - 0.5 * smoothstep(0.55, 1.0, dist);
+  lens.rgb += lens.a * 0.3 * smoothstep(0.45, 0.95, dist) * max(dot(nrm / max(dist, 1e-4), vec2(0.62, 0.78)), 0.0);
+  lens.rgb += lens.a * lt.y * 0.9;
+  col = mix(col, lens, 1.0 - smoothstep(0.9, 1.0, dist));
+}
 vec4 fx(vec2 q) {
-  vec4 bg = S(q);
-  bg.rgb = mix(bg.rgb, bg.rgb * 0.86 + 0.09 * bg.a, p_fog * 0.01);
-  vec4 col = bg;
+  vec4 col = S(q);
+  col.rgb = mix(col.rgb, col.rgb * 0.86 + 0.09 * col.a, p_fog * 0.01);
+  float sz = 0.4 + p_size * 0.012;
+  // Drops that ran down the glass leave a clear, slightly wavy track behind them.
+  float lw = 0.085 * sz;
+  float lane = floor(q.x / lw);
+  vec3 lh = hash32(vec2(lane, 7.7) + SEEDV);
+  if (lh.x < p_trails * 0.006) {
+    float cx = (lane + 0.5 + (lh.y - 0.5) * 0.4) * lw + sin(q.y * 23.0 + lh.z * TAU) * lw * 0.07;
+    float headY = (0.25 + 0.7 * lh.z) * uAsp.y;
+    float dx = q.x - cx;
+    float tw = lw * 0.11 * (0.55 + 0.45 * smoothstep(0.0, headY, q.y));
+    if (q.y < headY) {
+      float t = 1.0 - smoothstep(tw * 0.55, tw, abs(dx));
+      col = mix(col, O(q + vec2(dx * 1.4, 0.0)), t * 0.85);
+      col.rgb *= 1.0 - 0.1 * t * smoothstep(tw * 0.3, tw, abs(dx));
+    }
+    drop(col, q, vec2(dx, (q.y - headY) * 0.72), lw * 0.2);
+  }
   for (int L = 0; L < 3; L++) {
     float fl = float(L);
-    float cs = (0.11 - 0.03 * fl) * (0.4 + p_size * 0.012);
+    float cs = (0.11 - 0.03 * fl) * sz;
     vec2 g = q / cs + fl * 17.3 + SEEDV;
     vec2 id = floor(g);
-    vec2 f = fract(g) - 0.5;
     vec3 h = hash32(id + fl * 7.7);
     if (h.z > p_density * 0.01) continue;
-    float r = 0.13 + 0.2 * hash21(id + 3.3 + fl);
-    vec2 d = f - (h.xy - 0.5) * 0.5;
+    vec2 d = fract(g) - 0.5 - (h.xy - 0.5) * 0.5;
     d.y *= 0.82;
-    float dist = length(d) / r;
-    if (dist < 1.0) {
-      vec2 nrm = d / r;
-      vec4 lens = O(q - nrm * cs * r * (2.4 + 1.4 * dist * dist));
-      lens.rgb *= 1.0 - 0.55 * smoothstep(0.55, 1.0, dist);
-      lens.rgb += lens.a * 0.7 * (1.0 - smoothstep(0.0, 0.22, length(nrm - vec2(-0.38, -0.42))));
-      lens.rgb += lens.a * 0.12 * smoothstep(0.5, 1.0, dist) * max(nrm.y, 0.0);
-      col = mix(col, lens, 1.0 - smoothstep(0.9, 1.0, dist));
-    }
+    drop(col, q, d * cs, cs * (0.13 + 0.2 * hash21(id + 3.3 + fl)));
   }
   return clamp(col, 0.0, 1.0);
 }`,
@@ -236,19 +324,20 @@ vec4 fx(vec2 q) {
   {
     id: 'ripple',
     name: 'Pond ripples',
-    cat: 'glass',
+    cat: 'water',
     strength: 2,
     seeded: true,
-    desc: 'Rings spreading from a few raindrops on water.',
+    desc: 'Rings spreading from a few raindrops on still water.',
     params: [
       R('scale', 'Wavelength', 1, 30, 6, 0.5),
-      R('amount', 'Amount', 0, 100, 50),
+      R('amount', 'Amount', 0, 100, 45),
       R('drops', 'Drops', 1, 8, 4),
-      R('shine', 'Shine', 0, 100, 40),
+      R('shine', 'Shine', 0, 100, 45),
+      R('dispersion', 'Colour fringes', 0, 100, 20),
     ],
     frag: `
 vec4 fx(vec2 q) {
-  vec2 d = vec2(0.0);
+  vec2 slope = vec2(0.0);
   float hgt = 0.0;
   float w = p_scale * 0.01;
   for (int i = 0; i < 8; i++) {
@@ -258,24 +347,72 @@ vec4 fx(vec2 q) {
     float r = length(v) + 1e-4;
     float ph = r / w * TAU;
     float att = 1.0 / (1.0 + r * 2.5);
-    d += (v / r) * cos(ph) * att;
+    slope += (v / r) * cos(ph) * att;
     hgt += sin(ph) * att;
   }
-  vec4 col = S(q + d * p_amount * 0.0004 * (0.4 + p_scale * 0.1));
-  col.rgb += col.a * hgt * p_shine * 0.0012;
+  vec4 col = refractS(q, slope * p_amount * 0.0004 * (0.4 + p_scale * 0.1), p_dispersion * 0.006);
+  vec2 lt = glassLight(slope * 0.3, 60.0);
+  float sh = p_shine * 0.01;
+  col.rgb *= 1.0 + lt.x * 0.7 * sh;
+  col.rgb += col.a * lt.y * 0.35 * sh;
+  return clamp(col, 0.0, 1.0);
+}`,
+  },
+  {
+    id: 'water',
+    name: 'Water surface',
+    cat: 'water',
+    strength: 2,
+    seeded: true,
+    desc: 'Seen through shallow, moving water with caustics and glints.',
+    params: [
+      R('scale', 'Wave size', 2, 40, 10),
+      R('amount', 'Refraction', 0, 100, 40),
+      R('caustics', 'Caustics', 0, 100, 40),
+      R('glints', 'Glints', 0, 100, 35),
+      R('tint', 'Water tint', 0, 100, 25),
+      R('dispersion', 'Colour fringes', 0, 100, 15),
+    ],
+    frag: `
+float waterH(vec2 p) {
+  vec2 w = p + (noise2(p * 0.35 + SEEDV) - 0.5) * 1.8;
+  float h = 0.0, a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    float ang = float(i) * 1.9 + uSeed;
+    h += a * sin(dot(w, vec2(cos(ang), sin(ang))) * (2.0 + float(i) * 1.5) + float(i) * 1.3);
+    a *= 0.6;
+  }
+  return h;
+}
+vec4 fx(vec2 q) {
+  float cs = p_scale * 0.01;
+  vec2 p = q / cs * 2.0;
+  const float e = 0.06;
+  float h0 = waterH(p);
+  float hx1 = waterH(p + vec2(e, 0.0)), hx0 = waterH(p - vec2(e, 0.0));
+  float hy1 = waterH(p + vec2(0.0, e)), hy0 = waterH(p - vec2(0.0, e));
+  vec2 slope = vec2(hx1 - hx0, hy1 - hy0) / (2.0 * e);
+  float lap = (hx1 + hx0 + hy1 + hy0 - 4.0 * h0) / (e * e);
+  vec4 col = refractS(q, slope * cs * p_amount * 0.0024, p_dispersion * 0.006);
+  col.rgb = mix(col.rgb, col.rgb * vec3(0.72, 0.93, 1.0) + vec3(0.0, 0.025, 0.045) * col.a, p_tint * 0.01);
+  // Wave crests act as lenses and gather the light into bright lines.
+  float ca = smoothstep(5.0, 24.0, -lap);
+  col.rgb *= 1.0 + (ca * 0.9 - 0.1) * p_caustics * 0.01;
+  col.rgb += col.a * ca * 0.08 * p_caustics * 0.01;
+  col.rgb += col.a * glassLight(slope * 0.2, 80.0).y * p_glints * 0.008;
   return clamp(col, 0.0, 1.0);
 }`,
   },
   {
     id: 'bubbles',
-    name: 'Bubble wrap',
-    cat: 'glass',
+    name: 'Bubbles',
+    cat: 'water',
     strength: 3,
     desc: 'A honeycomb of little fisheye lenses.',
     params: [
       R('size', 'Bubble size', 2, 40, 9),
-      R('bulge', 'Bulge', 0, 100, 75),
-      R('gap', 'Gaps', 0, 100, 45),
+      R('bulge', 'Bulge', 0, 100, 55),
+      R('gap', 'Gaps', 0, 100, 30),
     ],
     frag: `
 vec4 fx(vec2 q) {
@@ -305,8 +442,8 @@ vec4 fx(vec2 q) {
     desc: 'Crystal facets that split the colours apart.',
     params: [
       R('size', 'Facet size', 4, 60, 24),
-      R('spread', 'Colour split', 0, 100, 45),
-      R('shift', 'Shift', 0, 100, 35),
+      R('spread', 'Colour split', 0, 100, 30),
+      R('shift', 'Shift', 0, 100, 12),
     ],
     frag: `
 vec4 fx(vec2 q) {
@@ -332,7 +469,7 @@ vec4 fx(vec2 q) {
     seeded: true,
     desc: 'Solid-colour crystals with faceted shading.',
     params: [
-      R('size', 'Crystal size', 0.5, 30, 4.5, 0.5),
+      R('size', 'Crystal size', 0.5, 30, 2.5, 0.5),
       R('facet', 'Facet shading', 0, 100, 45),
       R('edge', 'Edges', 0, 100, 25),
     ],
@@ -360,8 +497,8 @@ vec4 fx(vec2 q) {
     desc: 'Interlocking pieces that never quite line up.',
     params: [
       R('size', 'Piece size', 4, 40, 13),
-      R('shift', 'Shift', 0, 100, 40),
-      R('twist', 'Twist', 0, 100, 20),
+      R('shift', 'Shift', 0, 100, 25),
+      R('twist', 'Twist', 0, 100, 10),
       R('depth', 'Emboss', 0, 100, 60),
     ],
     frag: `
@@ -416,9 +553,9 @@ vec4 fx(vec2 q) {
     desc: 'Square tiles nudged, spun and flipped out of place.',
     params: [
       R('size', 'Tile size', 2, 40, 12),
-      R('shift', 'Shift', 0, 100, 35),
-      R('twist', 'Twist', 0, 100, 20),
-      R('flip', 'Flipped tiles', 0, 100, 30),
+      R('shift', 'Shift', 0, 100, 20),
+      R('twist', 'Twist', 0, 100, 10),
+      R('flip', 'Flipped tiles', 0, 100, 0),
       R('gap', 'Grout', 0, 100, 30),
     ],
     frag: `
@@ -452,8 +589,8 @@ vec4 fx(vec2 q) {
     desc: 'Hexagonal mirrors turned and flipped at random.',
     params: [
       R('size', 'Tile size', 3, 40, 13),
-      R('turn', 'Turned tiles', 0, 100, 65),
-      R('flip', 'Flipped tiles', 0, 100, 40),
+      R('turn', 'Turned tiles', 0, 100, 25),
+      R('flip', 'Flipped tiles', 0, 100, 15),
       R('gap', 'Edges', 0, 100, 30),
     ],
     frag: `
@@ -485,7 +622,7 @@ vec4 fx(vec2 q) {
     params: [
       R('shards', 'Shards', 4, 40, 15),
       R('rings', 'Rings', 1, 10, 4),
-      R('shift', 'Displacement', 0, 100, 50),
+      R('shift', 'Displacement', 0, 100, 30),
       R('crack', 'Cracks', 0, 100, 45),
     ],
     frag: `
@@ -521,7 +658,7 @@ vec4 fx(vec2 q) {
     desc: 'The picture cut into ribbons and woven back together.',
     params: [
       R('width', 'Strip width', 1, 30, 7, 0.5),
-      R('shift', 'Shift', 0, 100, 45),
+      R('shift', 'Shift', 0, 100, 25),
       R('shadow', 'Shadow', 0, 100, 60),
       R('gap', 'Gaps', 0, 100, 20),
     ],
@@ -556,7 +693,7 @@ vec4 fx(vec2 q) {
     desc: 'Strips slid sideways like a broken blind.',
     params: [
       R('width', 'Slat width', 0.5, 30, 5, 0.5),
-      R('shift', 'Shift', 0, 100, 40),
+      R('shift', 'Shift', 0, 100, 25),
       R('angle', 'Angle', 0, 180, 0),
       T('mirror', 'Flip every other slat', false),
       R('edge', 'Edge shading', 0, 100, 40),
@@ -585,7 +722,7 @@ vec4 fx(vec2 q) {
     desc: 'Concentric rings, each rotated by a different amount.',
     params: [
       R('width', 'Ring width', 1, 30, 7, 0.5),
-      R('twist', 'Max rotation', 0, 180, 35),
+      R('twist', 'Max rotation', 0, 180, 14),
       R('edge', 'Edge shading', 0, 100, 45),
     ],
     frag: `
@@ -609,7 +746,7 @@ vec4 fx(vec2 q) {
     desc: 'A print folded into an accordion of shaded panels.',
     params: [
       R('width', 'Panel width', 1, 40, 9, 0.5),
-      R('depth', 'Fold depth', 0, 100, 55),
+      R('depth', 'Fold depth', 0, 100, 45),
       R('angle', 'Angle', 0, 180, 0),
     ],
     frag: `
@@ -637,7 +774,7 @@ vec4 fx(vec2 q) {
     seeded: true,
     desc: 'Flat-shaded triangles, like a paper-craft model.',
     params: [
-      R('size', 'Triangle size', 1, 30, 6, 0.5),
+      R('size', 'Triangle size', 1, 30, 3.5, 0.5),
       R('jitter', 'Irregularity', 0, 100, 60),
       R('edge', 'Edges', 0, 100, 25),
     ],
@@ -662,7 +799,7 @@ vec4 fx(vec2 q) {
   {
     id: 'kaleido',
     name: 'Kaleidoscope',
-    cat: 'tiles',
+    cat: 'heavy',
     strength: 3,
     centered: true,
     desc: 'Mirrored wedges spinning around the centre.',
@@ -683,7 +820,7 @@ vec4 fx(vec2 q) {
   {
     id: 'mirrorGrid',
     name: 'Mirror tiles',
-    cat: 'tiles',
+    cat: 'heavy',
     strength: 3,
     centered: true,
     desc: 'One patch of the picture repeated as mirrored tiles.',
@@ -713,7 +850,7 @@ vec4 fx(vec2 q) {
     desc: 'Smooth, marbled currents pushing the picture around.',
     params: [
       R('scale', 'Scale', 0, 100, 40),
-      R('amount', 'Amount', 0, 100, 45),
+      R('amount', 'Amount', 0, 100, 28),
     ],
     frag: `
 vec4 fx(vec2 q) {
@@ -732,7 +869,7 @@ vec4 fx(vec2 q) {
     desc: 'A grid of small whirlpools.',
     params: [
       R('size', 'Cell size', 3, 60, 16),
-      R('angle', 'Twist', 0, 540, 150),
+      R('angle', 'Twist', 0, 540, 70),
       T('alternate', 'Alternate direction', true),
     ],
     frag: `
@@ -756,7 +893,7 @@ vec4 fx(vec2 q) {
     desc: 'Rolling sine waves.',
     params: [
       R('length', 'Wavelength', 1, 60, 12),
-      R('amount', 'Amount', 0, 100, 35),
+      R('amount', 'Amount', 0, 100, 25),
       R('angle', 'Angle', 0, 180, 0),
       T('cross', 'Both directions', true),
     ],
@@ -833,7 +970,7 @@ vec4 fx(vec2 q) {
     centered: true,
     desc: 'One big twist around the centre.',
     params: [
-      R('angle', 'Twist', -720, 720, 200),
+      R('angle', 'Twist', -720, 720, 110),
       R('radius', 'Radius', 10, 250, 110),
     ],
     frag: `
@@ -908,7 +1045,7 @@ vec4 fx(vec2 q) {
     strength: 2,
     desc: 'Newsprint dots, in CMYK or a single ink.',
     params: [
-      R('size', 'Dot spacing', 0.3, 6, 1.1, 0.1),
+      R('size', 'Dot spacing', 0.3, 6, 0.8, 0.1),
       R('angle', 'Screen angle', 0, 90, 15),
       O('mode', 'Inks', ['CMYK', 'Single ink'], 0),
       C('ink', 'Ink', '#1d2a44'),
@@ -950,7 +1087,7 @@ vec4 fx(vec2 q) {
     seeded: true,
     desc: 'Banknote-style lines that swell in the shadows.',
     params: [
-      R('lines', 'Lines', 20, 300, 110),
+      R('lines', 'Lines', 20, 300, 140),
       R('angle', 'Angle', 0, 180, 35),
       R('contrast', 'Contrast', 0, 100, 40),
       R('wobble', 'Wobble', 0, 100, 25),
@@ -984,8 +1121,8 @@ vec4 fx(vec2 q) {
     seeded: true,
     desc: 'Dabs of paint on bare canvas.',
     params: [
-      R('size', 'Dab size', 0.3, 8, 1.5, 0.1),
-      R('fill', 'Coverage', 30, 100, 80),
+      R('size', 'Dab size', 0.3, 8, 1, 0.1),
+      R('fill', 'Coverage', 30, 100, 95),
       C('paper', 'Canvas', '#f3ead8'),
     ],
     frag: `
@@ -1043,7 +1180,7 @@ vec4 fx(vec2 q) {
     strength: 1,
     desc: 'Flat colour bands with inked outlines.',
     params: [
-      R('levels', 'Colour levels', 2, 10, 4),
+      R('levels', 'Colour levels', 2, 10, 5),
       R('edges', 'Ink outlines', 0, 100, 65),
       R('saturation', 'Saturation', 0, 200, 130),
     ],
@@ -1068,7 +1205,7 @@ vec4 fx(vec2 q) {
     params: [
       R('strength', 'Line strength', 0, 100, 65),
       R('shade', 'Shading', 0, 100, 50),
-      R('tint', 'Keep colour', 0, 100, 15),
+      R('tint', 'Keep colour', 0, 100, 45),
     ],
     frag: `
 vec4 fx(vec2 q) {
@@ -1091,7 +1228,7 @@ vec4 fx(vec2 q) {
     desc: 'Glowing outlines in the dark.',
     params: [
       R('glow', 'Glow', 0, 100, 60),
-      R('dark', 'Darkness', 0, 100, 88),
+      R('dark', 'Darkness', 0, 100, 70),
       R('hue', 'Hue shift', 0, 360, 0),
     ],
     frag: `
@@ -1102,7 +1239,7 @@ vec4 fx(vec2 q) {
   float e = sobel(q, d) + 0.6 * sobel(q, d * 2.5);
   vec3 hsv = rgb2hsv(c);
   vec3 glowc = hsv2rgb(vec3(fract(hsv.x + p_hue / 360.0), clamp(hsv.y * 1.4 + 0.35, 0.0, 1.0), 1.0));
-  vec3 col = c * (1.0 - p_dark * 0.01) + glowc * smoothstep(0.04, 0.6, e) * (0.6 + p_glow * 0.02);
+  vec3 col = c * (1.0 - p_dark * 0.01) + glowc * smoothstep(0.25, 1.6, e) * (0.5 + p_glow * 0.012);
   return vec4(clamp(col, 0.0, 1.0) * s.a, s.a);
 }`,
   },
@@ -1114,7 +1251,7 @@ vec4 fx(vec2 q) {
     strength: 2,
     desc: 'Rebuilt from studded plastic bricks.',
     params: [
-      R('size', 'Brick size', 0.8, 12, 3, 0.1),
+      R('size', 'Brick size', 0.8, 12, 2, 0.1),
       R('depth', 'Depth', 0, 100, 65),
     ],
     frag: `
@@ -1144,7 +1281,7 @@ vec4 fx(vec2 q) {
     strength: 2,
     desc: 'Embroidered with little thread crosses.',
     params: [
-      R('size', 'Stitch size', 0.4, 8, 1.6, 0.1),
+      R('size', 'Stitch size', 0.4, 8, 1.1, 0.1),
       C('fabric', 'Fabric', '#efe6d2'),
     ],
     frag: `
@@ -1176,10 +1313,10 @@ vec4 fx(vec2 q) {
     seeded: true,
     desc: 'Torn scanlines, shifted blocks and split colour channels.',
     params: [
-      R('amount', 'Amount', 0, 100, 50),
+      R('amount', 'Amount', 0, 100, 35),
       R('slices', 'Slices', 2, 80, 26),
       R('rgb', 'Colour split', 0, 100, 45),
-      R('blocks', 'Block errors', 0, 100, 30),
+      R('blocks', 'Block errors', 0, 100, 15),
     ],
     frag: `
 vec4 fx(vec2 q) {
@@ -1233,7 +1370,7 @@ vec4 fx(vec2 q) {
     seeded: true,
     desc: 'Bright areas run down the picture like wet paint.',
     params: [
-      R('amount', 'Length', 0, 100, 50),
+      R('amount', 'Length', 0, 100, 35),
       R('width', 'Drip width', 0.1, 5, 0.6, 0.1),
       R('angle', 'Angle', 0, 360, 90),
     ],
@@ -1262,9 +1399,9 @@ vec4 fx(vec2 q) {
     strength: 1,
     desc: 'Chunky ordered dithering from the 8-bit days.',
     params: [
-      R('pixel', 'Pixel size', 1, 20, 4),
-      R('levels', 'Levels', 2, 6, 2),
-      T('mono', 'Two colours', true),
+      R('pixel', 'Pixel size', 1, 20, 3),
+      R('levels', 'Levels', 2, 6, 4),
+      T('mono', 'Two colours', false),
       C('dark', 'Dark', '#22223b'),
       C('light', 'Light', '#f2e9e4'),
     ],
@@ -1291,7 +1428,7 @@ vec4 fx(vec2 q) {
       C('dark', 'Shadows', '#2b1055'),
       C('light', 'Highlights', '#ffd166'),
       R('contrast', 'Contrast', 0, 100, 30),
-      R('amount', 'Amount', 0, 100, 100),
+      R('amount', 'Amount', 0, 100, 85),
     ],
     frag: `
 vec4 fx(vec2 q) {
@@ -1342,6 +1479,16 @@ vec4 fx(vec2 q) {
   },
 
   // ───────────────────────────── Classic ─────────────────────────────
+  {
+    id: 'original',
+    name: 'Original picture',
+    cat: 'basic',
+    strength: 0,
+    hidden: true,
+    desc: 'Shows the base picture without any masks. The compositor supplies it directly.',
+    params: [],
+    frag: 'vec4 fx(vec2 q) { return O(q); }',
+  },
   {
     id: 'blur',
     thumb: { amount: 30 },
@@ -1448,6 +1595,26 @@ export function normalizeParams(definition, params = {}) {
   return result;
 }
 
+const AMOUNT_KEYS = new Set([
+  'shift', 'twist', 'zoom', 'amount', 'strength', 'lens', 'jitter', 'flatten', 'tint', 'bulge', 'flip', 'turn',
+  'spread', 'depth', 'rgb', 'blocks', 'fog', 'ripple', 'wobble', 'bleed', 'bevel', 'tone',
+]);
+
+/** Default parameters with every "how much" slider scaled, for the Gentle / Strong presets. */
+export function intensityParams(definition, factor) {
+  const params = defaultParams(definition);
+
+  for (const param of definition.params) {
+    if (param.type === 'range' && AMOUNT_KEYS.has(param.key) && param.min >= 0) {
+      const value = Math.max(param.min, Math.min(param.max, param.value * factor));
+
+      params[param.key] = param.step < 1 ? Math.round(value / param.step) * param.step : Math.round(value);
+    }
+  }
+
+  return params;
+}
+
 export function hexToVec3(hex) {
   const value = Number.parseInt(String(hex).replace('#', ''), 16) || 0;
   return [((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255];
@@ -1495,6 +1662,53 @@ float sobel(vec2 q, float d) {
   float ml = luma(S(q + vec2(-d, 0.0)).rgb), mr = luma(S(q + vec2(d, 0.0)).rgb);
   float bl = luma(S(q + vec2(-d, d)).rgb), bc = luma(S(q + vec2(0.0, d)).rgb), br = luma(S(q + vec2(d, d)).rgb);
   return length(vec2(tr + 2.0 * mr + br - tl - 2.0 * ml - bl, bl + 2.0 * bc + br - tl - 2.0 * tc - tr));
+}
+// ── optics shared by the glass and water effects ──
+const vec3 LIGHT = vec3(-0.46, -0.58, 0.67);
+float fbm3(vec2 p) {
+  float a = 0.5, t = 0.0;
+  for (int i = 0; i < 3; i++) { t += a * vnoise(p); p = p * 2.07 + 13.1; a *= 0.5; }
+  return t;
+}
+float cellDist(vec2 x) {
+  vec2 n = floor(x), f = fract(x);
+  float md = 8.0;
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+    vec2 g = vec2(float(i), float(j));
+    vec2 r = g + hash22(n + g + SEEDV) - f;
+    md = min(md, dot(r, r));
+  }
+  return sqrt(md);
+}
+// Surface height of patterned glass; features are about one unit of p across.
+// 0 hammered, 1 pebbled, 2 flemish (hand-blown waves), 3 rippled, 4 seedy (waves + trapped bubbles)
+float glassHeight(vec2 p, int kind) {
+  if (kind == 0) { float d = cellDist(p * 1.4); return d * d * 0.9; }
+  if (kind == 1) { float d = cellDist(p * 2.6); return 0.3 * (1.0 - smoothstep(0.0, 0.62, d)); }
+  if (kind == 3) return 0.3 * sin(p.y * 4.5 + 2.4 * fbm3(p * 0.45 + SEEDV)) + 0.35 * fbm3(p * 1.3 + SEEDV);
+  if (kind == 4) {
+    vec3 h = hash32(floor(p * 1.7) + SEEDV);
+    float seed = h.z < 0.4 ? 1.0 - smoothstep(0.0, 0.07 + 0.1 * h.z, length(fract(p * 1.7) - 0.25 - 0.5 * h.xy)) : 0.0;
+    return 0.8 * fbm3(p * 0.5 + SEEDV) + 0.25 * seed;
+  }
+  return 1.3 * fbm3(p * 0.6 + SEEDV) + 0.12 * fbm3(p * 2.6 + SEEDV + 5.0);
+}
+vec2 glassSlope(vec2 p, int kind) {
+  const float e = 0.04;
+  float h = glassHeight(p, kind);
+  return vec2(glassHeight(p + vec2(e, 0.0), kind) - h, glassHeight(p + vec2(0.0, e), kind) - h) / e;
+}
+// Looks at the picture through a surface that bends the view by o; disp splits the colours.
+vec4 refractS(vec2 q, vec2 o, float disp) {
+  vec4 g = S(q + o);
+  if (disp < 0.002) return g;
+  return vec4(S(q + o * (1.0 - disp)).r, g.g, S(q + o * (1.0 + disp)).b, g.a);
+}
+// Light on a glossy surface with the given slope: x = shading around 0, y = specular highlight.
+vec2 glassLight(vec2 slope, float shininess) {
+  vec3 n = normalize(vec3(-slope, 1.0));
+  vec3 hv = normalize(LIGHT + vec3(0.0, 0.0, 1.0));
+  return vec2(dot(n, LIGHT) - LIGHT.z, pow(max(dot(n, hv), 0.0), shininess));
 }
 ${uniforms}
 ${definition.frag}

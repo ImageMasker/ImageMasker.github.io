@@ -9,6 +9,7 @@ import {
   effectLayer,
   imageLayer,
   insertLayer,
+  insertMask,
   isBoxLayer,
   maskLayer,
   moveLayer,
@@ -21,7 +22,7 @@ import {
 } from '../core/model.js';
 import { Store } from '../core/Store.js';
 import { defaultParams, getEffect } from '../gl/effects.js';
-import { ImgurUploader } from '../integrations/ImgurUploader.js';
+import { ImageHosts } from '../integrations/ImageHosts.js';
 import { RedditPoster } from '../integrations/RedditPoster.js';
 import { RISChecker } from '../integrations/RISChecker.js';
 import { loadFlagMaskCatalog } from '../masks/FlagMaskCatalog.js';
@@ -51,7 +52,9 @@ const TOOL_BUTTONS = [
   { id: 'select', icon: 'select', label: 'Move mode', short: 'Move', command: 'move' },
   { id: 'brush', icon: 'brush', label: 'Brush mode', short: 'Brush', command: 'brush' },
   { id: 'eraser', icon: 'eraser', label: 'Eraser', short: 'Eraser', command: 'eraser' },
-  { id: 'paint', icon: 'paint', label: 'Effect brush', short: 'Fx brush', command: 'blurBrush' },
+  { id: 'blurBrush', icon: 'blur', label: 'Blur brush', short: 'Blur', command: 'blurBrush' },
+  { id: 'pixelBrush', icon: 'pixel', label: 'Pixel brush', short: 'Pixel', command: 'pixelBrush' },
+  { id: 'paint', icon: 'paint', label: 'Effect brush', short: 'Fx brush', command: 'effectBrush' },
   { id: 'region', icon: 'region', label: 'Add region', short: 'Region', command: 'addRegion' },
   { id: 'rect', icon: 'rect', label: 'Add rectangle', short: 'Rect', command: 'addRectangle', action: 'addRectangle' },
   { id: 'text', icon: 'text', label: 'Add text', short: 'Text', command: 'addText', action: 'addText' },
@@ -78,12 +81,13 @@ export class App {
     this.assets = new AssetStore();
     this.store = new Store();
     this.redditPoster = new RedditPoster();
-    this.imgurUploader = new ImgurUploader(this.settings);
+    this.imageHosts = new ImageHosts(this.settings);
     this.risChecker = new RISChecker((text, tone) => this.notify(text, tone));
     this.toasts = new ToastManager();
     this.toolState = {
       brush: { size: 10, color: '#000000', type: 'smooth', opacity: 100 },
-      paint: { effectId: 'blur' },
+      eraser: { mode: 'erase' },
+      paint: { effectId: 'cutGlass', amounts: { blur: 14, pixelate: 1.6 } },
       region: { shape: 'rect', effectId: 'blur' },
       text: {},
     };
@@ -116,6 +120,8 @@ export class App {
       select: new SelectTool(this),
       brush: new BrushTool(this, 'brush'),
       eraser: new BrushTool(this, 'eraser'),
+      blurBrush: new BrushTool(this, 'paint', { effectId: 'blur' }),
+      pixelBrush: new BrushTool(this, 'paint', { effectId: 'pixelate' }),
       paint: new BrushTool(this, 'paint'),
       region: new RegionTool(this),
       crop: new CropTool(this),
@@ -429,8 +435,10 @@ export class App {
         brush: () => this.setTool('brush'),
         eraser: () => this.setTool('eraser'),
         move: () => this.setTool('select'),
-        blurBrush: () => this.setEffectBrush('blur'),
-        pixelBrush: () => this.setEffectBrush('pixelate'),
+        blurBrush: () => this.setTool('blurBrush'),
+        pixelBrush: () => this.setTool('pixelBrush'),
+        effectBrush: () => this.setTool('paint'),
+        revealEraser: () => this.setEraserMode('reveal'),
         crop: () => this.setTool('crop'),
         addRectangle: () => this.addRectangle(),
         addText: () => this.addText(),
@@ -527,10 +535,10 @@ export class App {
     this.bus.emit('tool', name);
   }
 
-  setEffectBrush(effectId) {
-    this.toolState.paint.effectId = effectId;
-    this.inspector.key = '';
-    this.setTool('paint');
+  setEraserMode(mode) {
+    this.toolState.eraser.mode = mode;
+    this.setTool('eraser');
+    this.inspector.update();
   }
 
   adjustBrushSize(delta) {
@@ -746,7 +754,7 @@ export class App {
 
     const layer = effectLayer(this.store.doc, effectId);
 
-    this.store.apply('Add effect mask', (doc) => insertLayer(doc, layer));
+    this.store.apply('Add effect mask', (doc) => insertMask(doc, layer));
     this.store.select([layer.id]);
     this.revealEditor();
   }
@@ -800,7 +808,7 @@ export class App {
         return insertLayer(removeLayers(doc, [selected.id]), carried, index);
       });
     } else {
-      this.store.apply('Add mask', (doc) => insertLayer(doc, layer));
+      this.store.apply('Add mask', (doc) => insertMask(doc, layer));
     }
 
     this.store.select([layer.id]);
@@ -1071,6 +1079,48 @@ export class App {
       console.error(error);
       this.notify('Download failed.', 'error');
     }
+  }
+
+  /**
+   * Copies the picture and opens Reddit's image post form for the next round, title filled in,
+   * so the round can be posted without an image host: paste (Ctrl+V) and submit.
+   */
+  async copyAndPost(roundTitle, subreddit = 'picturegame') {
+    if (!this.requireImage('Load an image before posting.')) {
+      return null;
+    }
+
+    if (!window.isSecureContext || !window.ClipboardItem || !navigator.clipboard?.write) {
+      this.notify("This browser can't copy images to the clipboard. Use Download and attach the file on Reddit instead.", 'warning', 6200);
+      return null;
+    }
+
+    // Start both right away so the clipboard write still counts as part of the click.
+    const picture = this.exportBlob({ ...this.sharePanel.getExportOptions(), format: 'png' });
+    const round = this.redditPoster.nextRoundNumber().catch(() => null);
+
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': picture })]);
+    } catch (error) {
+      this.notify(`Clipboard image copy failed. ${error?.name ?? ''} ${error?.message ?? ''}`.trim(), 'warning', 6200);
+      return null;
+    }
+
+    const number = await round;
+
+    if (!number) {
+      this.notify('Image copied, but the current round number could not be read. Check the title before posting.', 'warning', 6200);
+    }
+
+    const url = this.redditPoster.imagePostUrl(number ?? '?', roundTitle, subreddit);
+    const opened = window.open(url);
+
+    this.notify(
+      opened ? 'Image copied. Press Ctrl+V in the Reddit tab to attach it.' : 'Image copied, but the Reddit tab was blocked. Use the link in the Share tab.',
+      opened ? 'success' : 'warning',
+      6200
+    );
+    return { url, opened: Boolean(opened) };
   }
 
   copyYml({ roundTitle, roundAnswer, imageUrl }) {

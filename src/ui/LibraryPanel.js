@@ -111,7 +111,7 @@ export class LibraryPanel {
         el(
           'div',
           { className: 'mask-grid' },
-          EFFECTS.filter((effect) => effect.cat === category.id).map((effect) =>
+          EFFECTS.filter((effect) => effect.cat === category.id && !effect.hidden).map((effect) =>
             this.tile({
               label: effect.name,
               title: effect.desc,

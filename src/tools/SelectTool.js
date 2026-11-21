@@ -72,7 +72,7 @@ export class SelectTool {
 
     this.group.replaceChildren();
 
-    if (!store.hasImage || this.app.textEditor?.layerId) {
+    if (!this.active || !store.hasImage || this.app.textEditor?.layerId) {
       return;
     }
 

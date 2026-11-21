@@ -22,7 +22,8 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 ## Tools
 
 1. Brush with each brush type, then erase part of a stroke.
-2. Effect brush (G and X), then erase part of the painted area with the painted layer selected.
+2. Blur brush (G), pixel brush (X) and effect brush (Shift+G); change the amount slider; erase part of the painted area with the painted layer selected.
+2. Eraser in *Reveal original* mode over a few stacked masks, then *Restore masks*. Add another mask afterwards: the revealed area must stay clear.
 3. Region tool with rectangle, ellipse and freehand.
 4. Rectangle and text. Double-click the text and edit it in place; try multiline, font, alignment, bold, italic, outline and shadow.
 5. Select, move, resize, rotate, duplicate and delete each layer type. Shift+click several layers and move them together.
@@ -39,7 +40,8 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 
 ## Sharing
 
-1. Upload, Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.
+1. *Copy image & post to Reddit*: the Reddit image form opens with `[Round N] title`, CTRL+V attaches the picture.
+1. Upload with each host (Imgur, ImgBB with a key, Litterbox), then Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.
 2. Saved rounds: browse with the arrows and the left/right keys, update, delete, save from URL.
 
 ## Sessions and settings

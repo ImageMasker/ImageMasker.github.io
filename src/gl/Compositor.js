@@ -189,6 +189,8 @@ export class Compositor {
     const H = Math.max(1, Math.round(doc.height * scale));
     const unit = Math.min(doc.width, doc.height);
     const ctx = {
+      doc,
+      base: null,
       W,
       H,
       unit,
@@ -218,7 +220,33 @@ export class Compositor {
       }
     }
 
+    glx.release(ctx.base);
     return acc;
+  }
+
+  /** The base picture on its own, rendered once per frame for "reveal original" layers. */
+  baseTarget(ctx) {
+    if (!ctx.base) {
+      const glx = this.glx;
+      let acc = glx.acquire(ctx.W, ctx.H);
+
+      glx.clear(acc);
+
+      for (const layer of ctx.doc.layers) {
+        if (layer.type === 'image' && layer.base) {
+          const next = this.drawContent(ctx, acc, { ...layer, opacity: 1, blend: 'normal' });
+
+          if (next !== acc) {
+            glx.release(acc);
+            acc = next;
+          }
+        }
+      }
+
+      ctx.base = acc;
+    }
+
+    return ctx.base;
   }
 
   contentSpec(ctx, layer) {
@@ -382,12 +410,15 @@ export class Compositor {
       glx.draw(glx.program('transform', TRANSFORM_SHADER), input, { uSrc: acc, uDocSize: ctx.docSize, uMat: toMat3(m) });
     }
 
-    const processed = this.runEffect(getEffect(layer.effectId), layer.params, layer.seed, input, {
-      asp: ctx.asp,
-      px: ctx.px,
-      center: region ? [layer.x / ctx.unit, layer.y / ctx.unit] : [ctx.asp[0] / 2, ctx.asp[1] / 2],
-      extent: region ? Math.min(layer.w, layer.h) / 2 / ctx.unit : 0.5,
-    });
+    const reveal = layer.effectId === 'original';
+    const processed = reveal
+      ? this.baseTarget(ctx)
+      : this.runEffect(getEffect(layer.effectId), layer.params, layer.seed, input, {
+          asp: ctx.asp,
+          px: ctx.px,
+          center: region ? [layer.x / ctx.unit, layer.y / ctx.unit] : [ctx.asp[0] / 2, ctx.asp[1] / 2],
+          extent: region ? Math.min(layer.w, layer.h) / 2 / ctx.unit : 0.5,
+        });
 
     if (input !== acc) {
       glx.release(input);
@@ -407,7 +438,10 @@ export class Compositor {
       uOpacity: layer.opacity,
       uBlend: blendIndex(layer.blend),
     });
-    glx.release(processed);
+    if (!reveal) {
+      glx.release(processed);
+    }
+
     return out;
   }
 

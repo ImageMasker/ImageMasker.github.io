@@ -35,7 +35,9 @@ The document is `{ width, height, layers: [bottom ... top] }` in picture pixels.
 layers are shared between history entries, and pictures live in the `AssetStore`, so undo is cheap.
 
 Layer types: `image`, `mask` (`source: 'asset' | 'pattern'`), `effect`, `drawing`, `text`, `rect`.
-An effect layer's `coverage` is `full`, `rect`, `ellipse`, `polygon` or `paint`.
+An effect layer's `coverage` is `full`, `rect`, `ellipse`, `polygon` or `paint`. The hidden effect id
+`original` (used by the eraser's reveal mode) shows the base picture instead of running a shader;
+`insertMask()` keeps such layers on top when masks are added.
 
 ## Rendering
 

@@ -265,6 +265,17 @@ export function insertLayer(doc, layer, index = doc.layers.length) {
   return { ...doc, layers };
 }
 
+/** Adds a mask on top of the stack, but below "revealed original" layers so they keep showing through. */
+export function insertMask(doc, layer) {
+  let index = doc.layers.length;
+
+  while (index > 0 && doc.layers[index - 1].type === 'effect' && doc.layers[index - 1].effectId === 'original') {
+    index -= 1;
+  }
+
+  return insertLayer(doc, layer, layer.effectId === 'original' ? doc.layers.length : index);
+}
+
 export function removeLayers(doc, ids) {
   const set = new Set(ids);
 

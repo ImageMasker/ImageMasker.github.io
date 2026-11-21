@@ -18,7 +18,7 @@ Once a picture is loaded, pasting adds new images as layers ("Paste as new layer
 
 The **Masks** library on the left has four tabs. Clicking a mask replaces the selected mask so you can browse quickly; Shift+click (or the + on a tile) stacks another one.
 
-* **Effects** – masks that reshape the picture instead of covering it: cut glass, stained glass, reeded glass, glass blocks, rainy window, jigsaw, shuffled tiles, hex mirrors, shattered, woven strips, turning rings, kaleidoscope, liquid warp, halftone, engraving, pointillism, pencil sketch, cross-stitch, glitch, VHS and more. Every effect has its own sliders and (where it makes sense) a **Shuffle** button for a new random arrangement. An effect can cover the whole picture, be limited to a rectangle / ellipse / freehand region, or be painted on with the effect brush.
+* **Effects** – masks that reshape the picture instead of covering it: cut glass, stained glass, reeded glass, textured glass (hammered, pebbled, flemish, rippled, seedy), glass blocks, rainy window, pond ripples, water surface, jigsaw, shuffled tiles, hex mirrors, shattered, woven strips, turning rings, liquid warp, halftone, engraving, pointillism, pencil sketch, cross-stitch, glitch, VHS and more. The glass and water effects refract the picture through a textured surface, with colour fringes and highlights you can dial in. The defaults are tuned so the picture stays recognisable; **Gentle / Default / Strong** and **Mix with original** change that in one click, and the few effects that really hide the subject sit in their own *Heavy* group. Seeded effects have a **Shuffle** button. An effect can cover the whole picture, be limited to a rectangle / ellipse / freehand region, or be painted on with the effect brush.
 * **Overlays** – procedural patterns (lattice, mesh, honeycomb, stripes, zebra, polka dots, seigaiha, truchet, camo, …) with editable colours, plus the nine classic image masks.
 * **Flags** – the searchable flag masks.
 * **Custom** – your own mask URLs (saved in the browser) or a local image file.
@@ -29,20 +29,27 @@ The little bar on each effect tile is a rough guide to how hard it scrambles the
 
 ### Tools
 
-Move/select (resize and rotate with the handles, Shift+click for multi-select), brush (smooth, marker, dotted, spray), eraser, effect brush, effect region, rectangle, text (double-click to edit in place; font, alignment, bold/italic, outline, shadow) and crop/resize canvas (drag the frame past the edge to add space).
+Move/select (resize and rotate with the handles, Shift+click for multi-select), brush (smooth, marker, dotted, spray), eraser, blur brush, pixel brush, effect brush (any effect), effect region, rectangle, text (double-click to edit in place; font, alignment, bold/italic, outline, shadow) and crop/resize canvas (drag the frame past the edge to add space).
+
+The eraser has three modes: **Erase drawings**, **Reveal original** (brushes through every mask and effect to show the untouched picture, e.g. to give a hint or keep one detail clear) and **Restore masks** (paints the masks back). Masks you add later stay underneath the revealed area.
 
 Mouse wheel zooms, Space+drag or middle mouse pans. Hold **Original** in the header to see the picture without masks.
 
 ### Sharing
 
-The **Share** tab holds the export settings (Original PNG, Editor PNG, Web JPEG, Original JPEG), copy to clipboard, download and **Upload to Imgur**. After an upload you get the image URL, *Copy*, *Check RIS* (opens Yandex, TinEye, Google Lens, Google and Bing – allow popups), round title / answer, *Submit to /r/PictureGame*, *Save round* and *Copy YML*. Saved rounds are listed at the bottom of the tab.
+The **Share** tab holds the export settings (Original PNG, Editor PNG, Web JPEG, Original JPEG), copy to clipboard, download, the round title / answer and two ways to post:
+
+* **Copy image & post to Reddit** – needs no image host. It copies the picture to the clipboard and opens Reddit's image post form for /r/PictureGame with `[Round N]` and your title filled in (N is the next round number from picturega.me). Press CTRL+V there to attach the picture and submit.
+* **Upload** – uploads to the host chosen under *Upload settings* and gives you the image URL, *Copy*, *Check RIS* (opens Yandex, TinEye, Google Lens, Google and Bing – allow popups), *Submit to /r/PictureGame* (link post), *Save round* and *Copy YML*.
+
+Image hosts: **Imgur** (blocked in the UK since September 2025), **ImgBB** (works in the UK; needs a free API key from https://api.imgbb.com/, stored in your browser) and **Litterbox** (no account, but links expire after 72 hours, so only for short rounds). Saved rounds are listed at the bottom of the tab.
 
 **Settings** has saved sessions (stored in the browser, pictures included, with autosave and JSON export/import), themes (the built-in ones plus JSON themes) and remappable keyboard shortcuts. The **AI** tab has background removal and prompt-based AI edits.
 
 ### Keyboard shortcuts (defaults, all remappable)
 
 * CTRL+Z / CTRL+Y: undo / redo
-* V, B, E: move, brush, eraser. G / X: effect brush (blur / pixelate). A: region. R: rectangle. T: text. C: crop
+* V, B, E: move, brush, eraser. Shift+E: eraser in reveal-original mode. G / X: blur brush / pixel brush. Shift+G: effect brush. A: region. R: rectangle. T: text. C: crop
 * D: duplicate. Delete: delete selection
 * W / S: brush size up / down
 * Up / down: opacity of the selection (or of the top layer)
