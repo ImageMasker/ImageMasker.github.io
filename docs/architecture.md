@@ -8,7 +8,7 @@ src/main.js                  boots App
 src/app/App.js               layout, shared services, every editing command
 src/app/sessions.js          IndexedDB sessions, autosave, JSON export/import
 src/app/settingsUi.js        settings dialog (sessions, themes, shortcuts, about)
-src/app/ai.js                background removal + AI edit flows
+src/app/backgroundRemoval.js background removal into a new layer
 src/core/model.js            the document: plain immutable data + layer factories
 src/core/Store.js            current document, selection, undo/redo
 src/core/AssetStore.js       decoded images, referenced from layers by id
@@ -22,7 +22,7 @@ src/raster/                  Canvas 2D rasterisers for strokes and text
 src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
 src/tools/                   select, brush/eraser/effect brush, region, crop, text editor
 src/ui/                      panels (library, layers, properties, share, ...)
-src/integrations/, storage/  Imgur, RIS, Reddit, AI services, localStorage wrappers
+src/integrations/, storage/  image hosts, RIS, Reddit, background removal model, localStorage wrappers
 dev/effect-sheet.html        contact sheet of every effect/pattern + shader errors
 old/v2/, old/                previous versions, kept working
 ```
@@ -64,6 +64,7 @@ Add an entry to `EFFECTS` in `src/gl/effects.js`:
   seeded: true,           // uses uSeed -> gets a Shuffle button
   centered: true,         // uses uCenter / uExtent
   thumb: { size: 6 },     // optional parameter overrides for the small gallery preview
+  main: ['size'],         // optional: sliders shown up front (default: first three), the rest go under "More"
   params: [R('size', 'Size', 1, 40, 10)],
   frag: `vec4 fx(vec2 q) { return S(q + sin(q.yx * p_size) * 0.01); }`,
 }
@@ -71,6 +72,10 @@ Add an entry to `EFFECTS` in `src/gl/effects.js`:
 
 `q` is the position in units, `S(q)` samples the picture below, each parameter becomes a `p_<key>`
 uniform. The properties UI, the gallery tile, sessions and the effect brush pick it up automatically.
+Add the effect to `INTENSITY` (same file) with the sliders Gentle / Strong should scale; the effect
+sheet reports an error if the three presets come out identical. A `centered` effect gets a draggable
+centre, stored as `layer.center` in the layer's local box.
 Open `dev/effect-sheet.html?only=myEffect` to see it and any compile error.
 
-Patterns in `src/gl/patterns.js` work the same way with `vec4 pattern(vec2 p)`.
+Patterns in `src/gl/patterns.js` work the same way with `vec4 pattern(vec2 p)`. List size parameters
+(line width, dot size) in `fixed` so Density keeps them the same size on the picture.

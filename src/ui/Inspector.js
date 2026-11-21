@@ -2,7 +2,7 @@
 // rebuilt only when the kind of thing being edited changes; otherwise their values are synced.
 
 import { fitText, updateLayer, zoomFactor } from '../core/model.js';
-import { EFFECT_CATEGORIES, EFFECTS, getEffect, intensityParams } from '../gl/effects.js';
+import { EFFECT_CATEGORIES, EFFECTS, getEffect, defaultParams, hasIntensity, INTENSITY_LEVELS, intensityParams } from '../gl/effects.js';
 import { BLEND_MODES } from '../gl/glsl.js';
 import { getPattern } from '../gl/patterns.js';
 import { BRUSH_TYPES } from '../raster/strokes.js';
@@ -106,7 +106,6 @@ export class Inspector {
     } else if (layers.length > 1) {
       parts.push(
         section(`${layers.length} layers selected`, [
-          el('p', { className: 'panel-intro-copy', textContent: 'Drag to move them together. Arrow keys nudge (with Shift) or change opacity.' }),
           row([
             button('Duplicate', { iconName: 'duplicate', onClick: () => this.app.duplicateSelected() }),
             button('Delete', { iconName: 'trash', onClick: () => this.app.deleteSelected() }),
@@ -115,7 +114,8 @@ export class Inspector {
       );
     } else if (!toolPart) {
       parts.push(
-        el('div', { className: 'panel-empty-state', textContent: 'Nothing selected. Click a layer on the canvas or in the list to edit it.' })
+        el('div', { className: 'panel-empty-state', textContent: 'Nothing selected. Click a layer on the canvas or in the list to edit it.' }),
+        section('Picture', [this.backgroundRemovalRow(null)], { open: true })
       );
     }
 
@@ -183,10 +183,10 @@ export class Inspector {
   }
 
   /** Auto-generated controls for an effect's or pattern's parameter list. */
-  paramControls(id, definition) {
+  paramControls(id, definition, keep = () => true) {
     const patch = (key) => (value, layer) => ({ params: { ...layer.params, [key]: value } });
 
-    return definition.params.map((param) => {
+    return definition.params.filter(keep).map((param) => {
       const read = (layer) => layer.params?.[param.key] ?? param.value;
 
       if (param.type === 'color') {
@@ -280,13 +280,11 @@ export class Inspector {
           this.toolSlider({ label: 'Strength', min: 1, max: 100, format: percent }, () => state.brush.opacity, (value) => {
             state.brush.opacity = value;
           }),
-          el('p', { className: 'panel-intro-copy', textContent: 'Paint where the effect should show. Strokes with the same effect share one layer; its sliders appear when you select it.' }),
         ], { className: 'tool-section--primary' });
       case 'region':
         return section('Region', [
           select({ label: 'Shape', options: REGION_SHAPES, value: state.region.shape, onChange: (value) => { state.region.shape = value; } }).element,
           select({ label: 'Effect', options: effectOptions(), value: state.region.effectId, onChange: (value) => { state.region.effectId = value; } }).element,
-          el('p', { className: 'panel-intro-copy', textContent: 'Drag on the picture to mark the area. Hold Shift for a square or circle.' }),
         ], { className: 'tool-section--primary' });
       case 'crop':
         return this.cropSection();
@@ -335,7 +333,6 @@ export class Inspector {
       this.toolSlider({ label: 'Strength', min: 1, max: 100, format: percent }, () => state.brush.opacity, (value) => {
         state.brush.opacity = value;
       }),
-      el('p', { className: 'panel-intro-copy', textContent: 'Paint over what should be hidden. The eraser removes it again while the painted layer is selected.' }),
     ], { className: 'tool-section--primary' });
   }
 
@@ -358,7 +355,7 @@ export class Inspector {
     sync();
 
     return section('Crop / resize canvas', [
-      el('p', { className: 'panel-intro-copy', textContent: 'Drag the frame. Pull it past the edge to add empty space around the picture.' }),
+      el('p', { className: 'panel-intro-copy', textContent: 'Pull the frame past the edge to add empty space.' }),
       el('div', { className: 'field field--inline' }, [el('span', { className: 'field-label', textContent: 'Size' }), width, el('span', { textContent: '×' }), height]),
       row([
         button('Apply resize', { id: 'applyCropButton', onClick: () => app.applyCrop() }),
@@ -409,11 +406,28 @@ export class Inspector {
               button('Fit to canvas', { iconName: 'fit', onClick: () => this.app.fitLayerToCanvas(layer.id) }),
               ...(layer.base ? [] : [button('Use as base', { onClick: () => this.app.store.apply('Use as base', (doc) => updateLayer(doc, layer.id, { base: true })) })]),
             ]),
+            this.backgroundRemovalRow(layer.id),
           ]),
         ];
       default:
         return [];
     }
+  }
+
+  /** "Remove background" button with live progress; `layerId` null means the base picture. */
+  backgroundRemovalRow(layerId) {
+    const tools = this.app.backgroundTools;
+    const control = button('Remove background', { iconName: 'sparkle', title: 'Cut the subject out into a new layer (runs in your browser)', onClick: () => tools.remove(layerId) });
+    const label = control.querySelector('span:last-child');
+    const sync = () => {
+      control.disabled = tools.status.busy;
+      label.textContent = tools.status.busy ? `${tools.status.label}…` : 'Remove background';
+    };
+
+    this.bindings.push(sync);
+    this.app.bus.on('background-status', () => control.isConnected && sync());
+    sync();
+    return row([control], 'button-row--fill');
   }
 
   effectSections(layer) {
@@ -424,39 +438,54 @@ export class Inspector {
     if (layer.effectId === 'original') {
       return [
         section('Revealed original', [
-          el('p', { className: 'panel-intro-copy', textContent: 'Shows the untouched picture through the masks below. Use the eraser in "Reveal original" mode to add, "Restore masks" to take away.' }),
           this.layerSlider(layer.id, { label: 'Opacity', min: 0, max: 100, format: percent }, (entry) => entry.opacity * 100, (value) => ({ opacity: value / 100 }), 'Change opacity'),
           row([button('Clear revealed area', { iconName: 'trash', onClick: () => app.store.apply('Clear revealed area', (doc) => updateLayer(doc, layer.id, { strokes: [] })) })]),
         ], { className: 'tool-section--primary' }),
       ];
     }
 
+    const setParams = (label, params) => app.store.apply(`${label} ${definition.name.toLowerCase()}`, (doc) => updateLayer(doc, layer.id, { params }));
     const intensity = (label, factor, title) =>
-      button(label, { title, onClick: () => app.store.apply(`${label} ${definition.name.toLowerCase()}`, (doc) => updateLayer(doc, layer.id, { params: intensityParams(definition, factor) })) });
+      button(label, { title, onClick: () => setParams(label, intensityParams(definition, factor, app.store.layer(layer.id).params)) });
+    const ranges = definition.params.filter((param) => param.type === 'range').map((param) => param.key);
+    const main = new Set(definition.main ?? ranges.slice(0, 3));
+    const more = definition.params.filter((param) => !main.has(param.key));
     const settings = [
       select({ label: 'Effect', options: effectOptions(), value: layer.effectId, onChange: (value) => app.changeEffect(layer.id, value) }).element,
       this.layerSlider(layer.id, { label: 'Mix with original', min: 0, max: 100, format: percent }, (entry) => entry.opacity * 100, (value) => ({ opacity: value / 100 }), 'Change mix'),
       row([
-        intensity('Gentle', 0.5, 'Keep the picture easy to recognise'),
-        intensity('Default', 1, 'Back to the default settings'),
-        intensity('Strong', 1.7, 'Scramble harder'),
-      ], 'button-row--fill'),
-      ...this.paramControls(layer.id, definition),
+        ...(hasIntensity(definition)
+          ? [
+              intensity('Gentle', INTENSITY_LEVELS.gentle, 'Easier to recognise (keeps your other settings)'),
+              intensity('Strong', INTENSITY_LEVELS.strong, 'Scramble harder (keeps your other settings)'),
+            ]
+          : []),
+        button('Reset', { iconName: 'reset', title: 'Back to the default settings', onClick: () => setParams('Reset', defaultParams(definition)) }),
+        ...(definition.seeded
+          ? [button('Shuffle', { iconName: 'shuffle', title: 'New random arrangement', onClick: () => app.store.apply('Shuffle', (doc) => updateLayer(doc, layer.id, { seed: Math.random() * 100 })) })]
+          : []),
+      ], 'button-row--fill compact-row'),
+      ...this.paramControls(layer.id, definition, (param) => main.has(param.key)),
     ];
 
-    if (definition.seeded) {
-      settings.push(row([
-        button('Shuffle', { iconName: 'shuffle', title: 'New random arrangement', onClick: () => app.store.apply('Shuffle', (doc) => updateLayer(doc, layer.id, { seed: Math.random() * 100 })) }),
-      ]));
+    if (more.length) {
+      settings.push(section('More settings', this.paramControls(layer.id, definition, (param) => !main.has(param.key)), { open: false, className: 'tool-section--nested' }));
     }
 
     const area = [];
 
+    if (definition.centered) {
+      const reset = button('Reset centre', { iconName: 'reset', onClick: () => app.store.apply('Reset centre', (doc) => updateLayer(doc, layer.id, { center: null })) });
+
+      this.bindings.push(() => {
+        reset.disabled = !app.store.layer(layer.id)?.center;
+      });
+      reset.disabled = !layer.center;
+      area.push(row([el('span', { className: 'field-label centre-hint', textContent: 'Drag the ⊕ on the picture to move the centre.' }), reset]));
+    }
+
     if (layer.coverage === 'full') {
-      area.push(
-        el('p', { className: 'panel-intro-copy', textContent: 'Covers the whole picture.' }),
-        row([button('Limit to a region', { iconName: 'region', onClick: () => app.setCoverage(layer.id, 'rect') })])
-      );
+      area.push(row([button('Limit to a region', { iconName: 'region', onClick: () => app.setCoverage(layer.id, 'rect') })]));
     } else if (region) {
       if (layer.coverage !== 'polygon') {
         area.push(this.layerSelect(layer.id, 'Shape', REGION_SHAPES.slice(0, 2), (entry) => entry.coverage, (value) => ({ coverage: value })));
@@ -474,7 +503,6 @@ export class Inspector {
       );
     } else {
       area.push(
-        el('p', { className: 'panel-intro-copy', textContent: 'Painted on. Use the effect brush to add and the eraser to remove.' }),
         row([
           button('Clear painted area', { iconName: 'trash', onClick: () => app.store.apply('Clear painted area', (doc) => updateLayer(doc, layer.id, { strokes: [] })) }),
           button('Apply to whole picture', { onClick: () => app.setCoverage(layer.id, 'full') }),
@@ -525,7 +553,7 @@ export class Inspector {
           button('Reseed warp', { iconName: 'shuffle', onClick: () => app.store.apply('Reseed warp', (doc) => updateLayer(doc, id, (entry) => ({ warpSeed: Math.random(), warp: entry.warp || 30 }))) }),
           button('Re-tilt', { title: 'New random tilt and skew', onClick: () => app.retiltMask(id) }),
         ]),
-      ])
+      ], { open: false })
     );
 
     return parts;

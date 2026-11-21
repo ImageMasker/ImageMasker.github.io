@@ -4,6 +4,7 @@
 //   uAA   size of one render pixel in pattern units (for anti-aliasing)
 //   two(t) mixes the main colour (t = 1) over the background colour, honouring "Background" opacity
 
+import { paramUniforms } from './effects.js';
 import { CELLS } from './glsl.js';
 
 const R = (key, label, min, max, value, step = 1) => ({ key, label, type: 'range', min, max, value, step });
@@ -18,6 +19,7 @@ const DENSITY = (value) => R('density', 'Density', 2, 120, value);
 export const PATTERNS = [
   {
     id: 'lattice',
+    fixed: ['width'],
     name: 'Lattice',
     params: [DENSITY(9), R('width', 'Band width', 10, 95, 36), R('shade', 'Shading', 0, 100, 60), A('#17171c'), B(), BG(0)],
     frag: `
@@ -43,6 +45,7 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'mesh',
+    fixed: ['width'],
     name: 'Mesh',
     params: [DENSITY(18), R('width', 'Line width', 2, 60, 22), R('angle', 'Weave angle', 0, 90, 45), A('#101014'), B(), BG(0)],
     frag: `
@@ -56,6 +59,7 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'honeycomb',
+    fixed: ['width'],
     name: 'Honeycomb',
     params: [DENSITY(12), R('width', 'Line width', 2, 60, 20), A('#1a1a20'), B('#f5c542'), BG(0)],
     frag: `
@@ -67,8 +71,9 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'stripes',
+    fixed: ['ratio'],
     name: 'Stripes',
-    params: [DENSITY(18), R('ratio', 'Stripe width', 5, 95, 50), A('#e4572e'), B('#fff6e5'), BG(100)],
+    params: [DENSITY(18), R('ratio', 'Stripe width', 5, 95, 50), A('#e4572e'), B('#fff6e5'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float w = p_ratio * 0.005;
@@ -77,9 +82,10 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'zebra',
+    fixed: ['ratio'],
     name: 'Zebra',
     seeded: true,
-    params: [DENSITY(12), R('ratio', 'Stripe width', 5, 95, 52), R('wobble', 'Wobble', 0, 100, 60), A('#111114'), B('#f6f1e7'), BG(100)],
+    params: [DENSITY(12), R('ratio', 'Stripe width', 5, 95, 52), R('wobble', 'Wobble', 0, 100, 60), A('#111114'), B('#f6f1e7'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float y = p.y + (fbm(p * 0.35 + SEEDV) - 0.48) * p_wobble * 0.09;
@@ -91,8 +97,9 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'waves',
+    fixed: ['ratio'],
     name: 'Waves',
-    params: [DENSITY(16), R('ratio', 'Band width', 5, 95, 50), R('amp', 'Wave height', 0, 100, 45), A('#1f6f8b'), B('#e8f7f9'), BG(100)],
+    params: [DENSITY(16), R('ratio', 'Band width', 5, 95, 50), R('amp', 'Wave height', 0, 100, 45), A('#1f6f8b'), B('#e8f7f9'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float y = p.y + sin(p.x * PI) * p_amp * 0.006;
@@ -103,8 +110,9 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'chevron',
+    fixed: ['ratio'],
     name: 'Chevron',
-    params: [DENSITY(14), R('ratio', 'Band width', 5, 95, 50), R('slope', 'Slope', 10, 200, 100), A('#2d3142'), B('#ffd166'), BG(100)],
+    params: [DENSITY(14), R('ratio', 'Band width', 5, 95, 50), R('slope', 'Slope', 10, 200, 100), A('#2d3142'), B('#ffd166'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float y = p.y + abs(fract(p.x * 0.5) - 0.5) * p_slope * 0.02;
@@ -116,7 +124,7 @@ vec4 pattern(vec2 p) {
   {
     id: 'checker',
     name: 'Checker',
-    params: [DENSITY(12), A('#141418'), B('#f3ede2'), BG(100)],
+    params: [DENSITY(12), A('#141418'), B('#f3ede2'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   vec2 f = abs(fract(p) - 0.5);
@@ -127,8 +135,9 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'harlequin',
+    fixed: ['line'],
     name: 'Harlequin',
-    params: [DENSITY(9), R('line', 'Line width', 0, 40, 10), A('#c8553d'), B('#f1e0c5'), BG(100)],
+    params: [DENSITY(9), R('line', 'Line width', 0, 40, 10), A('#c8553d'), B('#f1e0c5'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   vec2 g = rot(0.7854) * (p * vec2(1.0, 0.62));
@@ -145,8 +154,9 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'dots',
+    fixed: ['size'],
     name: 'Polka dots',
-    params: [DENSITY(12), R('size', 'Dot size', 5, 98, 55), A('#d7263d'), B('#fff8f0'), BG(100)],
+    params: [DENSITY(12), R('size', 'Dot size', 5, 98, 55), A('#d7263d'), B('#fff8f0'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float r = p_size * 0.005;
@@ -155,9 +165,10 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'bubbles',
+    fixed: ['size'],
     name: 'Bubbles',
     seeded: true,
-    params: [DENSITY(8), R('size', 'Bubble size', 20, 100, 70), R('hues', 'Colour variety', 0, 100, 60), A('#6c5ce7'), B('#f8f4ec'), BG(100)],
+    params: [DENSITY(8), R('size', 'Bubble size', 20, 100, 70), R('hues', 'Colour variety', 0, 100, 60), A('#6c5ce7'), B('#f8f4ec'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   vec4 col = vec4(p_b, 1.0) * p_bg * 0.01;
@@ -178,9 +189,10 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'confetti',
+    fixed: ['size'],
     name: 'Confetti',
     seeded: true,
-    params: [DENSITY(12), R('size', 'Piece size', 20, 100, 65), R('hues', 'Colour variety', 0, 100, 100), A('#ff5d8f'), B('#fffaf0'), BG(100)],
+    params: [DENSITY(12), R('size', 'Piece size', 20, 100, 65), R('hues', 'Colour variety', 0, 100, 100), A('#ff5d8f'), B('#fffaf0'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   vec4 col = vec4(p_b, 1.0) * p_bg * 0.01;
@@ -200,7 +212,7 @@ vec4 pattern(vec2 p) {
   {
     id: 'seigaiha',
     name: 'Seigaiha',
-    params: [DENSITY(7), R('rings', 'Rings', 1, 6, 3), A('#27496d'), B('#f0f5f9'), BG(100)],
+    params: [DENSITY(7), R('rings', 'Rings', 1, 6, 3), A('#27496d'), B('#f0f5f9'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float j = floor(p.y * 2.0);
@@ -220,9 +232,10 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'truchet',
+    fixed: ['width'],
     name: 'Truchet',
     seeded: true,
-    params: [DENSITY(10), R('width', 'Line width', 2, 45, 16), O('style', 'Style', ['Arcs', 'Maze'], 0), A('#22223b'), B('#f2e9e4'), BG(100)],
+    params: [DENSITY(10), R('width', 'Line width', 2, 45, 16), O('style', 'Style', ['Arcs', 'Maze'], 0), A('#22223b'), B('#f2e9e4'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   vec2 f = fract(p);
@@ -238,7 +251,7 @@ vec4 pattern(vec2 p) {
     id: 'topo',
     name: 'Contours',
     seeded: true,
-    params: [DENSITY(5), R('levels', 'Levels', 2, 30, 12), R('width', 'Line width', 5, 100, 35), A('#2f4858'), B('#f6f4e8'), BG(100)],
+    params: [DENSITY(5), R('levels', 'Levels', 2, 30, 12), R('width', 'Line width', 5, 100, 35), A('#2f4858'), B('#f6f4e8'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float n = fbm(p * 0.5 + SEEDV) * p_levels;
@@ -251,7 +264,7 @@ vec4 pattern(vec2 p) {
     id: 'camo',
     name: 'Camo',
     seeded: true,
-    params: [DENSITY(5), A('#4a5d23'), B('#c2b280'), BG(100)],
+    params: [DENSITY(5), A('#4a5d23'), B('#c2b280'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float n = fbm(p * 0.7 + SEEDV);
@@ -266,7 +279,7 @@ vec4 pattern(vec2 p) {
   {
     id: 'plaid',
     name: 'Plaid',
-    params: [DENSITY(6), A('#9b2226'), B('#f1e3c8'), BG(100)],
+    params: [DENSITY(6), A('#9b2226'), B('#f1e3c8'), BG(0)],
     frag: `
 float plaidBand(float x) {
   float f = fract(x);
@@ -286,7 +299,7 @@ vec4 pattern(vec2 p) {
     id: 'triangles',
     name: 'Triangles',
     seeded: true,
-    params: [DENSITY(9), R('variety', 'Tone variety', 0, 100, 60), A('#3d5a80'), B('#e0fbfc'), BG(100)],
+    params: [DENSITY(9), R('variety', 'Tone variety', 0, 100, 60), A('#3d5a80'), B('#e0fbfc'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   vec2 i = floor(p + (p.x + p.y) * 0.366025404);
@@ -301,7 +314,7 @@ vec4 pattern(vec2 p) {
   {
     id: 'sunburst',
     name: 'Sunburst',
-    params: [R('rays', 'Rays', 3, 60, 18), R('twist', 'Twist', -100, 100, 0), A('#f77f00'), B('#fcf0d9'), BG(100)],
+    params: [R('rays', 'Rays', 3, 60, 18), R('twist', 'Twist', -100, 100, 0), A('#f77f00'), B('#fcf0d9'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float r = length(p);
@@ -313,8 +326,9 @@ vec4 pattern(vec2 p) {
   },
   {
     id: 'spiral',
+    fixed: ['ratio'],
     name: 'Spiral',
-    params: [DENSITY(10), R('arms', 'Arms', 1, 12, 2), R('ratio', 'Band width', 5, 95, 50), A('#e5989b'), B('#fff1e6'), BG(100)],
+    params: [DENSITY(10), R('arms', 'Arms', 1, 12, 2), R('ratio', 'Band width', 5, 95, 50), A('#e5989b'), B('#fff1e6'), BG(0)],
     frag: `
 vec4 pattern(vec2 p) {
   float v = fract(length(p) - atan(p.y, p.x) / TAU * floor(p_arms + 0.5));
@@ -332,6 +346,27 @@ export function getPattern(id) {
 
 export function hasPattern(id) {
   return PATTERN_MAP.has(id);
+}
+
+/**
+ * Uniforms for a pattern. Density changes how many repeats there are; the sizes listed in
+ * `fixed` (line widths, dot sizes) are compensated so they keep the same size on the picture,
+ * otherwise Density would look exactly like zooming out.
+ */
+export function patternUniforms(definition, params = {}) {
+  const densityParam = definition.params.find((param) => param.key === 'density');
+  const ratio = densityParam ? (Number(params.density) || densityParam.value) / densityParam.value : 1;
+  const scaled = { ...params };
+
+  for (const key of definition.fixed ?? []) {
+    const param = definition.params.find((candidate) => candidate.key === key);
+    const value = Number(params[key] ?? param.value);
+
+    // Never let compensation close the gaps completely.
+    scaled[key] = Math.max(param.min, Math.min(Math.max(value, param.max * 0.8), value * ratio));
+  }
+
+  return paramUniforms(definition, scaled);
 }
 
 /** GLSL for `layerShader()`: evaluates the pattern in the layer's local box. */

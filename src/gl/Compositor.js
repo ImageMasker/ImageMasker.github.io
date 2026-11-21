@@ -3,7 +3,7 @@
 // layers re-process whatever is already there. The same code renders the preview and the export,
 // only the scale differs.
 
-import { invert, layerMatrix, toMat3 } from '../core/geometry.js';
+import { apply, invert, layerMatrix, toMat3 } from '../core/geometry.js';
 import { StrokeSurface } from '../raster/strokes.js';
 import { measureText, renderText, textSignature } from '../raster/text.js';
 import { effectShader, getEffect, hexToVec3, paramUniforms } from './effects.js';
@@ -18,7 +18,7 @@ import {
   blendIndex,
   layerShader,
 } from './glsl.js';
-import { getPattern, patternSource } from './patterns.js';
+import { getPattern, patternSource, patternUniforms } from './patterns.js';
 
 const NONE = [0, 0, 0, 0];
 const COVERAGE_KIND = { full: 0, rect: 1, ellipse: 2, polygon: 3, paint: 4 };
@@ -52,7 +52,7 @@ export class Compositor {
   }
 
   effectProgram(definition) {
-    return this.glx.program(`effect:${definition.id}`, () => effectShader(definition));
+    return this.glx.program(`effect:${definition.shader ?? definition.id}`, () => effectShader(definition));
   }
 
   // ── textures ──────────────────────────────────────────────────────────────
@@ -273,7 +273,7 @@ export class Compositor {
           return {
             program: this.patternProgram(definition),
             uniforms: {
-              ...paramUniforms(definition, layer.params),
+              ...patternUniforms(definition, layer.params),
               uPatScale: [(density * layer.w) / layer.h, density],
               uAA: density / Math.max(1, boxPx[1]),
               uSeed: layer.seed || 0,
@@ -411,12 +411,13 @@ export class Compositor {
     }
 
     const reveal = layer.effectId === 'original';
+    const centre = apply(layerMatrix(layer), layer.center?.x ?? 0, layer.center?.y ?? 0);
     const processed = reveal
       ? this.baseTarget(ctx)
       : this.runEffect(getEffect(layer.effectId), layer.params, layer.seed, input, {
           asp: ctx.asp,
           px: ctx.px,
-          center: region ? [layer.x / ctx.unit, layer.y / ctx.unit] : [ctx.asp[0] / 2, ctx.asp[1] / 2],
+          center: [centre.x / ctx.unit, centre.y / ctx.unit],
           extent: region ? Math.min(layer.w, layer.h) / 2 / ctx.unit : 0.5,
         });
 
@@ -586,7 +587,7 @@ export class Compositor {
     const target = glx.acquire(source.width, source.height);
 
     glx.draw(this.patternProgram(definition), target, {
-      ...paramUniforms(definition, params),
+      ...patternUniforms(definition, params),
       uPatScale: [density, density],
       uAA: density / side,
       uSeed: seed || 0,

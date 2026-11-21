@@ -198,6 +198,9 @@ export function normalizeDoc(raw, hasAsset) {
       }
 
       layer.params = normalizeParams(getEffect(layer.effectId), layer.params);
+      layer.center = Number.isFinite(Number(layer.center?.x)) && Number.isFinite(Number(layer.center?.y))
+        ? { x: Number(layer.center.x), y: Number(layer.center.y) }
+        : null;
       layer.coverage = ['full', 'rect', 'ellipse', 'polygon', 'paint'].includes(layer.coverage) ? layer.coverage : 'full';
       layer.strokes = layer.coverage === 'paint' ? (Array.isArray(layer.strokes) ? layer.strokes : []) : null;
 

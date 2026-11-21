@@ -383,3 +383,21 @@
   pointer-events: auto;
   caret-color: var(--bg-slider-thumb);
 }
+
+.centre-handle,
+.centre-handle-back {
+  fill: rgba(255, 255, 255, 0.18);
+  stroke: white;
+  stroke-width: 2;
+}
+
+.centre-handle-back {
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 4;
+}
+
+.centre-handle-cross {
+  stroke: white;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+}

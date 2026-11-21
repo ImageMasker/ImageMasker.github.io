@@ -54,10 +54,6 @@ export class LibraryPanel {
     return el('fieldset', { id: 'masks', className: 'panel-fieldset library-panel' }, [
       el('legend', { textContent: 'Masks' }),
       tabs,
-      el('p', {
-        className: 'panel-intro-copy library-hint',
-        textContent: 'Click a mask to try it. It replaces the selected mask; Shift+click or + stacks another one.',
-      }),
       el('div', { className: 'library-scroll' }, Object.values(this.panels)),
     ]);
   }
@@ -82,7 +78,7 @@ export class LibraryPanel {
       ? el('canvas', { className: 'mask-tile-preview', width: '8', height: '8' })
       : el('img', { className: 'mask-tile-preview', src: image, alt: '', loading: 'lazy' });
     const add = el('span', { className: 'mask-tile-add', title: 'Add as a new layer', role: 'button', 'aria-label': `Stack ${label}` }, [icon('plus')]);
-    const tileButton = el('button', { type: 'button', className: 'mask-tile', title: title || label }, [
+    const tileButton = el('button', { type: 'button', className: 'mask-tile', title: `${title || label}\nClick to try it (replaces the selected mask), Shift+click or + to stack.` }, [
       preview,
       el('span', { className: 'mask-tile-label' }, [
         el('span', { className: 'mask-tile-name', textContent: label }),
@@ -126,30 +122,12 @@ export class LibraryPanel {
     );
 
     return el('div', { className: 'library-tab' }, [
-      el('p', {
-        className: 'panel-intro-copy library-note',
-        textContent: 'Effect masks reshape the picture itself instead of covering it. The dots show how hard each one scrambles the image; nothing is guaranteed to beat reverse image search, so always check.',
-      }),
       ...groups,
     ]);
   }
 
   renderOverlays() {
     return el('div', { className: 'library-tab hidden' }, [
-      el('section', { className: 'library-group' }, [
-        el('h3', { className: 'library-group-title', textContent: 'Patterns' }),
-        el(
-          'div',
-          { className: 'mask-grid' },
-          PATTERNS.map((pattern) =>
-            this.tile({
-              label: pattern.name,
-              render: (source) => this.app.stage.compositor.patternPreview(pattern, defaultParams(pattern), 12.5, source),
-              onPick: (options) => this.app.addPattern(pattern.id, options),
-            })
-          )
-        ),
-      ]),
       el('section', { className: 'library-group' }, [
         el('h3', { className: 'library-group-title', textContent: 'Classic' }),
         el(
@@ -160,6 +138,20 @@ export class LibraryPanel {
               label: `Classic ${preset.id}`,
               image: preset.thumb,
               onPick: (options) => this.app.addPresetMask(preset, options),
+            })
+          )
+        ),
+      ]),
+      el('section', { className: 'library-group' }, [
+        el('h3', { className: 'library-group-title', textContent: 'Patterns' }),
+        el(
+          'div',
+          { className: 'mask-grid' },
+          PATTERNS.map((pattern) =>
+            this.tile({
+              label: pattern.name,
+              render: (source) => this.app.stage.compositor.patternPreview(pattern, defaultParams(pattern), 12.5, source),
+              onPick: (options) => this.app.addPattern(pattern.id, options),
             })
           )
         ),

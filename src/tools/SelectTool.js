@@ -2,6 +2,7 @@
 
 import { apply, invert, layerAxes, layerCorners, layerMatrix } from '../core/geometry.js';
 import { findLayer, isBoxLayer, topLayerAt, updateLayer } from '../core/model.js';
+import { getEffect } from '../gl/effects.js';
 import { measureText } from '../raster/text.js';
 import { svg } from '../view/Stage.js';
 
@@ -48,6 +49,19 @@ export class SelectTool {
     return this.active && layer && isBoxLayer(layer) && !layer.locked && layer.visible ? layer : null;
   }
 
+  /** Selected effect whose centre can be dragged, and where that centre is on screen. */
+  centreHandle() {
+    const layer = this.app.store.selectedLayer;
+
+    if (!this.active || !layer || layer.type !== 'effect' || layer.locked || !layer.visible || !getEffect(layer.effectId).centered) {
+      return null;
+    }
+
+    const point = apply(layerMatrix(layer), layer.center?.x ?? 0, layer.center?.y ?? 0);
+
+    return { layer, ...this.app.stage.toScreen(point.x, point.y) };
+  }
+
   handlePoints(layer) {
     const stage = this.app.stage;
     const matrix = layerMatrix(layer);
@@ -90,6 +104,16 @@ export class SelectTool {
       this.group.append(svg('polygon', { points, class: 'selection-outline' }));
     }
 
+    const centre = this.centreHandle();
+
+    if (centre) {
+      const { x, y } = centre;
+
+      this.group.append(svg('circle', { cx: x, cy: y, r: 9, class: 'centre-handle-back' }));
+      this.group.append(svg('circle', { cx: x, cy: y, r: 9, class: 'centre-handle' }));
+      this.group.append(svg('path', { d: `M${x - 14} ${y}H${x + 14}M${x} ${y - 14}V${y + 14}`, class: 'centre-handle-cross' }));
+    }
+
     const layer = this.handleLayer();
 
     if (!layer) {
@@ -107,13 +131,19 @@ export class SelectTool {
   }
 
   hitHandle(event) {
+    const reach = event.pointerType === 'touch' ? 18 : 10;
+    const centre = this.centreHandle();
+
+    if (centre && Math.hypot(event.sx - centre.x, event.sy - centre.y) <= reach + 4) {
+      return { kind: 'centre', layer: centre.layer };
+    }
+
     const layer = this.handleLayer();
 
     if (!layer) {
       return null;
     }
 
-    const reach = event.pointerType === 'touch' ? 18 : 10;
     const { handles, rotate } = this.handlePoints(layer);
 
     if (Math.hypot(event.sx - rotate.x, event.sy - rotate.y) <= reach) {
@@ -189,6 +219,14 @@ export class SelectTool {
 
     drag.moved = true;
     store.begin();
+
+    if (drag.kind === 'centre') {
+      const local = apply(invert(layerMatrix(drag.start)), event.x, event.y);
+
+      store.set(updateLayer(store.gestureBase.doc, drag.start.id, { center: { x: local.x, y: local.y } }));
+      return;
+    }
+
     store.set(updateLayer(store.gestureBase.doc, drag.start.id, drag.kind === 'rotate' ? this.rotatePatch(drag, event) : this.resizePatch(drag, event)));
   }
 
@@ -242,7 +280,7 @@ export class SelectTool {
     this.drag = null;
 
     if (drag?.moved) {
-      this.app.store.end(drag.kind === 'move' ? 'Move' : drag.kind === 'rotate' ? 'Rotate' : 'Resize');
+      this.app.store.end({ move: 'Move', rotate: 'Rotate', centre: 'Move centre' }[drag.kind] ?? 'Resize');
     }
   }
 
@@ -255,7 +293,9 @@ export class SelectTool {
     const handle = this.hitHandle(event);
     let cursor = 'default';
 
-    if (handle?.kind === 'rotate') {
+    if (handle?.kind === 'centre') {
+      cursor = 'move';
+    } else if (handle?.kind === 'rotate') {
       cursor = 'crosshair';
     } else if (handle) {
       const direction = apply(layerAxes(handle.layer), handle.hx, handle.hy);

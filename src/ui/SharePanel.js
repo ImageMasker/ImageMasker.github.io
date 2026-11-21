@@ -19,9 +19,11 @@ export class SharePanel {
     this.options = { preset: 'original_png', ...EXPORT_PRESETS.original_png };
     this.refs = {};
     this.rounds = new SavedRoundsPanel();
+    const share = this.renderShare();
+
+    share.append(this.renderExport());
     this.element = el('div', { className: 'share-panel' }, [
-      this.renderExport(),
-      this.renderShare(),
+      share,
       this.renderImport(),
       this.renderRounds(),
     ]);
@@ -81,18 +83,15 @@ export class SharePanel {
       },
     });
     refs.sizeInfo = el('div', { className: 'export-size-info' });
-    refs.copyImage = button('Copy to clipboard', { id: 'Copy', iconName: 'clipboard', onClick: () => this.app.copyImage() });
-    refs.download = button('Download image', { id: 'Download', iconName: 'download', onClick: () => this.app.downloadImage() });
 
-    return el('fieldset', { className: 'panel-fieldset' }, [
-      el('legend', { textContent: 'Export' }),
+    return section('Export settings', [
       refs.preset.element,
       refs.size.element,
       refs.format.element,
       refs.quality.element,
       refs.sizeInfo,
-      row([refs.copyImage, refs.download], 'button-row--fill'),
-    ]);
+      el('p', { className: 'panel-intro-copy', textContent: 'Used by Copy and Download in the header, and by uploads.' }),
+    ], { open: false, className: 'share-section' });
   }
 
   getExportOptions() {
@@ -126,12 +125,14 @@ export class SharePanel {
     refs.answer = el('input', { id: 'roundAnswer', type: 'text', placeholder: 'Round Answer', 'aria-label': 'Round answer' });
     refs.subreddit = el('input', { id: 'newSubInput', type: 'text', value: 'picturegame', placeholder: 'Subreddit', className: 'hidden', 'aria-label': 'Subreddit' });
     refs.subreddit.addEventListener('input', () => this.updatePostLabel());
-    refs.copyPost = button('Copy image & post to Reddit', { id: 'copyAndPost', iconName: 'reddit', className: 'app-button--primary', onClick: () => this.copyAndPost() });
-    refs.copyPostHint = el('p', {
-      className: 'panel-intro-copy',
-      textContent: 'No image host needed: copies the picture, opens the Reddit image post with the next round number in the title, then you paste (Ctrl+V) and submit.',
+    refs.copyPost = button('Copy image & post to Reddit', {
+      id: 'copyAndPost',
+      iconName: 'reddit',
+      className: 'app-button--primary',
+      title: 'Copies the picture and opens the Reddit image post with the next round number in the title. Paste (Ctrl+V) there and submit.',
+      onClick: () => this.copyAndPost(),
     });
-    refs.upload = button('Upload', { id: 'uploadbutton', iconName: 'upload', className: 'app-button--primary', onClick: () => this.upload() });
+    refs.upload = button('Upload', { id: 'uploadbutton', iconName: 'upload', className: 'app-button--fill', onClick: () => this.upload() });
     refs.url = el('input', { id: 'uploadedUrl', type: 'text', 'aria-label': 'Uploaded image URL', placeholder: 'Uploaded image URL' });
     refs.copyUrl = button('Copy', { id: 'copyToClipboard', onClick: () => this.requireUrl('There is no uploaded URL to copy yet.') && app.copyText(refs.url.value, 'Image URL copied.') });
     refs.checkRis = button('Check RIS', { id: 'checkForRIS', onClick: () => this.requireUrl('Upload an image first to check RIS.') && app.risChecker.check(refs.url.value.trim()) });
@@ -219,11 +220,8 @@ export class SharePanel {
       refs.answer,
       refs.subreddit,
       refs.copyPost,
-      refs.copyPostHint,
-      refs.upload,
       refs.shareMessage.element,
-      refs.uploaded,
-      section('Upload settings', [refs.host.element, refs.hostNote, refs.imgbbBlock, refs.imgurBlock], { open: false }),
+      section('Upload to an image host', [refs.host.element, refs.hostNote, refs.imgbbBlock, refs.imgurBlock, refs.upload, refs.uploaded], { open: false }),
       section('Check any URL for RIS', [el('div', { className: 'input-row' }, [refs.ris, button('Check', { onClick: checkRisUrl })])], { open: false }),
     ]);
 
@@ -328,7 +326,7 @@ export class SharePanel {
       app.queueAutosave();
     } catch (error) {
       this.setUploaded(refs.url.value);
-      refs.shareMessage.set(`The upload failed. Reason: ${error.message} You can switch host under Upload settings, or use "Copy image & post to Reddit".`, 'error');
+      refs.shareMessage.set(`The upload failed. Reason: ${error.message} You can switch host above, or use "Copy image & post to Reddit".`, 'error');
       app.notify('The upload failed.', 'error', 3600);
     } finally {
       refs.upload.disabled = false;
@@ -388,6 +386,7 @@ export class SharePanel {
       onChange: (value) => app.settings.setPasteImageAsLayer(value),
     });
     refs.pasteAsLayer.element.id = 'pasteImagesAsLayer';
+    refs.pasteAsLayer.element.title = 'When on, pasted images and URLs become layers. Turn off to replace the base picture instead.';
 
     return el('fieldset', { className: 'panel-fieldset' }, [
       el('legend', { textContent: 'Add image' }),
@@ -397,7 +396,6 @@ export class SharePanel {
         button('Add as layer…', { iconName: 'plus', onClick: () => app.pickFile('layer') }),
       ], 'button-row--fill'),
       row([refs.pasteAsLayer.element]),
-      el('p', { className: 'panel-intro-copy', textContent: 'When on, pasted images and URLs become layers. Turn off to replace the base image instead.' }),
     ]);
   }
 
@@ -527,7 +525,7 @@ export class SharePanel {
   sync() {
     const enabled = this.app.store.hasImage;
 
-    for (const control of [this.refs.copyImage, this.refs.download, this.refs.upload, this.refs.copyPost]) {
+    for (const control of [this.refs.upload, this.refs.copyPost]) {
       control.disabled = !enabled;
     }
 

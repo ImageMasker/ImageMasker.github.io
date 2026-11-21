@@ -7,10 +7,6 @@
   min-height: 0;
 }
 
-.library-hint {
-  font-size: 0.72rem;
-}
-
 .library-scroll {
   flex: 1;
   min-height: 0;
@@ -23,13 +19,6 @@
   display: grid;
   gap: 10px;
   align-content: start;
-}
-
-.library-note {
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: var(--surface-tint);
-  font-size: 0.72rem;
 }
 
 .library-group {
@@ -284,8 +273,7 @@
 
 /* ── share ─────────────────────────────────────────────────────────────── */
 
-.share-panel,
-.ai-panel {
+.share-panel {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -382,50 +370,36 @@
   box-shadow: var(--shadow-soft);
 }
 
-/* ── AI ────────────────────────────────────────────────────────────────── */
+/* ── compact controls ───────────────────────────────────────────────── */
 
-.ai-panel .tool-field-block {
-  display: grid;
-  gap: 3px;
+.compact-row .app-button {
+  min-height: 26px;
+  padding: 2px 8px;
+  font-size: 0.74rem;
 }
 
-.ai-panel .field-controls {
-  display: flex;
-  gap: 4px;
+.tool-section--nested {
+  background: transparent;
 }
 
-.ai-panel select,
-.ai-panel input,
-.ai-panel textarea {
+.tool-section--nested .tool-section-summary {
+  padding: 4px 6px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.share-section {
+  margin-top: 2px;
+}
+
+.app-button--fill {
   width: 100%;
 }
 
-.ai-panel textarea {
-  resize: vertical;
-}
-
-.ai-panel .is-busy {
-  opacity: 0.9;
-}
-
-.ai-edit-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-}
-
-.ai-edit-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--bg-slider);
-  border-top-color: var(--bg-slider-thumb);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.centre-hint {
+  flex: 1 1 140px;
+  font-weight: 400;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  align-self: center;
 }

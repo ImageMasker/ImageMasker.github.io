@@ -19,7 +19,7 @@
 <script type="module">
 import { AssetStore } from '../src/core/AssetStore.js';
 import { Compositor } from '../src/gl/Compositor.js';
-import { EFFECTS, defaultParams } from '../src/gl/effects.js';
+import { EFFECTS, defaultParams, hasIntensity, INTENSITY_LEVELS, intensityParams } from '../src/gl/effects.js';
 import { GL } from '../src/gl/GL.js';
 import { PATTERNS } from '../src/gl/patterns.js';
 import { createSampleScene } from '../src/utils/sampleScene.js';
@@ -69,6 +69,13 @@ for (const effect of EFFECTS) {
 for (const pattern of PATTERNS) {
   if (!only || only.includes(pattern.id)) {
     add(`pattern / ${pattern.id}`, () => compositor.patternPreview(pattern, defaultParams(pattern), 12.5, source));
+  }
+}
+// Registry check: wherever Gentle / Strong are offered they must change something.
+for (const effect of EFFECTS.filter((entry) => !entry.hidden && hasIntensity(entry))) {
+  const variants = [INTENSITY_LEVELS.gentle, 1, INTENSITY_LEVELS.strong].map((factor) => JSON.stringify(intensityParams(effect, factor)));
+  if (new Set(variants).size !== 3) {
+    errors.push(`${effect.id}: Gentle / Default / Strong are not all different`);
   }
 }
 document.getElementById('errors').textContent = errors.join('\n\n');

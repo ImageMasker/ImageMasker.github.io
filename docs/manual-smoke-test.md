@@ -15,7 +15,9 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 ## Masks
 
 1. Click several effect masks in a row: each click swaps the effect. Shift+click stacks a second one.
-2. Move the sliders, press Shuffle and Reset; undo and redo each.
+2. Move the sliders, press Gentle, Strong, Shuffle and Reset; Gentle/Strong must keep a custom pane size. Undo and redo each.
+2. Select Swirl or Fisheye, drag the ⊕ centre, then Reset centre.
+2. Pattern overlay: background transparent by default; Density adds repeats without thickening lines.
 3. "Limit to a region", move / resize / rotate the region, change shape, soft edge, magnify, reflect. "Apply to whole picture".
 4. Add a pattern overlay, a classic mask, a flag mask and a custom URL mask. Change opacity, zoom, angle, blend mode, hue, invert, blur, noise, warp, tile.
 
@@ -40,6 +42,8 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 
 ## Sharing
 
+1. Check RIS with a URL containing `?a=1&b=2`: every search site gets the full URL.
+1. Remove background from the picture (nothing selected) and from a pasted image layer.
 1. *Copy image & post to Reddit*: the Reddit image form opens with `[Round N] title`, CTRL+V attaches the picture.
 1. Upload with each host (Imgur, ImgBB with a key, Litterbox), then Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.
 2. Saved rounds: browse with the arrows and the left/right keys, update, delete, save from URL.

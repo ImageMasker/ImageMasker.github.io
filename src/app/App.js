@@ -44,7 +44,7 @@ import { ThemeManager } from '../ui/ThemeManager.js';
 import { ToastManager } from '../ui/ToastManager.js';
 import { el } from '../utils/dom.js';
 import { Stage } from '../view/Stage.js';
-import { AiTools } from './ai.js';
+import { BackgroundTools } from './backgroundRemoval.js';
 import { AUTOSAVE_ID, describeSession, restoreSession, SessionStore } from './sessions.js';
 import { SettingsUi } from './settingsUi.js';
 
@@ -63,7 +63,6 @@ const TOOL_BUTTONS = [
 const SIDE_TABS = [
   { id: 'edit', label: 'Edit' },
   { id: 'share', label: 'Share' },
-  { id: 'ai', label: 'AI' },
 ];
 const MOBILE_TABS = [{ id: 'masks', label: 'Masks' }, ...SIDE_TABS];
 const GITHUB_ICON =
@@ -107,7 +106,7 @@ export class App {
       this.stage = new Stage({ host: this.refs.canvasHost, store: this.store, assets: this.assets, bus: this.bus });
     } catch (error) {
       this.refs.dropTitle.textContent = 'This browser cannot run the editor';
-      this.refs.dropSubtitle.textContent = `${error.message} The previous version is still available from the link below.`;
+      this.refs.dropSubtitle.textContent = `${error.message} The glass, water and other effect masks need WebGL2. The previous version below still has the classic and flag masks, drawing, text and sharing.`;
       this.refs.dropTarget.disabled = true;
       this.refs.fallbackLink.classList.remove('hidden');
       return;
@@ -131,12 +130,11 @@ export class App {
     this.layersPanel = new LayersPanel(this);
     this.inspector = new Inspector(this);
     this.sharePanel = new SharePanel(this);
-    this.ai = new AiTools(this);
+    this.backgroundTools = new BackgroundTools(this);
     this.settingsUi = new SettingsUi(this);
     this.refs.library.append(this.library.element);
     this.refs.sidePanels.edit.append(this.layersPanel.element, this.inspector.element);
     this.refs.sidePanels.share.append(this.sharePanel.element);
-    this.refs.sidePanels.ai.append(this.ai.element);
     this.root.append(this.settingsUi.element, this.toasts.element);
 
     this.bindEvents();
@@ -147,7 +145,6 @@ export class App {
     this.setSideTab('edit');
     this.syncChrome();
     this.library.scheduleThumbs(50);
-    void this.ai.init();
     void this.checkAutosave();
   }
 
@@ -164,8 +161,8 @@ export class App {
     refs.zoomIn = headerButton('zoomIn', 'Zoom in', () => this.stage.zoomAt(1.25));
     refs.fit = headerButton('fit', 'Fit picture to screen', () => this.stage.fit());
     refs.compare = button('Original', { iconName: 'compare', className: 'header-button', title: 'Hold to see the picture without masks' });
-    refs.copy = button('Copy', { iconName: 'clipboard', className: 'header-button', title: 'Copy image to clipboard', onClick: () => this.copyImage() });
-    refs.download = button('Download', { iconName: 'download', className: 'header-button', title: 'Download image', onClick: () => this.downloadImage() });
+    refs.copy = button('Copy', { id: 'Copy', iconName: 'clipboard', className: 'header-button', title: 'Copy image to clipboard', onClick: () => this.copyImage() });
+    refs.download = button('Download', { id: 'Download', iconName: 'download', className: 'header-button', title: 'Download image', onClick: () => this.downloadImage() });
     refs.settings = el('button', { id: 'settingsButton', type: 'button', textContent: 'Settings', 'aria-label': 'Open settings' });
     refs.github = el('button', { id: 'github', type: 'button', 'aria-label': 'GitHub', title: 'Source on GitHub', innerHTML: GITHUB_ICON });
 
@@ -778,6 +775,7 @@ export class App {
     this.store.apply(full ? 'Apply to whole picture' : 'Limit to region', (current) =>
       updateLayer(current, layerId, {
         coverage,
+        center: null,
         points: null,
         strokes: null,
         rotation: 0,

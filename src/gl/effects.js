@@ -47,8 +47,17 @@ export const EFFECTS = [
       R('dispersion', 'Colour fringes', 0, 100, 30),
       R('gloss', 'Gloss', 0, 100, 50),
       R('tone', 'Tone variation', 0, 100, 15),
+      R('tint', 'Pane tint', 0, 100, 0),
+      O('palette', 'Tint colours', ['Blue, amber, plum', 'Cool', 'Warm', 'Soft rainbow'], 0),
     ],
+    main: ['size', 'shift', 'tint'],
     frag: `
+vec3 paneTint(int k, float t) {
+  if (k == 1) return mix(vec3(0.55, 0.75, 1.0), vec3(0.6, 1.0, 0.85), t);
+  if (k == 2) return mix(vec3(1.0, 0.75, 0.45), vec3(1.0, 0.58, 0.62), t);
+  if (k == 3) return hsv2rgb(vec3(t, 0.45, 1.0));
+  return t < 0.34 ? vec3(0.55, 0.72, 1.0) : t < 0.67 ? vec3(1.0, 0.8, 0.45) : vec3(0.86, 0.6, 0.95);
+}
 vec4 fx(vec2 q) {
   float cs = p_size * 0.01;
   Vor v = voronoi(q / cs, 0.85);
@@ -67,6 +76,8 @@ vec4 fx(vec2 q) {
   vec4 col = refractS(c + p + off, grain * 0.012 + bevel * cs * 0.13 + tilt * cs * 0.04, p_dispersion * 0.006);
   float tone = (h.y - 0.5) * p_tone * 0.008;
   col.rgb = mix(col.rgb, vec3(luma(col.rgb)), clamp(abs(tone) * 1.5, 0.0, 1.0)) * (1.0 + tone);
+  vec3 pane = paneTint(int(p_palette + 0.5), hash21(v.id + SEEDV + 1.7));
+  col.rgb = mix(col.rgb, col.rgb * pane * 1.2 + pane * 0.05 * col.a, p_tint * 0.01);
   vec2 lt = glassLight(tilt * 0.6 + grain + bevel, 70.0);
   float gl = p_gloss * 0.01;
   col.rgb *= 1.0 + lt.x * 0.4 * gl;
@@ -1444,7 +1455,7 @@ vec4 fx(vec2 q) {
     cat: 'retro',
     strength: 1,
     desc: 'False-colour heat map.',
-    params: [R('amount', 'Amount', 0, 100, 100)],
+    params: [R('amount', 'Amount', 0, 100, 80)],
     frag: `
 vec4 fx(vec2 q) {
   vec4 s = S(q);
@@ -1556,6 +1567,21 @@ vec4 fx(vec2 q) {
   },
 ];
 
+// Tinted glass: the cut glass shader with larger, coloured panes (one tile in the library).
+{
+  const base = EFFECTS.find((effect) => effect.id === 'cutGlass');
+  const overrides = { size: 22, tint: 20, shift: 25 };
+
+  EFFECTS.splice(EFFECTS.indexOf(base) + 1, 0, {
+    ...base,
+    id: 'tintedGlass',
+    name: 'Tinted glass',
+    desc: 'Large panes of softly coloured cut glass.',
+    shader: 'cutGlass',
+    params: base.params.map((param) => (param.key in overrides ? { ...param, value: overrides[param.key] } : param)),
+  });
+}
+
 const EFFECT_MAP = new Map(EFFECTS.map((effect) => [effect.id, effect]));
 
 export function getEffect(id) {
@@ -1595,21 +1621,85 @@ export function normalizeParams(definition, params = {}) {
   return result;
 }
 
-const AMOUNT_KEYS = new Set([
-  'shift', 'twist', 'zoom', 'amount', 'strength', 'lens', 'jitter', 'flatten', 'tint', 'bulge', 'flip', 'turn',
-  'spread', 'depth', 'rgb', 'blocks', 'fog', 'ripple', 'wobble', 'bleed', 'bevel', 'tone',
-]);
+// Sliders the Gentle / Strong presets scale, per effect. A leading '-' means smaller is stronger.
+const INTENSITY = {
+  cutGlass: ['shift', 'twist', 'zoom', 'tone', 'dispersion'],
+  tintedGlass: ['shift', 'twist', 'zoom', 'tint', 'dispersion'],
+  stainedGlass: ['flatten', 'tint'],
+  flutedGlass: ['strength'],
+  glassBlocks: ['lens', 'jitter'],
+  frosted: ['amount'],
+  privacyGlass: ['depth'],
+  rain: ['density', 'fog'],
+  ripple: ['amount'],
+  water: ['amount', 'caustics'],
+  bubbles: ['bulge'],
+  prism: ['spread', 'shift'],
+  crystal: ['size'],
+  puzzle: ['shift', 'twist'],
+  mosaic: ['shift', 'twist'],
+  hexFlip: ['turn', 'flip'],
+  shatter: ['shift'],
+  weave: ['shift'],
+  slats: ['shift'],
+  rings: ['twist'],
+  paperFold: ['depth'],
+  lowPoly: ['size'],
+  liquify: ['amount'],
+  swirlGrid: ['angle'],
+  wave: ['amount'],
+  corduroy: ['amount'],
+  smear: ['length'],
+  swirl: ['angle'],
+  fisheye: ['amount'],
+  zoomBlur: ['amount'],
+  radialBlur: ['amount'],
+  halftone: ['size'],
+  engrave: ['-lines'],
+  pointillism: ['size'],
+  oilPaint: ['radius'],
+  posterize: ['-levels'],
+  sketch: ['strength', '-tint'],
+  neon: ['glow', 'dark'],
+  bricks: ['size'],
+  crossStitch: ['size'],
+  glitch: ['amount', 'rgb', 'blocks'],
+  crt: ['scan', 'bleed', 'jitter'],
+  melt: ['amount'],
+  dither: ['pixel', '-levels'],
+  duotone: ['amount'],
+  thermal: ['amount'],
+  colorShift: ['hue'],
+  blur: ['amount'],
+  pixelate: ['size'],
+  noise: ['amount'],
+  rgbSplit: ['amount'],
+};
 
-/** Default parameters with every "how much" slider scaled, for the Gentle / Strong presets. */
-export function intensityParams(definition, factor) {
-  const params = defaultParams(definition);
+export const INTENSITY_LEVELS = { gentle: 0.5, strong: 1.7 };
 
-  for (const param of definition.params) {
-    if (param.type === 'range' && AMOUNT_KEYS.has(param.key) && param.min >= 0) {
-      const value = Math.max(param.min, Math.min(param.max, param.value * factor));
+export function hasIntensity(definition) {
+  return Boolean(INTENSITY[definition.id]?.length);
+}
 
-      params[param.key] = param.step < 1 ? Math.round(value / param.step) * param.step : Math.round(value);
+/**
+ * `current` with the effect's intensity sliders set to their default times `factor`.
+ * Every other setting (pane size, colours, ...) is left as it is.
+ */
+export function intensityParams(definition, factor, current = defaultParams(definition)) {
+  const params = { ...current };
+
+  for (const entry of INTENSITY[definition.id] ?? []) {
+    const inverse = entry.startsWith('-');
+    const param = definition.params.find((candidate) => candidate.key === entry.replace('-', ''));
+
+    if (!param || param.type !== 'range') {
+      continue;
     }
+
+    const value = Math.max(param.min, Math.min(param.max, inverse ? param.value / factor : param.value * factor));
+
+    params[param.key] = param.step < 1 ? Math.round(value / param.step) * param.step : Math.round(value);
   }
 
   return params;

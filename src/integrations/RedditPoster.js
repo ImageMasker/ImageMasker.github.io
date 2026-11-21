@@ -19,15 +19,21 @@ export class RedditPoster {
   async postToReddit(imageUrl, roundTitle, subreddit = 'picturegame') {
     const nextRound = await this.nextRoundNumber();
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const redditBase = isMobile ? 'http://old.reddit.com/r/' : 'http://www.reddit.com/r/';
+    const redditBase = isMobile ? 'https://old.reddit.com/r/' : 'https://www.reddit.com/r/';
 
-    return window.open(
-      `${redditBase}${subreddit}/submit?url=${imageUrl}&title=${encodeURIComponent(this.roundTitle(nextRound, roundTitle))}`
-    );
+    const url = new URL(`${redditBase}${encodeURIComponent(subreddit)}/submit`);
+
+    url.searchParams.set('url', imageUrl);
+    url.searchParams.set('title', this.roundTitle(nextRound, roundTitle));
+    return window.open(url.toString());
   }
 
   /** Image post: opens the image composer with the title filled in; the picture is pasted in. */
   imagePostUrl(roundNumber, roundTitle, subreddit = 'picturegame') {
-    return `https://www.reddit.com/r/${subreddit}/submit/?type=IMAGE&title=${encodeURIComponent(this.roundTitle(roundNumber, roundTitle))}`;
+    const url = new URL(`https://www.reddit.com/r/${encodeURIComponent(subreddit)}/submit/`);
+
+    url.searchParams.set('type', 'IMAGE');
+    url.searchParams.set('title', this.roundTitle(roundNumber, roundTitle));
+    return url.toString();
   }
 }

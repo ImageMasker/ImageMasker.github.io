@@ -18,8 +18,8 @@ Once a picture is loaded, pasting adds new images as layers ("Paste as new layer
 
 The **Masks** library on the left has four tabs. Clicking a mask replaces the selected mask so you can browse quickly; Shift+click (or the + on a tile) stacks another one.
 
-* **Effects** – masks that reshape the picture instead of covering it: cut glass, stained glass, reeded glass, textured glass (hammered, pebbled, flemish, rippled, seedy), glass blocks, rainy window, pond ripples, water surface, jigsaw, shuffled tiles, hex mirrors, shattered, woven strips, turning rings, liquid warp, halftone, engraving, pointillism, pencil sketch, cross-stitch, glitch, VHS and more. The glass and water effects refract the picture through a textured surface, with colour fringes and highlights you can dial in. The defaults are tuned so the picture stays recognisable; **Gentle / Default / Strong** and **Mix with original** change that in one click, and the few effects that really hide the subject sit in their own *Heavy* group. Seeded effects have a **Shuffle** button. An effect can cover the whole picture, be limited to a rectangle / ellipse / freehand region, or be painted on with the effect brush.
-* **Overlays** – procedural patterns (lattice, mesh, honeycomb, stripes, zebra, polka dots, seigaiha, truchet, camo, …) with editable colours, plus the nine classic image masks.
+* **Effects** – masks that reshape the picture instead of covering it: cut glass, stained glass, reeded glass, textured glass (hammered, pebbled, flemish, rippled, seedy), glass blocks, rainy window, pond ripples, water surface, jigsaw, shuffled tiles, hex mirrors, shattered, woven strips, turning rings, liquid warp, halftone, engraving, pointillism, pencil sketch, cross-stitch, glitch, VHS and more. The glass and water effects refract the picture through a textured surface, with colour fringes and highlights you can dial in. The defaults are tuned so the picture stays recognisable; **Gentle / Strong** (they only change the effect's strength sliders and keep the rest, e.g. pane size), **Reset** and **Mix with original** change that in one click; less-used sliders sit under *More settings*. Effects that turn around a centre (swirl, fisheye, kaleidoscope, turning rings, …) show a ⊕ on the picture you can drag. **Tinted glass** is cut glass with larger, softly coloured panes, and Cut glass has a pane tint slider, and the few effects that really hide the subject sit in their own *Heavy* group. Seeded effects have a **Shuffle** button. An effect can cover the whole picture, be limited to a rectangle / ellipse / freehand region, or be painted on with the effect brush.
+* **Overlays** – the nine classic image masks, then procedural patterns (lattice, mesh, honeycomb, stripes, zebra, polka dots, seigaiha, truchet, camo, …) with editable colours and a transparent background by default. *Mask zoom* scales the whole pattern; *Density* adds more repeats while lines and dots keep their size.
 * **Flags** – the searchable flag masks.
 * **Custom** – your own mask URLs (saved in the browser) or a local image file.
 
@@ -37,14 +37,16 @@ Mouse wheel zooms, Space+drag or middle mouse pans. Hold **Original** in the hea
 
 ### Sharing
 
-The **Share** tab holds the export settings (Original PNG, Editor PNG, Web JPEG, Original JPEG), copy to clipboard, download, the round title / answer and two ways to post:
+The **Share** tab has the round title / answer and **Copy image & post to Reddit**, the main way to submit:
 
 * **Copy image & post to Reddit** – needs no image host. It copies the picture to the clipboard and opens Reddit's image post form for /r/PictureGame with `[Round N]` and your title filled in (N is the next round number from picturega.me). Press CTRL+V there to attach the picture and submit.
-* **Upload** – uploads to the host chosen under *Upload settings* and gives you the image URL, *Copy*, *Check RIS* (opens Yandex, TinEye, Google Lens, Google and Bing – allow popups), *Submit to /r/PictureGame* (link post), *Save round* and *Copy YML*.
+* **Upload to an image host** (collapsed) – uploads to the chosen host and gives you the image URL, *Copy*, *Check RIS* (opens Yandex, TinEye, Google Lens, Google and Bing – allow popups), *Submit to /r/PictureGame* (link post), *Save round* and *Copy YML*.
 
 Image hosts: **Imgur** (blocked in the UK since September 2025), **ImgBB** (works in the UK; needs a free API key from https://api.imgbb.com/, stored in your browser) and **Litterbox** (no account, but links expire after 72 hours, so only for short rounds). Saved rounds are listed at the bottom of the tab.
 
-**Settings** has saved sessions (stored in the browser, pictures included, with autosave and JSON export/import), themes (the built-in ones plus JSON themes) and remappable keyboard shortcuts. The **AI** tab has background removal and prompt-based AI edits.
+Export settings (presets, size, format, JPEG quality) are in a collapsed section of the Share tab and apply to Copy and Download in the header and to uploads.
+
+**Settings** has saved sessions (stored in the browser, pictures included, with autosave and JSON export/import), themes (the built-in ones plus JSON themes) and remappable keyboard shortcuts. **Remove background** is in the properties of an image layer (or of the picture when nothing is selected); it runs in your browser and adds the cut-out as a new layer.
 
 ### Keyboard shortcuts (defaults, all remappable)
 
