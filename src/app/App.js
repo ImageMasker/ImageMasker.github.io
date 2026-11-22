@@ -59,6 +59,7 @@ import { pointInPolygon } from '../core/geometry.js';
 import { changeScore, renderSmall, unmaskedDoc } from './strengthMeter.js';
 import { AUTOSAVE_ID, describeSession, restoreSession, SessionStore } from './sessions.js';
 import { SettingsUi } from './settingsUi.js';
+import { restoreToolState } from './toolState.js';
 
 const TOOL_BUTTONS = [
   { id: 'select', icon: 'select', label: 'Move mode', short: 'Move', command: 'move' },
@@ -97,13 +98,8 @@ export class App {
     this.imageHosts = new ImageHosts(this.settings);
     this.risChecker = new RISChecker((text, tone) => this.notify(text, tone));
     this.toasts = new ToastManager();
-    this.toolState = {
-      brush: { size: 10, color: '#000000', type: 'smooth', opacity: 100 },
-      eraser: { mode: 'erase' },
-      paint: { effectId: 'cutGlass', amounts: { blur: 14, pixelate: 1.6 } },
-      region: { shape: 'rect', effectId: 'blur' },
-      text: {},
-    };
+    this.toolState = restoreToolState(this.settings.getToolSettings());
+    this.bus.on('tool-settings', () => this.settings.setToolSettings(this.toolState));
     this.toolName = 'select';
     this.tools = {};
     this.refs = { toolButtons: {}, sideTabs: {}, sidePanels: {}, mobileTabs: {} };
@@ -687,6 +683,7 @@ export class App {
 
   setEraserMode(mode) {
     this.toolState.eraser.mode = mode;
+    this.bus.emit('tool-settings');
     this.setTool('eraser');
     this.inspector.update();
   }

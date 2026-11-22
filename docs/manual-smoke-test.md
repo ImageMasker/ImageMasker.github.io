@@ -59,6 +59,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 2. Save, load, duplicate and delete a named session. Export the session JSON and import it again.
 3. Switch between the built-in themes, import and delete a JSON theme.
 4. Remap a shortcut and reset it. Shortcuts must not fire while typing in a field.
+5. Change the brush size, colour and type, the eraser mode, the region shape and the export preset, then reload: they are all kept.
 
 ## Mobile / compact layout
 

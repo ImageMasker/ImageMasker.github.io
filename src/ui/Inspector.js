@@ -13,7 +13,7 @@ import { button, color, row, section, select, slider, toggle } from './kit.js';
 
 const percent = (value) => `${Math.round(value)}%`;
 const degrees = (value) => `${Math.round(value)}°`;
-const ERASER_MODES = [
+export const ERASER_MODES = [
   { value: 'erase', label: 'Erase drawings' },
   { value: 'reveal', label: 'Reveal original' },
   { value: 'restore', label: 'Restore masks' },
@@ -23,7 +23,7 @@ const ERASER_HINTS = {
   reveal: 'Brushes through every mask and effect to show the original picture underneath.',
   restore: 'Paints the masks back over areas you revealed.',
 };
-const REGION_SHAPES = [
+export const REGION_SHAPES = [
   { value: 'rect', label: 'Rectangle' },
   { value: 'ellipse', label: 'Ellipse' },
   { value: 'freehand', label: 'Freehand' },
@@ -301,14 +301,19 @@ export class Inspector {
 
   // ── tool options ──────────────────────────────────────────────────────────
 
+  /** Wraps a write to app.toolState so the change is announced (and remembered). */
+  toolChange(write) {
+    return (value) => {
+      write(value);
+      this.app.bus.emit('tool-settings');
+    };
+  }
+
   toolSlider(options, read, write) {
     const control = slider({
       ...options,
       value: read(),
-      onInput: (value) => {
-        write(value);
-        this.app.bus.emit('tool-settings');
-      },
+      onInput: this.toolChange(write),
     });
 
     this.bindings.push(() => control.set(read()));
@@ -330,8 +335,8 @@ export class Inspector {
           this.toolSlider({ label: 'Brush opacity', min: 1, max: 100, format: percent }, () => state.brush.opacity, (value) => {
             state.brush.opacity = value;
           }),
-          color({ label: 'Colour', value: state.brush.color, onInput: (value) => { state.brush.color = value; } }).element,
-          select({ label: 'Brush type', options: BRUSH_TYPES.map((type) => ({ value: type.id, label: type.label })), value: state.brush.type, onChange: (value) => { state.brush.type = value; } }).element,
+          color({ label: 'Colour', value: state.brush.color, onInput: this.toolChange((value) => { state.brush.color = value; }) }).element,
+          select({ label: 'Brush type', options: BRUSH_TYPES.map((type) => ({ value: type.id, label: type.label })), value: state.brush.type, onChange: this.toolChange((value) => { state.brush.type = value; }) }).element,
         ], { className: 'tool-section--primary' });
       case 'eraser': {
         const hint = el('p', { className: 'panel-intro-copy', textContent: ERASER_HINTS[state.eraser.mode] });
@@ -339,10 +344,10 @@ export class Inspector {
           label: 'Mode',
           options: ERASER_MODES,
           value: state.eraser.mode,
-          onChange: (value) => {
+          onChange: this.toolChange((value) => {
             state.eraser.mode = value;
             hint.textContent = ERASER_HINTS[value];
-          },
+          }),
         });
 
         this.bindings.push(() => {
@@ -363,7 +368,7 @@ export class Inspector {
         return this.amountBrushSection(app.toolName === 'blurBrush' ? 'blur' : 'pixelate', sizeSlider);
       case 'paint':
         return section('Effect brush', [
-          select({ label: 'Effect', options: effectOptions(), value: state.paint.effectId, onChange: (value) => { state.paint.effectId = value; } }).element,
+          select({ label: 'Effect', options: effectOptions(), value: state.paint.effectId, onChange: this.toolChange((value) => { state.paint.effectId = value; }) }).element,
           sizeSlider(),
           this.toolSlider({ label: 'Strength', min: 1, max: 100, format: percent }, () => state.brush.opacity, (value) => {
             state.brush.opacity = value;
@@ -371,8 +376,8 @@ export class Inspector {
         ], { className: 'tool-section--primary' });
       case 'region':
         return section('Region', [
-          select({ label: 'Shape', options: REGION_SHAPES, value: state.region.shape, onChange: (value) => { state.region.shape = value; } }).element,
-          select({ label: 'Effect', options: effectOptions(), value: state.region.effectId, onChange: (value) => { state.region.effectId = value; } }).element,
+          select({ label: 'Shape', options: REGION_SHAPES, value: state.region.shape, onChange: this.toolChange((value) => { state.region.shape = value; }) }).element,
+          select({ label: 'Effect', options: effectOptions(), value: state.region.effectId, onChange: this.toolChange((value) => { state.region.effectId = value; }) }).element,
         ], { className: 'tool-section--primary' });
       case 'crop':
         return this.cropSection();
@@ -397,6 +402,7 @@ export class Inspector {
         const layer = tool.existingTarget();
 
         state.paint.amounts[effectId] = value;
+        app.bus.emit('tool-settings');
 
         if (layer) {
           app.store.updateLayer(layer.id, (entry) => ({ params: { ...entry.params, [amount.key]: value } }));
@@ -653,6 +659,7 @@ export class Inspector {
     const doc = app.store.doc;
     const style = (key) => (value, entry) => {
       app.toolState.text[key] = value;
+      app.bus.emit('tool-settings');
       return fitText({ ...entry, [key]: value });
     };
     const textInput = el('textarea', { rows: '3', 'aria-label': 'Text', className: 'text-input' });

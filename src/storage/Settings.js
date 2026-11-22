@@ -3,9 +3,28 @@ const CUSTOM_THEMES_KEY = 'imagemasker.customThemes';
 const AI_EDIT_SETTINGS_KEY = 'imagemasker.aiEditSettings';
 const PASTE_IMAGE_AS_LAYER_KEY = 'imagemasker.pasteImageAsLayer';
 const EDITOR_SHORTCUTS_KEY = 'imagemasker.editorShortcuts';
+const TOOL_SETTINGS_KEY = 'imagemasker.toolSettings';
+const EXPORT_SETTINGS_KEY = 'imagemasker.exportSettings';
 const LEGACY_THEME_KEY = 'Night';
 const POINTER_CALIBRATION_X_KEY = 'pointerCalibrationX';
 const POINTER_CALIBRATION_Y_KEY = 'pointerCalibrationY';
+
+function readObject(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '{}');
+    return value && typeof value === 'object' ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeObject(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value && typeof value === 'object' ? value : {}));
+  } catch {
+    // Storage can be full or disabled; the setting just isn't remembered.
+  }
+}
 
 export class Settings {
   getAccessToken() {
@@ -87,6 +106,22 @@ export class Settings {
       EDITOR_SHORTCUTS_KEY,
       JSON.stringify(bindings && typeof bindings === 'object' ? bindings : {})
     );
+  }
+
+  getToolSettings() {
+    return readObject(TOOL_SETTINGS_KEY);
+  }
+
+  setToolSettings(state) {
+    writeObject(TOOL_SETTINGS_KEY, state);
+  }
+
+  getExportSettings() {
+    return readObject(EXPORT_SETTINGS_KEY);
+  }
+
+  setExportSettings(options) {
+    writeObject(EXPORT_SETTINGS_KEY, options);
   }
 
   clearPointerCalibration() {

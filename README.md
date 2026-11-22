@@ -48,6 +48,8 @@ Right-click the picture for a menu (copy, download, copy & post, save round, pas
 
 Export settings (presets, size, format, JPEG quality) are in a collapsed section of the Share tab and apply to Copy and Download in the header and to uploads.
 
+Tool options (brush size, colour, type and opacity, eraser mode, blur / pixel amounts, effect brush and region choices, the last text style) and the export settings are remembered in your browser for the next visit.
+
 **Settings** has saved sessions (stored in the browser, pictures included, with autosave and JSON export/import), themes (the built-in ones plus JSON themes) and remappable keyboard shortcuts. **Remove background** is in the properties of an image layer (or of the picture when nothing is selected); it runs in your browser and adds the cut-out as a new layer.
 
 ### Keyboard shortcuts (defaults, all remappable)

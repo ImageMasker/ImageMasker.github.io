@@ -11,10 +11,20 @@ export const EXPORT_PRESETS = {
   original_jpeg: { label: 'Original JPEG', format: 'jpeg', size: 'original', quality: 92 },
 };
 
+function exportOptions({ preset, format, size, quality } = {}) {
+  return {
+    preset,
+    format: format === 'jpeg' ? 'jpeg' : 'png',
+    size: size === 'editor' ? 'editor' : 'original',
+    quality: Math.max(40, Math.min(100, Number(quality) || 92)),
+  };
+}
+
 export class SharePanel {
   constructor(app) {
     this.app = app;
-    this.options = { preset: 'original_png', ...EXPORT_PRESETS.original_png };
+    const stored = app.settings.getExportSettings();
+    this.options = EXPORT_PRESETS[stored.preset] ? exportOptions(stored) : { preset: 'original_png', ...EXPORT_PRESETS.original_png };
     this.refs = {};
     const share = this.renderShare();
 
@@ -46,7 +56,7 @@ export class SharePanel {
         refs.size.set(this.options.size);
         refs.format.set(this.options.format);
         refs.quality.set(this.options.quality);
-        this.updateSizeInfo();
+        this.saveExportOptions();
       },
     });
     refs.preset.input.id = 'exportPreset';
@@ -56,7 +66,7 @@ export class SharePanel {
       value: this.options.size,
       onChange: (value) => {
         this.options.size = value;
-        this.updateSizeInfo();
+        this.saveExportOptions();
       },
     });
     refs.format = select({
@@ -65,7 +75,7 @@ export class SharePanel {
       value: this.options.format,
       onChange: (value) => {
         this.options.format = value;
-        this.updateSizeInfo();
+        this.saveExportOptions();
       },
     });
     refs.quality = slider({
@@ -77,6 +87,7 @@ export class SharePanel {
       onInput: (value) => {
         this.options.quality = value;
       },
+      onChange: () => this.saveExportOptions(),
     });
     refs.sizeInfo = el('div', { className: 'export-size-info' });
 
@@ -88,6 +99,11 @@ export class SharePanel {
       refs.sizeInfo,
       el('p', { className: 'panel-intro-copy', textContent: 'Used by Copy and Download in the header, and by uploads.' }),
     ], { open: false, className: 'share-section' });
+  }
+
+  saveExportOptions() {
+    this.app.settings.setExportSettings(this.options);
+    this.updateSizeInfo();
   }
 
   getExportOptions() {
@@ -287,12 +303,7 @@ export class SharePanel {
     this.updatePostLabel();
 
     if (EXPORT_PRESETS[state.exportPreset]) {
-      this.options = {
-        preset: state.exportPreset,
-        format: state.exportFormat === 'jpeg' ? 'jpeg' : 'png',
-        size: state.exportSize === 'editor' ? 'editor' : 'original',
-        quality: Math.max(40, Math.min(100, Number(state.exportQuality) || 92)),
-      };
+      this.options = exportOptions({ preset: state.exportPreset, format: state.exportFormat, size: state.exportSize, quality: state.exportQuality });
       refs.preset.set(this.options.preset);
       refs.size.set(this.options.size);
       refs.format.set(this.options.format);
