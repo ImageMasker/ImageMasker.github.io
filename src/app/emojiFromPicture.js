@@ -29,9 +29,7 @@ export class EmojiTools {
   }
 
   async suggest() {
-    const { emojis, ranked } = await this.detector.pick(this.pictureCanvas(), (label) => this.setStatus(true, label));
-
-    return { emojis, ranked };
+    return this.detector.pick(this.pictureCanvas(), (label) => this.setStatus(true, label));
   }
 
   async run(apply) {

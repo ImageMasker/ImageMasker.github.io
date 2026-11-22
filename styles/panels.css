@@ -80,23 +80,27 @@
 
 .mask-tile-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 4px;
   min-width: 0;
 }
 
 .mask-tile-name {
+  display: -webkit-box;
   overflow: hidden;
   font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .mask-tile-strength {
   flex: none;
+  margin-top: 0.2rem;
   width: 16px;
   height: 6px;
   border-radius: 3px;
@@ -150,7 +154,7 @@
 
 .layer-row {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 6px;
   padding: 3px 4px;
@@ -173,6 +177,15 @@
 .layer-row.is-hidden .layer-text,
 .layer-row.is-hidden .layer-thumb {
   opacity: 0.45;
+}
+
+.layer-row.is-clipped {
+  margin-left: 14px;
+  border-left: 2px solid var(--bg-slider-thumb);
+}
+
+.layer-toggle-spacer {
+  width: 26px;
 }
 
 .layer-row.drop-above {
@@ -501,18 +514,48 @@
   white-space: nowrap;
 }
 
+.mask-tile-media {
+  position: relative;
+  display: block;
+}
+
 .mask-tile-star {
-  flex: none;
-  padding: 0 2px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-button);
+  color: var(--text-button);
+  font-size: 0.8rem;
   line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
 
-.mask-tile-star:hover,
+.mask-tile:hover .mask-tile-star,
+.mask-tile:focus-visible .mask-tile-star,
 .mask-tile-star.is-on {
-  color: rgb(224, 160, 40);
+  display: inline-flex;
+}
+
+.mask-tile-star:hover {
+  background: var(--bg-slider-thumb);
+}
+
+.mask-tile-star.is-on {
+  background: rgb(224, 160, 40);
+  color: white;
+}
+
+@media (hover: none) {
+  .mask-tile-star {
+    display: inline-flex;
+  }
 }
 
 /* ── emoji masks ───────────────────────────────────────────────────────── */
@@ -564,4 +607,41 @@
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-muted);
+}
+
+.emoji-glyph {
+  display: block;
+  width: 1.3rem;
+  height: 1.3rem;
+  pointer-events: none;
+}
+
+.emoji-chip.is-active {
+  border-color: var(--bg-slider-thumb);
+}
+
+/* ── stamp tool ────────────────────────────────────────────────────────── */
+
+.stamp-picker {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.stamp-current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: var(--surface-tint);
+  font-size: 2.3rem;
+  line-height: 1;
+}
+
+.stamp-current .emoji-glyph {
+  width: 40px;
+  height: 40px;
 }

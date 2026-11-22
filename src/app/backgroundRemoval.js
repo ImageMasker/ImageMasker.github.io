@@ -1,13 +1,14 @@
-// Background removal: renders the chosen image layer, runs the in-browser model on it and adds
-// the cut-out as a new layer above it (the source layer is hidden, not deleted).
+// Separate background: renders the chosen image layer, runs the in-browser model on it and adds
+// the cut-out subject as a new layer above it. The source layer stays visible, so masks can go
+// between the subject and the picture behind it.
 
 import { layerBounds } from '../core/geometry.js';
-import { imageLayer, insertLayer, updateLayer } from '../core/model.js';
+import { imageLayer, insertLayer } from '../core/model.js';
 import { BackgroundRemover } from '../integrations/BackgroundRemover.js';
 
 function progressLabel(key, current = 0, total = 0) {
   if (typeof key !== 'string') {
-    return 'Removing background';
+    return 'Separating background';
   }
 
   if (key.startsWith('fetch:')) {
@@ -19,7 +20,7 @@ function progressLabel(key, current = 0, total = 0) {
     'compute:inference': 'Running model',
     'compute:mask': 'Building mask',
     'compute:encode': 'Encoding cutout',
-  }[key] ?? 'Removing background';
+  }[key] ?? 'Separating background';
 }
 
 export class BackgroundTools {
@@ -62,7 +63,7 @@ export class BackgroundTools {
   async remove(layerId = null) {
     const app = this.app;
 
-    if (this.status.busy || !app.requireImage('Load an image before removing a background.')) {
+    if (this.status.busy || !app.requireImage('Load an image before separating the background.')) {
       return;
     }
 
@@ -89,14 +90,14 @@ export class BackgroundTools {
       const count = (this.count += 1);
       const layer = imageLayer(doc, asset, { name: `${target.name} cutout${count > 1 ? ` ${count}` : ''}`, rect });
 
-      app.store.apply('Remove background', (current) => {
+      app.store.apply('Separate background', (current) => {
         const index = current.layers.findIndex((entry) => entry.id === target.id);
 
-        return insertLayer(updateLayer(current, target.id, { visible: false }), layer, index + 1);
+        return insertLayer(current, layer, index + 1);
       });
       app.store.select([layer.id]);
       app.setTool('select');
-      app.notify('Background removed into a new layer. The original layer is hidden.', 'success', 3600);
+      app.notify('The subject is now its own layer above the picture. Put masks between the two, or hide the picture to keep only the subject.', 'success', 5200);
     } catch (error) {
       app.notify(error.message, 'error', 4200);
     } finally {

@@ -1,11 +1,16 @@
-// Emoji masks rasterised with Canvas 2D, using the system's colour emoji font.
+// Emoji masks rasterised with Canvas 2D, with Twemoji artwork (raster/twemoji.js) or the system's
+// colour emoji font (params.style 1).
 //
 // The tile is a jittered grid of emojis drawn on a torus (an emoji crossing an edge is drawn
 // again on the opposite side), so the texture repeats without seams and the layer can be wrapped
 // across the whole picture like a tiled mask. Everything is seeded, so the same layer always
 // draws the same way, in the preview and in the export.
 
-const FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", sans-serif';
+import { drawEmoji, twemojiState } from './twemoji.js';
+
+// Density 9 (the default) is the reference: the emoji size slider means the same at any density,
+// so density only changes how far apart the emojis are.
+const REFERENCE_ROWS = 9;
 
 function seededRandom(seed) {
   let state = (Math.floor(Math.abs(seed || 0.5) * 9973 * 2147483) % 2147483646) + 1;
@@ -19,9 +24,11 @@ function seededRandom(seed) {
 /** Changes whenever the drawing would change. */
 export function emojiSignature(layer) {
   const p = layer.params ?? {};
+  const emojis = layer.emojis ?? [];
 
   return [
-    (layer.emojis ?? []).join(''),
+    emojis.join(''),
+    p.style ? 'system' : twemojiState(emojis),
     layer.seed,
     p.density,
     p.size,
@@ -35,7 +42,8 @@ export function emojiSignature(layer) {
 
 /**
  * Draws one tile of the mask, `size` pixels square, into a new canvas. One tile spans the
- * layer's natural box; `params.density` is the number of rows (and columns) in it.
+ * layer's natural box; `params.density` is the number of rows (and columns) in it, and
+ * `params.size` the emoji size, independent of the density.
  */
 export function renderEmojiTile(layer, size) {
   const p = layer.params ?? {};
@@ -48,6 +56,8 @@ export function renderEmojiTile(layer, size) {
   const scatter = (p.scatter ?? 55) / 100;
   const variety = (p.variety ?? 35) / 100;
   const turn = ((p.turn ?? 25) * Math.PI) / 180;
+  const twemoji = !p.style;
+  const baseSize = (size / REFERENCE_ROWS) * ((p.size ?? 95) / 100);
 
   canvas.width = size;
   canvas.height = size;
@@ -59,9 +69,6 @@ export function renderEmojiTile(layer, size) {
     context.globalAlpha = 1;
   }
 
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-
   for (let row = 0; row < rows; row += 1) {
     for (let column = 0; column < rows; column += 1) {
       // Every other row is shifted by half a cell, so a plain grid still looks like a pattern.
@@ -69,11 +76,9 @@ export function renderEmojiTile(layer, size) {
       const y = (row + 0.5 + (random() - 0.5) * scatter) * cell;
       const emoji = emojis[Math.floor(random() * emojis.length)];
       const scale = Math.max(0.15, 1 + (random() * 2 - 1) * variety);
-      const fontSize = Math.max(2, cell * ((p.size ?? 95) / 100) * scale);
+      const fontSize = Math.max(2, baseSize * scale);
       const angle = (random() * 2 - 1) * turn;
       const reach = fontSize * 0.75;
-
-      context.font = `${fontSize}px ${FONT}`;
 
       // Draw again on the other side of every edge the emoji crosses: a copy one tile to the
       // right when it sticks out on the left, one tile to the left when it sticks out on the right.
@@ -86,7 +91,7 @@ export function renderEmojiTile(layer, size) {
           context.save();
           context.translate(x + ox, y + oy);
           context.rotate(angle);
-          context.fillText(emoji, 0, fontSize * 0.04);
+          drawEmoji(context, emoji, fontSize, twemoji);
           context.restore();
         }
       }
@@ -98,7 +103,7 @@ export function renderEmojiTile(layer, size) {
 
 /** A small preview of an emoji set (library tiles). */
 export function emojiPreview(emojis, { width = 176, height = 128, seed = 7 } = {}) {
-  const tile = renderEmojiTile({ emojis, seed, params: { density: 4, size: 95, variety: 30, turn: 25, scatter: 55, bgAlpha: 0 } }, 128);
+  const tile = renderEmojiTile({ emojis, seed, params: { density: 4, size: 95 * (9 / 4), variety: 30, turn: 25, scatter: 55, bgAlpha: 0 } }, 128);
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
 

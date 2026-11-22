@@ -182,6 +182,7 @@ export function normalizeDoc(raw, hasAsset) {
       name: String(source.name ?? 'Layer'),
       visible: source.visible !== false,
       locked: source.locked === true,
+      clipBelow: source.clipBelow === true,
       opacity: Math.max(0, Math.min(1, finite(source.opacity, 1))),
       blend: typeof source.blend === 'string' ? source.blend : 'normal',
       x: finite(source.x, doc.width / 2),

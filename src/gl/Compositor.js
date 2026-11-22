@@ -241,12 +241,17 @@ export class Compositor {
 
   /** Keeps `next` (acc with the layer applied) only inside the layer's collage piece. */
   clipTo(ctx, acc, next, layer) {
+    return this.keepInside(ctx, acc, next, this.clipTexture(ctx, layer));
+  }
+
+  /** Keeps `next` only where `coverage` (a doc-space texture) is opaque; `acc` elsewhere. */
+  keepInside(ctx, acc, next, coverage) {
     const out = this.glx.acquire(ctx.W, ctx.H);
 
     this.glx.draw(this.glx.program('mix', MIX_SHADER), out, {
       uDst: acc,
       uSrc: next,
-      uCov: this.clipTexture(ctx, layer),
+      uCov: coverage,
       uDocSize: ctx.docSize,
       uInv: ctx.docInv,
       uBoxPx: [ctx.W, ctx.H],
@@ -280,6 +285,52 @@ export class Compositor {
     });
     this.glx.release(next);
     return out;
+  }
+
+  /**
+   * The layer a "clip to the layer below" layer is limited to: the nearest layer under it that is
+   * not clipped itself (so several clipped layers stack on one, like clipping masks elsewhere).
+   * Null when there is nothing to clip to (or it is an effect, which has no shape of its own).
+   */
+  clipBase(layers, index) {
+    for (let below = index - 1; below >= 0; below -= 1) {
+      if (!layers[below].clipBelow) {
+        return layers[below].type === 'effect' ? null : layers[below];
+      }
+    }
+
+    return null;
+  }
+
+  /** The shape of a content layer on its own (its alpha), rendered once per frame. */
+  layerShape(ctx, layer) {
+    ctx.shapes ??= new Map();
+
+    let shape = ctx.shapes.get(layer.id);
+
+    if (!shape) {
+      const glx = this.glx;
+      const empty = glx.acquire(ctx.W, ctx.H);
+
+      glx.clear(empty);
+      shape = this.drawContent(ctx, empty, { ...layer, opacity: 1, blend: 'normal' });
+
+      if (shape !== empty && layer.clip?.points?.length >= 6) {
+        shape = this.clipTo(ctx, empty, shape, layer);
+      }
+
+      if (shape !== empty && layer.erased?.length) {
+        shape = this.eraseFrom(ctx, empty, shape, layer);
+      }
+
+      if (shape !== empty) {
+        glx.release(empty);
+      }
+
+      ctx.shapes.set(layer.id, shape);
+    }
+
+    return shape;
   }
 
   /** Drops rasters that were not needed by the most recent frames (old scales, deleted layers). */
@@ -322,8 +373,15 @@ export class Compositor {
     let acc = glx.acquire(W, H);
     glx.clear(acc);
 
-    for (const layer of doc.layers) {
+    for (const [index, layer] of doc.layers.entries()) {
       if (!layer.visible || !(layer.opacity > 0) || (only && !only.has(layer.id)) || hidden?.has(layer.id)) {
+        continue;
+      }
+
+      const clipBase = layer.clipBelow ? this.clipBase(doc.layers, index) : null;
+
+      // Clipped to a hidden layer: nothing to show it on.
+      if (clipBase && (!clipBase.visible || hidden?.has(clipBase.id))) {
         continue;
       }
 
@@ -337,6 +395,10 @@ export class Compositor {
         next = this.eraseFrom(ctx, acc, next, layer);
       }
 
+      if (next !== acc && clipBase && !clipBase.base) {
+        next = this.keepInside(ctx, acc, next, this.layerShape(ctx, clipBase));
+      }
+
       if (next !== acc) {
         glx.release(acc);
         acc = next;
@@ -344,6 +406,11 @@ export class Compositor {
     }
 
     glx.release(ctx.base);
+
+    for (const shape of ctx.shapes?.values() ?? []) {
+      glx.release(shape);
+    }
+
     return acc;
   }
 

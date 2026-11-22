@@ -23,6 +23,7 @@ import { apply, invert, layerMatrix, multiply, pointInPolygon } from '../src/cor
 import {
   cloneLayer,
   createDoc,
+  drawingLayer,
   effectLayer,
   emojiLayer,
   findLayer,
@@ -36,11 +37,16 @@ import {
   removeLayers,
   resizeCanvas,
   updateLayer,
+  usedEmojis,
 } from '../src/core/model.js';
 import { Store } from '../src/core/Store.js';
 import { area, COLLAGE_PRESETS, cutPieces, insetPiece, randomCuts } from '../src/collage/layout.js';
 import { normalizeDoc } from '../src/app/sessions.js';
 import { EMOJI_VOCAB, splitEmojis } from '../src/masks/emojiData.js';
+import { normalizeRepeat } from '../src/raster/repeat.js';
+import { twemojiCode } from '../src/raster/twemoji.js';
+import { restoreToolState } from '../src/app/toolState.js';
+import { Compositor } from '../src/gl/Compositor.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
@@ -190,15 +196,69 @@ test('repeated image masks keep a valid setting through a session', () => {
   const repeated = maskLayer(doc, asset(200, 100), { repeat: { rows: 99, size: 'x' } });
 
   equal(plain.repeat, null);
-  equal(repeated.repeat, { rows: 40, size: 80, stagger: 50 });
+  equal(repeated.repeat, { rows: 40, size: 80, stagger: 50, wobble: 0, warp: 0, seed: 0.5 });
 
   const restored = normalizeDoc(JSON.parse(JSON.stringify(insertMask(doc, repeated))), () => true).doc.layers[1];
 
-  equal(restored.repeat, { rows: 40, size: 80, stagger: 50 });
+  equal(restored.repeat, { rows: 40, size: 80, stagger: 50, wobble: 0, warp: 0, seed: 0.5 });
+  equal(normalizeRepeat({ wobble: 250, warp: -3, size: 1000 }), { rows: 12, size: 300, stagger: 50, wobble: 100, warp: 0, seed: 0.5 });
 });
 
-test('every palette emoji is listed once', () => {
+test('every palette emoji is listed once, with a theme', () => {
   equal(new Set(EMOJI_VOCAB.map((entry) => entry.emoji)).size, EMOJI_VOCAB.length);
+  assert(EMOJI_VOCAB.every((entry) => typeof entry.theme === 'string' && entry.theme), 'an emoji has no theme');
+  // Every theme has something that is not just a part to pick first.
+  for (const theme of new Set(EMOJI_VOCAB.map((entry) => entry.theme))) {
+    assert(EMOJI_VOCAB.some((entry) => entry.theme === theme && !entry.part), `${theme} only has parts`);
+  }
+});
+
+test('emoji masks and stamps: Twemoji names, used emojis, stamps restored', () => {
+  equal(twemojiCode('🐦'), '1f426');
+  equal(twemojiCode('❤️'), '2764');
+  equal(twemojiCode('🐦‍⬛'), '1f426-200d-2b1b');
+  equal(twemojiCode('👩‍⚕️'), '1f469-200d-2695-fe0f');
+
+  const doc = pictureDoc();
+  const stamp = { tool: 'stamp', emoji: '🦜', size: 30, opacity: 1, angle: 0, spin: 0, style: 0, seed: 0.3, points: [10, 10] };
+  const drawing = { ...drawingLayer(doc), strokes: [stamp, { ...stamp, emoji: '🍕', style: 1 }] };
+  const emoji = emojiLayer(doc, ['🐶', '🐱']);
+  const system = { ...emojiLayer(doc, ['🚗']), params: { ...emoji.params, style: 1 } };
+  const full = insertLayer(insertLayer(insertLayer(doc, drawing), emoji), system);
+
+  equal(usedEmojis(full).sort(), ['🐱', '🐶', '🦜'].sort());
+  equal(emoji.params.style, 0);
+
+  const restored = normalizeDoc(JSON.parse(JSON.stringify(full)), () => true).doc;
+
+  equal(restored.layers[1].strokes[0].emoji, '🦜');
+});
+
+test('stamp tool options are restored and checked', () => {
+  const state = restoreToolState({ stamp: { emoji: 'not an emoji', size: 900, drag: 'nope', recent: ['🐦', 'x', 3], style: 1 } });
+
+  equal(state.stamp.emoji, '😀');
+  equal(state.stamp.size, 200);
+  equal(state.stamp.drag, 'trail');
+  equal(state.stamp.recent, ['🐦']);
+  equal(state.stamp.style, 1);
+});
+
+test('"only on the layer below" is kept and clips to the nearest unclipped layer', () => {
+  const doc = pictureDoc();
+  const rect = rectLayer(doc);
+  const first = { ...rectLayer(doc), clipBelow: true };
+  const second = { ...rectLayer(doc), clipBelow: true };
+  const full = insertLayer(insertLayer(insertLayer(doc, rect), first), second);
+  const restored = normalizeDoc(JSON.parse(JSON.stringify(full)), () => true).doc;
+
+  equal(restored.layers.map((layer) => layer.clipBelow), [false, false, true, true]);
+
+  const compositor = Object.create(Compositor.prototype);
+
+  equal(compositor.clipBase(full.layers, 3).id, rect.id);
+  equal(compositor.clipBase(full.layers, 2).id, rect.id);
+  equal(compositor.clipBase([{ ...first }], 0), null);
 });
 
 // ── undo history ────────────────────────────────────────────────────────────

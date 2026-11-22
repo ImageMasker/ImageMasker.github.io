@@ -7,6 +7,7 @@ import { PATTERNS } from '../gl/patterns.js';
 import { EMOJI_SETS, randomEmojis } from '../masks/emojiData.js';
 import { PRESET_MASKS } from '../masks/maskData.js';
 import { emojiPreview } from '../raster/emoji.js';
+import { loadTwemoji } from '../raster/twemoji.js';
 import { el } from '../utils/dom.js';
 import { createSampleScene } from '../utils/sampleScene.js';
 import { CustomMasksPanel } from './CustomMasksPanel.js';
@@ -136,17 +137,17 @@ export class LibraryPanel {
           title: star.on ? 'Starred: shown first. Click to unstar.' : 'Star it to keep it at the top',
           'aria-label': star.on ? `Unstar ${label}` : `Star ${label}`,
           'aria-pressed': star.on ? 'true' : 'false',
-          textContent: star.on ? '★' : '☆',
+          textContent: '★',
         })
       : null;
     const tileButton = el('button', { type: 'button', className: 'mask-tile', title: `${title || label}\nClick to try it (replaces the selected mask), Shift+click or + to stack.` }, [
-      preview,
+      // The star sits on the picture's corner, so it needs a box of its own.
+      starToggle ? el('span', { className: 'mask-tile-media' }, [preview, starToggle]) : preview,
       el('span', { className: 'mask-tile-label' }, [
         el('span', { className: 'mask-tile-name', textContent: label }),
         ...(strength
           ? [el('span', { className: `mask-tile-strength strength-${strength}`, title: STRENGTH_LABEL[strength], 'aria-label': STRENGTH_LABEL[strength] })]
           : []),
-        ...(starToggle ? [starToggle] : []),
       ]),
       add,
       ...(badge ? [el('span', { className: `mask-tile-badge mask-tile-badge--${badge.kind}`, title: badge.title, textContent: badge.text })] : []),
@@ -268,7 +269,16 @@ export class LibraryPanel {
   /** "From the picture", "Random" and the ready-made emoji sets. */
   emojiTiles() {
     const app = this.app;
-    const preview = (emojis, seed) => emojiPreview(emojis, { seed }).toDataURL();
+    // Drawn with the system font straight away, then again once the Twemoji artwork is in.
+    const preview = (emojis, seed) => {
+      void loadTwemoji(emojis).then(() => {
+        const image = tiles.get(seed)?.querySelector('.mask-tile-preview');
+
+        if (image) image.src = emojiPreview(emojis, { seed }).toDataURL();
+      });
+      return emojiPreview(emojis, { seed }).toDataURL();
+    };
+    const tiles = new Map();
     const fromPicture = this.tile({
       label: 'From the picture',
       title: 'A small model in your browser looks at the picture and picks emojis for what it sees (downloads about 23 MB the first time). Careful: they can hint at the answer.',
@@ -277,21 +287,26 @@ export class LibraryPanel {
     });
     const fromPictureName = fromPicture.querySelector('.mask-tile-name');
 
+    tiles.set(3, fromPicture);
+
     app.bus.on('emoji-status', (status) => {
       fromPictureName.textContent = status.busy ? `${status.label}…` : 'From the picture';
     });
 
     return [
       fromPicture,
-      ...EMOJI_SETS.map((set, index) =>
-        this.tile({
+      ...EMOJI_SETS.map((set, index) => {
+        const tile = this.tile({
           label: set.name,
           title: set.emojis ? `${set.emojis.join(' ')}
 Pick your own emojis, density and size in the mask's properties.` : 'Different emojis every time',
           image: preview(set.emojis ?? ['🎲', '❓', '✨', '🎁'], index + 11),
           onPick: (options) => app.addEmojiMask(set.emojis ?? randomEmojis(), options),
-        })
-      ),
+        });
+
+        tiles.set(index + 11, tile);
+        return tile;
+      }),
     ];
   }
 

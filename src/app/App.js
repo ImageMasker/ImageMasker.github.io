@@ -37,6 +37,8 @@ import { RoundStorage } from '../storage/RoundStorage.js';
 import { Settings } from '../storage/Settings.js';
 import { BrushTool } from '../tools/BrushTool.js';
 import { CropTool } from '../tools/CropTool.js';
+import { StampTool } from '../tools/StampTool.js';
+import { onTwemoji } from '../raster/twemoji.js';
 import { RegionTool } from '../tools/RegionTool.js';
 import { RisCropTool } from '../tools/RisCropTool.js';
 import { SelectTool } from '../tools/SelectTool.js';
@@ -79,6 +81,7 @@ const TOOL_BUTTONS = [
   { id: 'rect', icon: 'rect', label: 'Add rectangle', short: 'Rect', command: 'addRectangle', action: 'addRectangle' },
   { id: 'text', icon: 'text', label: 'Add text', short: 'Text', command: 'addText', action: 'addText' },
   { id: 'crop', icon: 'crop', label: 'Crop / Resize', short: 'Crop', command: 'crop' },
+  { id: 'stamp', icon: 'stamp', label: 'Stamp emojis', short: 'Stamp', command: 'stamp' },
 ];
 const SIDE_TABS = [
   { id: 'edit', label: 'Edit' },
@@ -133,6 +136,8 @@ export class App {
     }
 
     this.assets.maxSize = Math.min(this.stage.glx.maxTextureSize, 8192);
+    // Emoji masks and stamps are redrawn as their Twemoji artwork arrives.
+    onTwemoji(() => this.stage.invalidate());
     this.assets.flagCatalog = () => this.flagCatalog();
     this.textEditor = new TextEditor(this);
     this.tools = {
@@ -144,6 +149,7 @@ export class App {
       paint: new BrushTool(this, 'paint'),
       region: new RegionTool(this),
       crop: new CropTool(this),
+      stamp: new StampTool(this),
       risCrop: new RisCropTool(this),
     };
 
@@ -488,6 +494,7 @@ export class App {
         effectBrush: () => this.setTool('paint'),
         revealEraser: () => this.setEraserMode('reveal'),
         crop: () => this.setTool('crop'),
+        stamp: () => this.setTool('stamp'),
         addRectangle: () => this.addRectangle(),
         addText: () => this.addText(),
         addRegion: () => this.setTool('region'),
@@ -1024,12 +1031,14 @@ export class App {
 
   /** A mask image kept in this browser (Custom tab). */
   addBlobMask(blob, name, options = {}) {
-    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name, repeat: options.repeat ? {} : null }, options);
+    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name, repeat: options.repeat ? { seed: Math.random() * 100 } : null }, options);
   }
 
-  /** A mask from the community list on media.picturega.me. */
+  /** A mask from the community list on media.picturega.me; the moderator chose image or pattern. */
   addCommunityMask(mask, options = {}) {
-    return this.addAssetMask(() => this.assets.fromUrl(mask.publicUrl, { name: mask.name }), { name: mask.name, repeat: options.repeat ? {} : null }, options);
+    const repeat = options.repeat ?? mask.use === 'pattern';
+
+    return this.addAssetMask(() => this.assets.fromUrl(mask.publicUrl, { name: mask.name }), { name: mask.name, repeat: repeat ? { seed: Math.random() * 100 } : null }, options);
   }
 
   retiltMask(layerId) {

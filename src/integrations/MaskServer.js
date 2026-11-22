@@ -147,8 +147,9 @@ export class MaskServer {
     return this.call(`/api/v1/masks/${id}`, { method: 'PATCH', ...this.json({ name }) });
   }
 
-  submit(id, { name, author }) {
-    return this.call(`/api/v1/masks/${id}/submit`, { method: 'POST', ...this.json({ name, author }) });
+  /** `use` ('image' | 'pattern') is how the masker adds it by default; the moderator can change it. */
+  submit(id, { name, author, use = 'image' }) {
+    return this.call(`/api/v1/masks/${id}/submit`, { method: 'POST', ...this.json({ name, author, use }) });
   }
 
   // ── community ───────────────────────────────────────────────────────────
@@ -167,8 +168,14 @@ export class MaskServer {
     return this.call(`/api/v1/masks/${id}/file`, { auth: 'mod', as: 'blob' });
   }
 
-  decide(id, decision) {
-    return this.call(`/api/v1/masks/${id}/review`, { method: 'POST', auth: 'mod', ...this.json({ decision }) });
+  /** `changes` can carry the `name` and `use` the mask is listed with. */
+  decide(id, decision, changes = {}) {
+    return this.call(`/api/v1/masks/${id}/review`, { method: 'POST', auth: 'mod', ...this.json({ decision, ...changes }) });
+  }
+
+  /** Renames a mask or changes its `use`, as a moderator (also for masks already in the list). */
+  updateAsModerator(id, changes) {
+    return this.call(`/api/v1/masks/${id}`, { method: 'PATCH', auth: 'mod', ...this.json(changes) });
   }
 
   removeAsModerator(id) {

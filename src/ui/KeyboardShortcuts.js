@@ -10,6 +10,7 @@ export const SHORTCUT_COMMANDS = [
   { id: 'blurBrush', label: 'Blur brush', category: 'Tools', defaultBinding: 'G' },
   { id: 'pixelBrush', label: 'Pixel brush', category: 'Tools', defaultBinding: 'X' },
   { id: 'crop', label: 'Crop / Resize', category: 'Tools', defaultBinding: 'C' },
+  { id: 'stamp', label: 'Stamp emojis', category: 'Tools', defaultBinding: 'M' },
   { id: 'addRectangle', label: 'Add rectangle', category: 'Insert', defaultBinding: 'R' },
   { id: 'addText', label: 'Add text', category: 'Insert', defaultBinding: 'T' },
   { id: 'addRegion', label: 'Add region', category: 'Insert', defaultBinding: 'A' },

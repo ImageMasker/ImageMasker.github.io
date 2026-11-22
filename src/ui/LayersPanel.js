@@ -61,7 +61,7 @@ export class LayersPanel {
     const { store } = this.app;
     const layers = store.hasImage ? [...store.doc.layers].reverse() : [];
     const signature = layers
-      .map((layer) => [layer.id, layer.name, layer.visible, layer.locked, layer.assetId ?? '', layer.coverage ?? '', layer.base ?? '', store.selection.includes(layer.id)].join(':'))
+      .map((layer) => [layer.id, layer.name, layer.visible, layer.locked, Boolean(layer.clipBelow), layer.assetId ?? '', layer.coverage ?? '', layer.base ?? '', store.selection.includes(layer.id)].join(':'))
       .join('|');
 
     this.empty.classList.toggle('hidden', layers.length > 0);
@@ -72,15 +72,32 @@ export class LayersPanel {
     }
 
     this.signature = signature;
-    this.list.replaceChildren(...layers.map((layer) => this.row(layer)));
+    this.list.replaceChildren(...layers.map((layer, index) => this.row(layer, layers[index + 1] ?? null)));
   }
 
-  row(layer) {
+  /** "Only on the layer below" (a clipping mask): the layer shows only where the one under it is. */
+  clipButton(layer, below) {
+    if (layer.base || !below) {
+      return el('span', { className: 'layer-toggle-spacer' });
+    }
+
+    const on = Boolean(layer.clipBelow);
+    const title = on
+      ? `Only shown on “${below.name}”. Click to apply it to everything below again.`
+      : `Apply only to the layer below (“${below.name}”), not to the other layers`;
+
+    return iconButton('clipBelow', title, (event) => {
+      event.stopPropagation();
+      this.app.store.apply(on ? 'Apply to all layers below' : 'Apply only to the layer below', (doc) => updateLayer(doc, layer.id, { clipBelow: !on }));
+    }, `layer-toggle${on ? ' is-on' : ''}`);
+  }
+
+  row(layer, below) {
     const { store } = this.app;
     const selected = store.selection.includes(layer.id);
     const name = el('span', { className: 'layer-name', textContent: layer.name, title: 'Double-click to rename' });
     const element = el('div', {
-      className: `layer-row${selected ? ' is-selected' : ''}${layer.visible ? '' : ' is-hidden'}`,
+      className: `layer-row${selected ? ' is-selected' : ''}${layer.visible ? '' : ' is-hidden'}${layer.clipBelow && below && !layer.base ? ' is-clipped' : ''}`,
       role: 'option',
       'aria-selected': selected ? 'true' : 'false',
       draggable: 'true',
@@ -92,6 +109,7 @@ export class LayersPanel {
       }, 'layer-toggle'),
       this.thumb(layer),
       el('span', { className: 'layer-text' }, [name, el('span', { className: 'layer-kind', textContent: describeLayer(layer) })]),
+      this.clipButton(layer, below),
       iconButton(layer.locked ? 'lock' : 'unlock', layer.locked ? 'Unlock layer' : 'Lock layer', (event) => {
         event.stopPropagation();
         store.apply(layer.locked ? 'Unlock layer' : 'Lock layer', (doc) => updateLayer(doc, layer.id, { locked: !layer.locked }));

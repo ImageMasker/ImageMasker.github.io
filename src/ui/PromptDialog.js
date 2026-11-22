@@ -1,5 +1,5 @@
-// A small form in a Modal: a few text fields and a confirm button. Resolves to the values, or
-// null when it is closed without confirming.
+// A small form in a Modal: a few text fields (or drop-downs, for fields with `options`) and a
+// confirm button. Resolves to the values, or null when it is closed without confirming.
 
 import { el } from '../utils/dom.js';
 import { button, row } from './kit.js';
@@ -9,13 +9,18 @@ export function promptDialog(host, { title, intro = '', fields, confirm = 'OK' }
   return new Promise((resolve) => {
     let done = false;
     const inputs = fields.map((field) =>
-      el('input', {
-        type: 'text',
-        value: field.value ?? '',
-        placeholder: field.placeholder ?? '',
-        maxlength: String(field.max ?? 60),
-        'aria-label': field.label,
-      })
+      field.options
+        ? Object.assign(
+            el('select', { 'aria-label': field.label }, field.options.map((option) => el('option', { value: option.value, textContent: option.label }))),
+            { value: field.value ?? field.options[0].value }
+          )
+        : el('input', {
+            type: 'text',
+            value: field.value ?? '',
+            placeholder: field.placeholder ?? '',
+            maxlength: String(field.max ?? 60),
+            'aria-label': field.label,
+          })
     );
     const finish = (values) => {
       if (done) {

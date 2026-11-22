@@ -23,10 +23,11 @@ src/gl/Compositor.js         document -> pixels
 src/gl/glsl.js               shared GLSL, blend modes, system shaders
 src/gl/effects.js            effect masks (one fragment shader each)
 src/gl/patterns.js           procedural overlay patterns
-src/raster/                  Canvas 2D rasterisers for strokes, text, emoji mask tiles and repeated image masks
+src/raster/                  Canvas 2D rasterisers for strokes and stamps, text, emoji mask tiles, repeated image
+                             masks, and the Twemoji artwork they draw (twemoji.js)
 src/masks/                   classic, flag and emoji mask data (emojiData.js + emojiEmbeddings.json)
 src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
-src/tools/                   select, brush/eraser/effect brush, region, crop, crop-RIS box, text editor
+src/tools/                   select, brush/eraser/effect brush, region, crop, emoji stamp, crop-RIS box, text editor
 src/ui/                      panels (library, layers, properties, share, ...), Rounds and Collage
                              dialogs (Modal.js), header ▾ menus (Dropdown.js)
 src/integrations/, storage/  image hosts, RIS, Reddit, background removal model, localStorage wrappers,
@@ -60,12 +61,26 @@ Random mask gives every piece (or only the piece chosen under *Masks → Add to*
 `clip`; effects are also fitted to the piece (`polygon` coverage) so centred effects centre on it.
 Cropping shifts `cells` and `clip`, but the collage tools are hidden once the canvas size changes.
 
+Any layer can have `clipBelow: true` (the ↳ button in the Layers list): its result is kept only where
+the nearest layer under it that is not clipped itself has pixels (`Compositor.clipBase` / `layerShape`),
+like a clipping mask. Clipping to the base picture or to an effect does nothing.
+
 An emoji mask (`source: 'emoji'`) keeps its `emojis`, `params` (see `EMOJI_MASK`) and `seed`; the
 compositor draws one seamless tile with `raster/emoji.js` at about the resolution the box is shown at
-and wraps it across the picture. *From the picture* (`app/emojiFromPicture.js`,
+and wraps it across the picture. Density is the number of rows in the tile; the emoji size does not
+depend on it. Emojis are Twemoji artwork (`raster/twemoji.js`) unless `params.style` is 1 (the device's
+font). The stamp tool adds `{ tool: 'stamp', emoji, size, angle, spin, style, points }` strokes to a
+drawing layer, so stamps erase, undo and save like brush strokes.
+
+A repeated image mask (`repeat: { rows, size, stagger, wobble, warp, seed }`, `raster/repeat.js`) draws
+the image small in staggered rows; `rows` (Density) only spaces the copies, `size` sizes them, and
+`wobble` / `warp` tilt and bend each copy on its own. Community masks carry `use: 'image' | 'pattern'`,
+set by the moderator, which decides how a click adds them. *From the picture* (`app/emojiFromPicture.js`,
 `integrations/EmojiDetector.js`) runs MobileCLIP S0's image model (fp16; the 8-bit one gives wrong
 results) through Transformers.js from jsDelivr, and compares the picture with text embeddings of every
-palette description that were computed once and shipped in `masks/emojiEmbeddings.json`.
+palette description that were computed once and shipped in `masks/emojiEmbeddings.json`. It picks
+from one theme (birds, fruit, …: the third field of each palette entry), the one whose emojis match
+the picture best together, so a robin gets birds rather than an orange for its breast.
 
 ## Rendering
 

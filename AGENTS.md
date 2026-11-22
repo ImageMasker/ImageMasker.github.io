@@ -25,8 +25,12 @@ There is no test runner or linter.
   `--use-angle=d3d11` works). The app instance is exposed as `window.imageMasker`
   (`store.doc`, `store.selection`, `stage`, `exportBlob()`, ...).
 * `docs/manual-smoke-test.md` is the manual checklist.
-* Changing the emoji palette in `src/masks/emojiData.js` means regenerating `src/masks/emojiEmbeddings.json` with
-  `dev/emoji-embeddings.html` (the detector refuses an out-of-date file).
+* Adding an emoji to the palette in `src/masks/emojiData.js` or changing a description means regenerating
+  `src/masks/emojiEmbeddings.json` with `dev/emoji-embeddings.html` (the detector refuses an out-of-date file;
+  vectors are matched by emoji, so reordering entries or changing themes needs no regeneration). It can be
+  run headless: open the page and read `window.__emojiEmbeddings` once it is set (a few minutes).
+* Emoji masks and stamps draw Twemoji SVGs from jsDelivr (`src/raster/twemoji.js`, pinned version) and fall
+  back to the system font while they load or when offline; `exportBlob()` waits for them.
 
 ## Layout
 

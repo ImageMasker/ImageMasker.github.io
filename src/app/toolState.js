@@ -6,6 +6,8 @@ import { hasEffect } from '../gl/effects.js';
 import { BRUSH_TYPES } from '../raster/strokes.js';
 import { TEXT_DEFAULTS } from '../raster/text.js';
 import { PAINT_AMOUNT } from '../tools/BrushTool.js';
+import { STAMP_DRAG_MODES } from '../tools/StampTool.js';
+import { splitEmojis } from '../masks/emojiData.js';
 import { ERASER_MODES, REGION_SHAPES } from '../ui/Inspector.js';
 
 export function defaultToolState() {
@@ -14,6 +16,7 @@ export function defaultToolState() {
     eraser: { mode: 'erase' },
     paint: { effectId: 'cutGlass', amounts: { blur: 14, pixelate: 1.6 } },
     region: { shape: 'rect', effectId: 'blur' },
+    stamp: { emoji: '😀', size: 40, opacity: 100, angle: 0, spin: 0, style: 0, drag: 'trail', recent: [] },
     text: {},
   };
 }
@@ -21,11 +24,12 @@ export function defaultToolState() {
 const number = (value, min, max, fallback) => (Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback);
 const oneOf = (value, values, fallback) => (values.includes(value) ? value : fallback);
 const colour = (value, fallback) => (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : fallback);
+const oneEmoji = (value) => (typeof value === 'string' && value.length <= 16 ? splitEmojis(value)[0] : undefined);
 const effect = (value, fallback) => (typeof value === 'string' && hasEffect(value) ? value : fallback);
 
 export function restoreToolState(stored) {
   const state = defaultToolState();
-  const { brush = {}, eraser = {}, paint = {}, region = {}, text = {} } = stored && typeof stored === 'object' ? stored : {};
+  const { brush = {}, eraser = {}, paint = {}, region = {}, stamp = {}, text = {} } = stored && typeof stored === 'object' ? stored : {};
 
   state.brush = {
     size: number(brush.size, 1, 100, state.brush.size),
@@ -43,6 +47,17 @@ export function restoreToolState(stored) {
   state.region = {
     shape: oneOf(region.shape, REGION_SHAPES.map((shape) => shape.value), state.region.shape),
     effectId: effect(region.effectId, state.region.effectId),
+  };
+
+  state.stamp = {
+    emoji: oneEmoji(stamp.emoji) ?? state.stamp.emoji,
+    size: number(stamp.size, 2, 200, state.stamp.size),
+    opacity: number(stamp.opacity, 1, 100, state.stamp.opacity),
+    angle: number(stamp.angle, -180, 180, state.stamp.angle),
+    spin: number(stamp.spin, 0, 180, state.stamp.spin),
+    style: stamp.style === 1 ? 1 : 0,
+    drag: oneOf(stamp.drag, STAMP_DRAG_MODES.map((mode) => mode.value), state.stamp.drag),
+    recent: Array.isArray(stamp.recent) ? stamp.recent.map(oneEmoji).filter(Boolean).slice(0, 12) : [],
   };
 
   for (const [key, value] of Object.entries(text && typeof text === 'object' ? text : {})) {

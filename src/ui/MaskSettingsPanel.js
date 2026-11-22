@@ -3,6 +3,7 @@
 
 import { el } from '../utils/dom.js';
 import { button, message, row, select } from './kit.js';
+import { USE_OPTIONS } from './CustomMasksPanel.js';
 
 const formatSize = (bytes) => (bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`);
 
@@ -128,6 +129,22 @@ export class MaskSettingsPanel {
 
   reviewItem(mask) {
     const image = el('img', { alt: mask.name });
+    const nameInput = el('input', { type: 'text', value: mask.name, maxlength: '60', 'aria-label': 'Name in the community list' });
+    const use = select({ label: 'Clicking it adds', options: USE_OPTIONS, value: mask.use === 'pattern' ? 'pattern' : 'image' });
+    // What the moderator set here goes with the decision.
+    const changes = () => ({ name: nameInput.value.trim() || mask.name, use: use.input.value });
+    const save = async () => {
+      try {
+        const updated = await this.server.updateAsModerator(mask.id, changes());
+
+        Object.assign(mask, updated);
+        title.textContent = updated.name;
+        this.reviewMessage.set(`“${updated.name}” was saved.`, 'success');
+        void this.app.library.custom.loadCommunity(true);
+      } catch (error) {
+        this.reviewMessage.set(error.message, 'error');
+      }
+    };
     const done = (text) => {
       item.remove();
       this.reviewMessage.set(this.reviewList.children.length ? text : `${text} Nothing else here.`, 'success');
@@ -135,8 +152,8 @@ export class MaskSettingsPanel {
     };
     const decide = (decision) => async () => {
       try {
-        await this.server.decide(mask.id, decision);
-        done({ approve: `“${mask.name}” is now in the community list.`, reject: `“${mask.name}” was rejected.`, unpublish: `“${mask.name}” was taken off the list.` }[decision]);
+        await this.server.decide(mask.id, decision, decision === 'approve' ? changes() : {});
+        done({ approve: `“${changes().name}” is now in the community list.`, reject: `“${mask.name}” was rejected.`, unpublish: `“${mask.name}” was taken off the list.` }[decision]);
       } catch (error) {
         this.reviewMessage.set(error.message, 'error');
       }
@@ -151,17 +168,20 @@ export class MaskSettingsPanel {
     };
     const actions = {
       pending: [button('Approve', { className: 'app-button--primary', onClick: decide('approve') }), button('Reject', { onClick: decide('reject') })],
-      approved: [button('Take off the list', { onClick: decide('unpublish') })],
+      approved: [button('Save', { className: 'app-button--primary', title: 'Save the name and how it is added', onClick: save }), button('Take off the list', { onClick: decide('unpublish') })],
       rejected: [button('Approve after all', { onClick: decide('approve') })],
     }[this.status] ?? [];
+    const title = el('strong', { textContent: mask.name });
     const item = el('div', { className: 'mask-review-item' }, [
       image,
       el('div', { className: 'mask-review-meta' }, [
-        el('strong', { textContent: mask.name }),
+        title,
         el('span', {
           className: 'panel-intro-copy',
           textContent: `${mask.author ? `by ${mask.author} · ` : ''}${mask.width} × ${mask.height} · ${formatSize(mask.size)} · key ${mask.owner}`,
         }),
+        nameInput,
+        use.element,
         row([...actions, button('Delete', { iconName: 'trash', onClick: remove })]),
       ]),
     ]);

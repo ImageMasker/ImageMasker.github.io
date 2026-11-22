@@ -1,6 +1,7 @@
 // Output commands mixed into App: export, copy, download, posting to Reddit and local rounds.
 
-import { createDoc, imageLayer } from '../core/model.js';
+import { createDoc, imageLayer, usedEmojis } from '../core/model.js';
+import { loadTwemoji } from '../raster/twemoji.js';
 import { el } from '../utils/dom.js';
 
 export class ShareCommands {
@@ -10,6 +11,8 @@ export class ShareCommands {
 
   async exportBlob({ format = 'png', size = 'original', quality = 0.92, scale = 1 } = {}) {
     this.textEditor.close();
+    // Emoji artwork still on its way would otherwise be drawn with the system font.
+    await loadTwemoji(usedEmojis(this.store.doc));
 
     let canvas = this.stage.renderToCanvas(this.store.doc, { scale: Math.min(scale, this.exportScale(size)) });
 

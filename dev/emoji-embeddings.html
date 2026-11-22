@@ -82,6 +82,7 @@ const json = JSON.stringify({
   dims,
   scale,
   emojis: EMOJI_VOCAB.map((entry) => entry.emoji),
+  names: EMOJI_VOCAB.map((entry) => entry.name),
   data: btoa(binary),
 });
 

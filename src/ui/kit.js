@@ -11,6 +11,8 @@ const ICONS = {
   text: '<path d="M5 7V4h14v3M12 4v16M9 20h6"/>',
   region: '<rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2.500"/>',
   crop: '<path d="M7 2v15h15M2 7h15v15"/>',
+  clipBelow: '<path d="M7 4v8a4 4 0 0 0 4 4h8"/><path d="M15 12l4 4-4 4"/>',
+  stamp: '<path d="M9.500 3h5v4.500l-1 3.500h4.500a2 2 0 0 1 2 2V16H4v-3a2 2 0 0 1 2-2h4.500l-1-3.500z"/><path d="M5 20h14"/>',
   undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
   redo: '<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>',
   zoomIn: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.300-4.300M11 8v6M8 11h6"/>',

@@ -19,14 +19,23 @@ function decodeEmbeddings(json) {
   const values = new Int8Array(bytes.buffer);
   const { dims, scale } = json;
 
-  return json.emojis.map((emoji, index) => {
+  const byEmoji = new Map(json.emojis.map((emoji, index) => [emoji, index]));
+
+  // In palette order, looked up by emoji, so reordering the palette or its themes needs no new file.
+  return EMOJI_VOCAB.map((entry) => {
+    const index = byEmoji.get(entry.emoji);
+
+    if (index === undefined || json.names?.[index] !== entry.name) {
+      throw new Error('The emoji list for the picture model is out of date.');
+    }
+
     const vector = new Float32Array(dims);
 
     for (let d = 0; d < dims; d += 1) {
       vector[d] = values[index * dims + d] / scale;
     }
 
-    return { emoji, vector };
+    return { emoji: entry.emoji, vector };
   });
 }
 
@@ -48,9 +57,12 @@ export class EmojiDetector {
         }),
       ]);
 
-      if (embeddings.model !== EMOJI_MODEL || embeddings.emojis.length !== EMOJI_VOCAB.length) {
+      if (embeddings.model !== EMOJI_MODEL) {
         throw new Error('The emoji list for the picture model is out of date.');
       }
+
+      // Checked before the model download: throws when an emoji or description changed.
+      const vocab = decodeEmbeddings(embeddings);
 
       library.env.allowLocalModels = false;
 
@@ -64,7 +76,7 @@ export class EmojiDetector {
         library.CLIPVisionModelWithProjection.from_pretrained(EMOJI_MODEL, { dtype: 'fp16', device: 'wasm', progress_callback: progress }),
       ]);
 
-      return { library, processor, model, vocab: decodeEmbeddings(embeddings) };
+      return { library, processor, model, vocab };
     })();
 
     // A failed load can be retried.
@@ -102,16 +114,32 @@ export class EmojiDetector {
     const exps = logits.map((logit) => Math.exp(logit - top));
     const total = exps.reduce((sum, value) => sum + value, 0);
 
-    return EMOJI_VOCAB.map((entry, index) => ({ emoji: entry.emoji, name: entry.name, score: exps[index] / total }))
+    return EMOJI_VOCAB.map((entry, index) => ({ emoji: entry.emoji, name: entry.name, theme: entry.theme, part: entry.part, score: exps[index] / total }))
       .sort((a, b) => b.score - a.score);
   }
 
-  /** 3-5 emojis for a mask: the three best matches plus whichever others are nearly as likely. */
+  /**
+   * 3-5 emojis for a mask, all from one theme: the theme (birds, fruit, vehicles…) the picture
+   * matches best overall, then its best emojis. Taking the best emojis regardless of theme mixes
+   * in whatever matches a detail (an orange for a robin's breast). A second theme is added only
+   * when the model is nearly as sure about it (a dog on a beach).
+   */
   async pick(canvas, onProgress) {
     const ranked = await this.rank(canvas, onProgress);
-    const best = ranked[0].score;
-    const picked = ranked.filter((entry, index) => index < 5 && (index < 3 || entry.score >= best * 0.12));
+    const themes = new Map();
 
-    return { emojis: picked.map((entry) => entry.emoji), ranked };
+    for (const entry of ranked) themes.set(entry.theme, (themes.get(entry.theme) ?? 0) + entry.score);
+
+    const [[theme, weight], second] = [...themes].sort((a, b) => b[1] - a[1]);
+    // Already sorted by score; parts (a feather for birds) go after the real thing.
+    const members = ranked.filter((entry) => entry.theme === theme).sort((a, b) => Number(a.part) - Number(b.part));
+    const best = members[0].score;
+    const picked = members.filter((entry, index) => index < 5 && (index < 3 || entry.score >= best * 0.1));
+
+    if (second && second[1] >= weight * 0.6) {
+      picked.push(...ranked.filter((entry) => entry.theme === second[0]).slice(0, 2));
+    }
+
+    return { emojis: picked.map((entry) => entry.emoji), ranked, theme };
   }
 }

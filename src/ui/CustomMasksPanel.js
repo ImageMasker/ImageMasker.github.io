@@ -12,6 +12,10 @@ import { button, message, row, section, toggle } from './kit.js';
 import { promptDialog } from './PromptDialog.js';
 
 const CLOUD_COPY_KEY = 'imagemasker.maskCloudCopy';
+export const USE_OPTIONS = [
+  { value: 'image', label: 'One image over the picture' },
+  { value: 'pattern', label: 'A repeated pattern (like a flag)' },
+];
 const STARRED_KEY = 'imagemasker.starredMasks';
 const STATUS_BADGE = {
   private: { kind: 'private', text: '☁', title: 'Private copy on the PictureGame media server' },
@@ -132,7 +136,7 @@ export class CustomMasksPanel {
         el('h3', { className: 'library-group-title', textContent: 'Community masks' }),
         el('p', {
           className: 'panel-intro-copy custom-masks-note',
-          textContent: 'Shared by other players. ☆ stars one to keep it at the top (in this browser). Share yours with “Share a mask…” or a mask’s ⋯ menu; a moderator checks every mask first.',
+          textContent: 'Shared by other players. A moderator checks every mask first.',
         }),
         this.communitySearch,
         this.communityStatus,
@@ -337,6 +341,7 @@ export class CustomMasksPanel {
       fields: [
         { key: 'name', label: 'Mask name', value: mask.name, max: 60, required: true },
         { key: 'author', label: 'Your name (optional, shown with the mask)', value: localStorage.getItem('imagemasker.maskAuthor') ?? '', max: 30 },
+        { key: 'use', label: 'Clicking it adds it as', value: 'image', options: USE_OPTIONS },
       ],
       confirm: 'Submit for review',
     });
@@ -538,13 +543,15 @@ export class CustomMasksPanel {
       ...masks.map(({ mask, starred: on }) =>
         this.library.tile({
           label: mask.name,
-          title: `${mask.name}${mask.author ? ` · by ${mask.author}` : ''} · ${mask.width} × ${mask.height}`,
+          title: `${mask.name}${mask.author ? ` · by ${mask.author}` : ''} · ${mask.width} × ${mask.height}${mask.use === 'pattern' ? ' · added as a repeated pattern' : ''}`,
           image: mask.publicUrl,
           star: { on, toggle: () => this.toggleStar(mask.id) },
           onPick: (options) => this.app.addCommunityMask(mask, options),
           menu: () => [
             { label: 'Add as a new layer', icon: 'plus', action: () => this.app.addCommunityMask(mask, { stack: true }) },
-            { label: 'Add as a repeated pattern (like a flag)', icon: 'grid', action: () => this.app.addCommunityMask(mask, { stack: true, repeat: true }) },
+            mask.use === 'pattern'
+              ? { label: 'Add as one image', icon: 'image', action: () => this.app.addCommunityMask(mask, { stack: true, repeat: false }) }
+              : { label: 'Add as a repeated pattern (like a flag)', icon: 'grid', action: () => this.app.addCommunityMask(mask, { stack: true, repeat: true }) },
             { label: on ? 'Unstar' : 'Star (keep at the top)', icon: 'bookmark', action: () => this.toggleStar(mask.id) },
             { label: 'Save to your masks', icon: 'download', action: () => this.saveCommunity(mask) },
           ],

@@ -9,6 +9,8 @@ import { EMOJI_MASK, EMOJI_PALETTE, randomEmojis, splitEmojis } from '../masks/e
 import { REPEAT_DEFAULTS } from '../raster/repeat.js';
 import { BRUSH_TYPES } from '../raster/strokes.js';
 import { PAINT_AMOUNT } from '../tools/BrushTool.js';
+import { STAMP_DRAG_MODES } from '../tools/StampTool.js';
+import { emojiGlyph } from '../raster/twemoji.js';
 import { FONTS } from '../raster/text.js';
 import { el } from '../utils/dom.js';
 import { button, color, row, section, select, slider, toggle } from './kit.js';
@@ -385,6 +387,8 @@ export class Inspector {
         ], { className: 'tool-section--primary' });
       case 'crop':
         return this.cropSection();
+      case 'stamp':
+        return this.stampSection();
       default:
         return null;
     }
@@ -431,6 +435,127 @@ export class Inspector {
       this.toolSlider({ label: 'Strength', min: 1, max: 100, format: percent }, () => state.brush.opacity, (value) => {
         state.brush.opacity = value;
       }),
+    ], { className: 'tool-section--primary' });
+  }
+
+  /** A collapsible palette of every emoji; built on first open since it has a few hundred buttons. */
+  emojiPalette(onPick, isActive, title = 'Emoji palette') {
+    const palette = section(title, [], { open: false });
+    const body = palette.querySelector('.tool-section-body');
+    const buttons = new Map();
+    const sync = () => {
+      for (const [emoji, control] of buttons) control.classList.toggle('is-active', isActive(emoji));
+    };
+
+    palette.addEventListener('toggle', () => {
+      if (!palette.open || buttons.size) {
+        return;
+      }
+
+      body.append(
+        ...EMOJI_PALETTE.flatMap((group) => [
+          el('div', { className: 'emoji-palette-title', textContent: group.label }),
+          el(
+            'div',
+            { className: 'emoji-palette' },
+            group.items.map(([emoji, name]) => {
+              const control = el('button', { type: 'button', className: 'emoji-palette-item', title: name, 'aria-label': name }, [emojiGlyph(emoji)]);
+
+              control.addEventListener('click', () => onPick(emoji));
+              buttons.set(emoji, control);
+              return control;
+            })
+          ),
+        ])
+      );
+      sync();
+    });
+
+    return { element: palette, sync };
+  }
+
+  /** Stamp tool: which emoji, how big, turned how, and what dragging does. */
+  stampSection() {
+    const app = this.app;
+    const state = app.toolState.stamp;
+    const setEmoji = (emoji) => {
+      state.emoji = emoji;
+      app.bus.emit('tool-settings');
+      sync();
+    };
+    const current = el('div', { className: 'stamp-current' });
+    const recent = el('div', { className: 'emoji-chips' });
+    const input = el('input', { type: 'text', placeholder: 'Type or paste an emoji…', 'aria-label': 'Emoji to stamp' });
+    const useTyped = () => {
+      const [emoji] = splitEmojis(input.value);
+
+      if (!emoji) {
+        app.notify('Type or paste an emoji first (Win + . or Ctrl + Cmd + Space opens the emoji keyboard).', 'info', 4200);
+        input.focus();
+        return;
+      }
+
+      input.value = '';
+      setEmoji(emoji);
+    };
+
+    input.addEventListener('keydown', (event) => event.key === 'Enter' && useTyped());
+
+    const palette = this.emojiPalette(setEmoji, (emoji) => emoji === state.emoji);
+    const sync = () => {
+      const key = `${state.emoji}|${state.style}|${state.recent.join(' ')}`;
+
+      palette.sync();
+
+      if (current.dataset.value === key) {
+        return;
+      }
+
+      current.dataset.value = key;
+      current.replaceChildren(state.style ? document.createTextNode(state.emoji) : emojiGlyph(state.emoji));
+      recent.replaceChildren(
+        ...state.recent.map((emoji) => {
+          const chip = el('button', { type: 'button', className: `emoji-chip${emoji === state.emoji ? ' is-active' : ''}`, title: `Stamp ${emoji}` }, [
+            state.style ? document.createTextNode(emoji) : emojiGlyph(emoji),
+          ]);
+
+          chip.addEventListener('click', () => setEmoji(emoji));
+          return chip;
+        })
+      );
+    };
+    const value = (key) => () => state[key];
+    const write = (key) => (next) => {
+      state[key] = next;
+    };
+
+    this.bindings.push(sync);
+    sync();
+
+    return section('Stamp', [
+      el('div', { className: 'stamp-picker' }, [
+        current,
+        el('div', { className: 'stack' }, [
+          el('div', { className: 'input-row' }, [input, button('Use', { onClick: useTyped })]),
+          recent,
+        ]),
+      ]),
+      this.toolSlider({ label: 'Stamp size', min: 2, max: 200 }, value('size'), write('size')),
+      this.toolSlider({ label: 'Opacity', min: 1, max: 100, format: percent }, value('opacity'), write('opacity')),
+      this.toolSlider({ label: 'Angle', min: -180, max: 180, format: degrees }, value('angle'), write('angle')),
+      this.toolSlider({ label: 'Random turn', min: 0, max: 180, format: degrees }, value('spin'), write('spin')),
+      select({ label: 'Dragging', options: STAMP_DRAG_MODES, value: state.drag, onChange: this.toolChange(write('drag')) }).element,
+      select({
+        label: 'Emoji style',
+        options: [{ value: '0', label: 'Twemoji' }, { value: '1', label: 'This device' }],
+        value: String(state.style),
+        onChange: this.toolChange((next) => {
+          state.style = Number(next);
+          sync();
+        }),
+      }).element,
+      el('p', { className: 'panel-intro-copy', textContent: 'Click to stamp. Stamps go into a drawing layer, so the eraser and undo work on them.' }),
+      palette.element,
     ], { className: 'tool-section--primary' });
   }
 
@@ -528,14 +653,14 @@ export class Inspector {
     return element;
   }
 
-  /** "Remove background" button with live progress; `layerId` null means the base picture. */
+  /** "Separate background" button with live progress; `layerId` null means the base picture. */
   backgroundRemovalRow(layerId) {
     const tools = this.app.backgroundTools;
-    const control = button('Remove background', { iconName: 'sparkle', title: 'Cut the subject out into a new layer (runs in your browser)', onClick: () => tools.remove(layerId) });
+    const control = button('Separate background', { iconName: 'sparkle', title: 'Copy the subject into its own layer above the picture, so masks can go between them (runs in your browser)', onClick: () => tools.remove(layerId) });
     const label = control.querySelector('span:last-child');
     const sync = () => {
       control.disabled = tools.status.busy;
-      label.textContent = tools.status.busy ? `${tools.status.label}…` : 'Remove background';
+      label.textContent = tools.status.busy ? `${tools.status.label}…` : 'Separate background';
     };
 
     this.bindings.push(sync);
@@ -660,15 +785,19 @@ export class Inspector {
     const chips = el('div', { className: 'emoji-chips' });
     const syncChips = () => {
       const emojis = current();
+      const system = Boolean(app.store.layer(id)?.params?.style);
+      const key = `${system}|${emojis.join(' ')}`;
 
-      if (chips.dataset.value === emojis.join(' ')) {
+      if (chips.dataset.value === key) {
         return;
       }
 
-      chips.dataset.value = emojis.join(' ');
+      chips.dataset.value = key;
       chips.replaceChildren(
         ...emojis.map((emoji) => {
-          const chip = el('button', { type: 'button', className: 'emoji-chip', textContent: emoji, title: emojis.length > 1 ? `Remove ${emoji}` : 'An emoji mask needs at least one emoji' });
+          const chip = el('button', { type: 'button', className: 'emoji-chip', title: emojis.length > 1 ? `Remove ${emoji}` : 'An emoji mask needs at least one emoji' }, [
+            system ? document.createTextNode(emoji) : emojiGlyph(emoji),
+          ]);
 
           chip.addEventListener('click', () => toggleEmoji(emoji));
           return chip;
@@ -707,39 +836,8 @@ export class Inspector {
 
     app.bus.on('emoji-status', () => fromPicture.isConnected && syncStatus());
 
-    const palette = section('Emoji palette', [], { open: false });
-    const paletteBody = palette.querySelector('.tool-section-body');
-    const paletteButtons = new Map();
-    const syncPalette = () => {
-      const emojis = new Set(current());
-
-      for (const [emoji, control] of paletteButtons) control.classList.toggle('is-active', emojis.has(emoji));
-    };
-
-    // Built on first open: it has a few hundred buttons.
-    palette.addEventListener('toggle', () => {
-      if (!palette.open || paletteButtons.size) {
-        return;
-      }
-
-      paletteBody.append(
-        ...EMOJI_PALETTE.flatMap((group) => [
-          el('div', { className: 'emoji-palette-title', textContent: group.label }),
-          el(
-            'div',
-            { className: 'emoji-palette' },
-            group.items.map(([emoji, name]) => {
-              const control = el('button', { type: 'button', className: 'emoji-palette-item', textContent: emoji, title: name });
-
-              control.addEventListener('click', () => toggleEmoji(emoji));
-              paletteButtons.set(emoji, control);
-              return control;
-            })
-          ),
-        ])
-      );
-      syncPalette();
-    });
+    const palette = this.emojiPalette(toggleEmoji, (emoji) => current().includes(emoji));
+    const syncPalette = palette.sync;
 
     this.bindings.push(syncChips, syncPalette, syncStatus);
     syncChips();
@@ -755,7 +853,7 @@ export class Inspector {
         button('Shuffle', { iconName: 'shuffle', title: 'Same emojis, new arrangement', onClick: () => app.store.apply('Shuffle', (doc) => updateLayer(doc, id, { seed: Math.random() * 100 })) }),
       ]),
       ...this.paramControls(id, EMOJI_MASK),
-      palette,
+      palette.element,
     ], { className: 'tool-section--primary' });
   }
 
@@ -784,10 +882,19 @@ export class Inspector {
         this.layerSlider(id, { label, min, max }, (entry) => entry.repeat?.[key] ?? REPEAT_DEFAULTS[key], (value, entry) => ({ repeat: { ...REPEAT_DEFAULTS, ...entry.repeat, [key]: value } }), 'Adjust repeat');
 
       parts.push(section('Repeat as a pattern', [
-        el('p', { className: 'panel-intro-copy', textContent: 'The image is drawn small, many times, in staggered rows, like the flag masks. Mask zoom makes them bigger.' }),
-        repeatSlider('rows', 'Rows', 1, 40),
-        repeatSlider('size', 'Size in its cell', 10, 100),
+        el('p', { className: 'panel-intro-copy', textContent: 'The image is drawn small, many times, in staggered rows, like the flag masks. Density sets how far apart the copies are; Mask zoom makes everything bigger.' }),
+        repeatSlider('rows', 'Density', 1, 40),
+        repeatSlider('size', 'Image size', 10, 300),
         repeatSlider('stagger', 'Row offset', 0, 100),
+        repeatSlider('wobble', 'Wobble each', 0, 100),
+        repeatSlider('warp', 'Warp each', 0, 100),
+        row([
+          button('Shuffle', {
+            iconName: 'shuffle',
+            title: 'New wobble and warp for every copy',
+            onClick: () => app.store.apply('Shuffle', (doc) => updateLayer(doc, id, (entry) => ({ repeat: { ...REPEAT_DEFAULTS, ...entry.repeat, seed: Math.random() * 100 } }))),
+          }),
+        ]),
       ], { className: 'tool-section--primary' }));
     }
 

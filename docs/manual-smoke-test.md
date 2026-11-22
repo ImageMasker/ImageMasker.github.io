@@ -48,13 +48,22 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 1. Mouse wheel zoom, Space+drag and middle-mouse pan, Fit, 100%, hold Original.
 2. Export each preset. Download, copy to clipboard and Imgur upload must match the editor.
 
+## Emojis, stamps and clipping
+
+1. Masks → Other → Animals: the emojis are Twemoji. *Emoji style* → This device switches to the system font. Density only changes how far apart they are, not their size.
+1. *From the picture* on a bird photo picks bird emojis.
+1. *Stamp* (M, below Crop): click stamps the emoji at the chosen size, dragging lays a trail (or, with *Dragging → Sizes and turns*, sizes one stamp). The eraser and undo work on stamps; the export has Twemoji stamps.
+1. A repeated image mask: Density spaces the copies without resizing them; *Wobble each* and *Warp each* change every copy differently, Shuffle reseeds them.
+1. Layers list ↳ on a mask above a separated subject: the mask only shows on the subject. Click again to undo.
+1. Community masks: two-line names, ☆ appears on the thumbnail on hover and stays when starred. A mask the moderator set to *pattern* is added as a repeated pattern; its ⋯ menu offers *Add as one image*.
+
 ## Sharing
 
 1. Check RIS with a URL containing `?a=1&b=2`: every search site gets the full URL.
 1. With the computer's time zone set to London, *Check RIS* uploads to Litterbox (1 hour) and the Share tab's link stays empty. Elsewhere it uses the chosen host and falls back to Litterbox if that fails.
 1. Header *Check RIS* (Shift+F): a waiting tab opens at once, the picture uploads to the chosen host, then the ticked sites open (all by default). Untick some in the ▾ menu: only those open, also from the Share tab. Pressing it again without changes reuses the upload.
 1. *Crop RIS* (Shift+C): drag a box over part of the picture; only that part is uploaded and searched. Esc cancels.
-1. Remove background from the picture (nothing selected) and from a pasted image layer.
+1. Separate background from the picture (nothing selected) and from a pasted image layer: the picture stays visible under the subject.
 1. *Copy image & post to Reddit*: the Reddit image form opens with `[Round N] title`, CTRL+V attaches the picture.
 1. On a phone: *Share image…* opens the share sheet with the picture; pick Reddit, the title is on the clipboard. Same from a locally saved round in *Rounds*. On a browser that can't share files the button is hidden.
 1. Upload with each host (Imgur, ImgBB with a key, Litterbox), then Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.

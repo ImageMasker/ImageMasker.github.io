@@ -147,6 +147,14 @@ export function emojiLayer(doc, emojis, { opacity = 0.9, params = null, deform =
   };
 }
 
+/** Every emoji drawn with Twemoji artwork in the document (emoji masks and stamps). */
+export function usedEmojis(doc) {
+  return doc.layers.flatMap((layer) => [
+    ...(layer.source === 'emoji' && !layer.params?.style ? layer.emojis : []),
+    ...(layer.strokes ?? []).filter((stroke) => stroke.tool === 'stamp' && !stroke.style).map((stroke) => stroke.emoji),
+  ]);
+}
+
 export function emojiLayerName(emojis) {
   return `Emoji ${emojis.slice(0, 4).join('')}${emojis.length > 4 ? '…' : ''}`;
 }

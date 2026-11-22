@@ -441,3 +441,22 @@
 .library-collage-bar {
   margin: 0 0 8px;
 }
+
+.stamp-ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(var(--stamp-angle, 0deg));
+  outline: 1px dashed rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+
+.stamp-ghost img {
+  width: 92%;
+  height: 92%;
+}

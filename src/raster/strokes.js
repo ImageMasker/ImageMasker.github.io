@@ -1,6 +1,13 @@
 // Vector brush strokes rasterised with Canvas 2D.
 // A stroke is { tool: 'brush' | 'eraser', type, color, size, opacity, seed, points: [x0, y0, x1, y1, ...] }
-// with points in document pixels.
+// with points in document pixels. A stamp stroke is { tool: 'stamp', emoji, size, opacity, angle,
+// spin, style, seed, points }: the emoji drawn at the first point and then every `size × spacing`
+// along the path (stamp tool).
+
+import { drawEmoji, twemojiVersion } from './twemoji.js';
+
+/** How far apart stamps are along a drag, in stamp sizes. */
+export const STAMP_SPACING = 1.1;
 
 export const BRUSH_TYPES = [
   { id: 'smooth', label: 'Smooth' },
@@ -57,10 +64,33 @@ function walk(points, spacing, visit) {
   }
 }
 
+function drawStamps(ctx, stroke) {
+  const size = Math.max(1, stroke.size || 1);
+  const random = seededRandom(stroke.seed);
+  const base = ((stroke.angle || 0) * Math.PI) / 180;
+  const spin = ((stroke.spin || 0) * Math.PI) / 180;
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, stroke.opacity ?? 1));
+  walk(stroke.points, size * STAMP_SPACING, (x, y) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(base + (random() * 2 - 1) * spin);
+    drawEmoji(ctx, String(stroke.emoji || '🙂').slice(0, 16), size, !stroke.style);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
 export function drawStroke(ctx, stroke) {
   const points = stroke.points;
 
   if (!points || points.length < 2) {
+    return;
+  }
+
+  if (stroke.tool === 'stamp') {
+    drawStamps(ctx, stroke);
     return;
   }
 
@@ -131,7 +161,8 @@ export class StrokeSurface {
 
   /** Returns true when the pixels in `canvas` changed. */
   sync(strokes, width, height, scaleX, scaleY = scaleX) {
-    const key = `${width}x${height}@${scaleX},${scaleY}`;
+    // Twemoji artwork arriving changes how stamps look, so it redraws everything (rare).
+    const key = `${width}x${height}@${scaleX},${scaleY}#${strokes.some((stroke) => stroke.tool === 'stamp') ? twemojiVersion() : 0}`;
     let dirty = false;
 
     if (key !== this.key) {
