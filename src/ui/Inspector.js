@@ -1,10 +1,12 @@
 // Properties panel: options for the active tool and for the selected layer(s). The controls are
 // rebuilt only when the kind of thing being edited changes; otherwise their values are synced.
 
-import { fitText, updateLayer, zoomFactor } from '../core/model.js';
+import { emojiLayerName, fitText, updateLayer, zoomFactor } from '../core/model.js';
 import { EFFECT_CATEGORIES, EFFECTS, getEffect, defaultParams, hasIntensity, INTENSITY_LEVELS, intensityParams } from '../gl/effects.js';
 import { BLEND_MODES } from '../gl/glsl.js';
 import { getPattern } from '../gl/patterns.js';
+import { EMOJI_MASK, EMOJI_PALETTE, randomEmojis, splitEmojis } from '../masks/emojiData.js';
+import { REPEAT_DEFAULTS } from '../raster/repeat.js';
 import { BRUSH_TYPES } from '../raster/strokes.js';
 import { PAINT_AMOUNT } from '../tools/BrushTool.js';
 import { FONTS } from '../raster/text.js';
@@ -66,7 +68,7 @@ export class Inspector {
       store.hasImage,
       this.app.toolName,
       this.app.collageCells()?.length ?? 0,
-      ...layers.map((layer) => [layer.id, layer.type, layer.effectId, layer.coverage, layer.source, layer.patternId, layer.base].join(':')),
+      ...layers.map((layer) => [layer.id, layer.type, layer.effectId, layer.coverage, layer.source, layer.patternId, layer.base, Boolean(layer.repeat)].join(':')),
     ].join('|');
   }
 
@@ -631,6 +633,132 @@ export class Inspector {
     ];
   }
 
+  /** Emojis of an emoji mask: chips, typing/pasting, random, from the picture, palette, sliders. */
+  emojiSection(layer) {
+    const app = this.app;
+    const id = layer.id;
+    const current = () => app.store.layer(id)?.emojis ?? [];
+    const setEmojis = (emojis, label) => {
+      if (!emojis.length) {
+        return;
+      }
+
+      app.store.apply(label, (doc) =>
+        updateLayer(doc, id, (entry) => ({ emojis, ...(/^Emoji /.test(entry.name) ? { name: emojiLayerName(emojis) } : {}) }))
+      );
+    };
+    const toggleEmoji = (emoji) => {
+      const emojis = current();
+
+      if (emojis.includes(emoji)) {
+        if (emojis.length > 1) setEmojis(emojis.filter((entry) => entry !== emoji), 'Remove emoji');
+      } else {
+        setEmojis([...emojis, emoji].slice(0, 40), 'Add emoji');
+      }
+    };
+
+    const chips = el('div', { className: 'emoji-chips' });
+    const syncChips = () => {
+      const emojis = current();
+
+      if (chips.dataset.value === emojis.join(' ')) {
+        return;
+      }
+
+      chips.dataset.value = emojis.join(' ');
+      chips.replaceChildren(
+        ...emojis.map((emoji) => {
+          const chip = el('button', { type: 'button', className: 'emoji-chip', textContent: emoji, title: emojis.length > 1 ? `Remove ${emoji}` : 'An emoji mask needs at least one emoji' });
+
+          chip.addEventListener('click', () => toggleEmoji(emoji));
+          return chip;
+        })
+      );
+    };
+
+    const input = el('input', { type: 'text', placeholder: 'Type or paste emojis…', 'aria-label': 'Emojis to add' });
+    const addTyped = (replace) => {
+      const typed = splitEmojis(input.value);
+
+      if (!typed.length) {
+        app.notify('Type or paste some emojis first (Win + . or Ctrl + Cmd + Space opens the emoji keyboard).', 'info', 4200);
+        input.focus();
+        return;
+      }
+
+      setEmojis(replace ? typed : [...new Set([...current(), ...typed])].slice(0, 40), replace ? 'Replace emojis' : 'Add emojis');
+      input.value = '';
+    };
+
+    input.addEventListener('keydown', (event) => event.key === 'Enter' && addTyped(false));
+
+    const fromPicture = button('From the picture', {
+      iconName: 'sparkle',
+      title: 'Picks emojis for what the picture shows with a small model in your browser (about 23 MB the first time). They can hint at the answer.',
+      onClick: () => app.emojiTools.applyToLayer(id),
+    });
+    const fromPictureLabel = fromPicture.querySelector('span:last-child');
+    const syncStatus = () => {
+      const status = app.emojiTools.status;
+
+      fromPicture.disabled = status.busy;
+      fromPictureLabel.textContent = status.busy ? `${status.label}…` : 'From the picture';
+    };
+
+    app.bus.on('emoji-status', () => fromPicture.isConnected && syncStatus());
+
+    const palette = section('Emoji palette', [], { open: false });
+    const paletteBody = palette.querySelector('.tool-section-body');
+    const paletteButtons = new Map();
+    const syncPalette = () => {
+      const emojis = new Set(current());
+
+      for (const [emoji, control] of paletteButtons) control.classList.toggle('is-active', emojis.has(emoji));
+    };
+
+    // Built on first open: it has a few hundred buttons.
+    palette.addEventListener('toggle', () => {
+      if (!palette.open || paletteButtons.size) {
+        return;
+      }
+
+      paletteBody.append(
+        ...EMOJI_PALETTE.flatMap((group) => [
+          el('div', { className: 'emoji-palette-title', textContent: group.label }),
+          el(
+            'div',
+            { className: 'emoji-palette' },
+            group.items.map(([emoji, name]) => {
+              const control = el('button', { type: 'button', className: 'emoji-palette-item', textContent: emoji, title: name });
+
+              control.addEventListener('click', () => toggleEmoji(emoji));
+              paletteButtons.set(emoji, control);
+              return control;
+            })
+          ),
+        ])
+      );
+      syncPalette();
+    });
+
+    this.bindings.push(syncChips, syncPalette, syncStatus);
+    syncChips();
+    syncStatus();
+
+    return section('Emojis', [
+      chips,
+      el('div', { className: 'input-row' }, [input, button('Add', { title: 'Add these to the mask', onClick: () => addTyped(false) })]),
+      row([button('Use only the typed emojis', { onClick: () => addTyped(true) })], 'button-row--fill'),
+      row([
+        button('Random', { iconName: 'dice', title: 'A random set of emojis', onClick: () => setEmojis(randomEmojis(), 'Random emojis') }),
+        fromPicture,
+        button('Shuffle', { iconName: 'shuffle', title: 'Same emojis, new arrangement', onClick: () => app.store.apply('Shuffle', (doc) => updateLayer(doc, id, { seed: Math.random() * 100 })) }),
+      ]),
+      ...this.paramControls(id, EMOJI_MASK),
+      palette,
+    ], { className: 'tool-section--primary' });
+  }
+
   maskSections(layer) {
     const app = this.app;
     const id = layer.id;
@@ -647,14 +775,35 @@ export class Inspector {
       parts.push(section(`${definition.name} pattern`, controls, { className: 'tool-section--primary' }));
     }
 
+    if (layer.source === 'emoji') {
+      parts.push(this.emojiSection(layer));
+    }
+
+    if (layer.source === 'asset' && layer.repeat) {
+      const repeatSlider = (key, label, min, max) =>
+        this.layerSlider(id, { label, min, max }, (entry) => entry.repeat?.[key] ?? REPEAT_DEFAULTS[key], (value, entry) => ({ repeat: { ...REPEAT_DEFAULTS, ...entry.repeat, [key]: value } }), 'Adjust repeat');
+
+      parts.push(section('Repeat as a pattern', [
+        el('p', { className: 'panel-intro-copy', textContent: 'The image is drawn small, many times, in staggered rows, like the flag masks. Mask zoom makes them bigger.' }),
+        repeatSlider('rows', 'Rows', 1, 40),
+        repeatSlider('size', 'Size in its cell', 10, 100),
+        repeatSlider('stagger', 'Row offset', 0, 100),
+      ], { className: 'tool-section--primary' }));
+    }
+
     parts.push(
       section('Mask & blend', [
         this.layerSlider(id, { label: 'Mask opacity', min: 0, max: 100, format: percent }, (entry) => entry.opacity * 100, (value) => ({ opacity: value / 100 }), 'Mask opacity'),
         this.layerSlider(id, { label: 'Mask zoom', min: 0, max: 100 }, (entry) => entry.zoom ?? 50, (value, entry) => ({ zoom: value, w: entry.natW * zoomFactor(value), h: entry.natH * zoomFactor(value) }), 'Mask zoom'),
         this.layerSlider(id, { label: 'Mask angle', min: -180, max: 180, format: degrees }, (entry) => ((((entry.rotation * 180) / Math.PI + 180) % 360) + 360) % 360 - 180, (value) => ({ rotation: (value * Math.PI) / 180 }), 'Mask angle'),
         this.layerSelect(id, 'Blend mode', BLEND_MODES.map((mode) => ({ value: mode.id, label: mode.label })), (entry) => entry.blend, (value) => ({ blend: value })),
-        ...(layer.source === 'asset' ? [row([this.layerToggle(id, 'Tile to fill', (entry) => entry.tile, (value) => ({ tile: value }))])] : []),
-      ], { className: layer.source === 'pattern' ? '' : 'tool-section--primary' }),
+        ...(layer.source === 'asset'
+          ? [row([
+              this.layerToggle(id, 'Repeat as a pattern', (entry) => Boolean(entry.repeat), (value) => ({ repeat: value ? { ...REPEAT_DEFAULTS } : null })),
+              ...(layer.repeat ? [] : [this.layerToggle(id, 'Tile to fill', (entry) => entry.tile, (value) => ({ tile: value }))]),
+            ])]
+          : []),
+      ], { className: layer.source === 'asset' ? 'tool-section--primary' : '' }),
       section('Mask effects', [
         this.layerSlider(id, { label: 'Hue', min: 0, max: 360, format: degrees }, (entry) => entry.hue || 0, (value) => ({ hue: value }), 'Mask hue'),
         this.layerSlider(id, { label: 'Blur', min: 0, max: 100 }, (entry) => entry.blur || 0, (value) => ({ blur: value }), 'Mask blur'),

@@ -1,9 +1,12 @@
-// The mask library: effect masks, overlay masks (procedural + classic images), flags, and the
-// user's own and community masks (CustomMasksPanel). Thumbnails are rendered live from the loaded picture.
+// The mask library: effect masks, overlay masks (procedural + classic images), emoji masks and
+// flags ("Other"), and the user's own and community masks (CustomMasksPanel). Effect and pattern
+// thumbnails are rendered live from the loaded picture.
 
 import { EFFECT_CATEGORIES, EFFECTS, defaultParams } from '../gl/effects.js';
 import { PATTERNS } from '../gl/patterns.js';
+import { EMOJI_SETS, randomEmojis } from '../masks/emojiData.js';
 import { PRESET_MASKS } from '../masks/maskData.js';
+import { emojiPreview } from '../raster/emoji.js';
 import { el } from '../utils/dom.js';
 import { createSampleScene } from '../utils/sampleScene.js';
 import { CustomMasksPanel } from './CustomMasksPanel.js';
@@ -12,7 +15,7 @@ import { icon } from './kit.js';
 const TABS = [
   { id: 'effects', label: 'Effects' },
   { id: 'overlays', label: 'Overlays' },
-  { id: 'flags', label: 'Flags' },
+  { id: 'other', label: 'Other' },
   { id: 'custom', label: 'Custom' },
 ];
 const THUMB_WIDTH = 176;
@@ -80,7 +83,7 @@ export class LibraryPanel {
 
     this.panels.effects = this.renderEffects();
     this.panels.overlays = this.renderOverlays();
-    this.panels.flags = this.renderFlags();
+    this.panels.other = this.renderOther();
     this.panels.custom = this.renderCustom();
 
     this.collageSelect = el('select', { 'aria-label': 'Add masks to' });
@@ -111,7 +114,7 @@ export class LibraryPanel {
       this.panels[tab.id].classList.toggle('hidden', tab.id !== id);
     }
 
-    if (id === 'flags') {
+    if (id === 'other') {
       this.loadFlags();
     }
 
@@ -121,11 +124,21 @@ export class LibraryPanel {
   }
 
   /** A gallery tile. `render(source)` returns ImageData for live thumbnails. */
-  tile({ label, title = '', strength = 0, image = '', render = null, onPick, badge = null, menu = null }) {
+  tile({ label, title = '', strength = 0, image = '', render = null, onPick, badge = null, menu = null, star = null }) {
     const preview = render
       ? el('canvas', { className: 'mask-tile-preview', width: '8', height: '8' })
       : el('img', { className: 'mask-tile-preview', src: image, alt: '', loading: 'lazy' });
     const add = el('span', { className: 'mask-tile-add', title: 'Add as a new layer', role: 'button', 'aria-label': `Stack ${label}` }, [icon('plus')]);
+    const starToggle = star
+      ? el('span', {
+          className: `mask-tile-star${star.on ? ' is-on' : ''}`,
+          role: 'button',
+          title: star.on ? 'Starred: shown first. Click to unstar.' : 'Star it to keep it at the top',
+          'aria-label': star.on ? `Unstar ${label}` : `Star ${label}`,
+          'aria-pressed': star.on ? 'true' : 'false',
+          textContent: star.on ? '★' : '☆',
+        })
+      : null;
     const tileButton = el('button', { type: 'button', className: 'mask-tile', title: `${title || label}\nClick to try it (replaces the selected mask), Shift+click or + to stack.` }, [
       preview,
       el('span', { className: 'mask-tile-label' }, [
@@ -133,6 +146,7 @@ export class LibraryPanel {
         ...(strength
           ? [el('span', { className: `mask-tile-strength strength-${strength}`, title: STRENGTH_LABEL[strength], 'aria-label': STRENGTH_LABEL[strength] })]
           : []),
+        ...(starToggle ? [starToggle] : []),
       ]),
       add,
       ...(badge ? [el('span', { className: `mask-tile-badge mask-tile-badge--${badge.kind}`, title: badge.title, textContent: badge.text })] : []),
@@ -150,6 +164,11 @@ export class LibraryPanel {
     }
 
     tileButton.addEventListener('click', (event) => {
+      if (starToggle?.contains(event.target)) {
+        star.toggle();
+        return;
+      }
+
       if (more?.contains(event.target)) {
         const box = more.getBoundingClientRect();
 
@@ -226,13 +245,54 @@ export class LibraryPanel {
     ]);
   }
 
-  renderFlags() {
+  renderOther() {
     this.flagSearch = el('input', { type: 'search', placeholder: 'Search flags…', 'aria-label': 'Search flag masks', className: 'library-search' });
     this.flagGrid = el('div', { className: 'mask-grid mask-grid--flags' });
     this.flagStatus = el('div', { className: 'panel-empty-state', textContent: 'Loading flags…' });
     this.flagSearch.addEventListener('input', () => this.renderFlagGrid());
 
-    return el('div', { className: 'library-tab hidden' }, [this.flagSearch, this.flagStatus, this.flagGrid]);
+    return el('div', { className: 'library-tab hidden' }, [
+      el('section', { className: 'library-group' }, [
+        el('h3', { className: 'library-group-title', textContent: 'Emoji' }),
+        el('div', { className: 'mask-grid' }, this.emojiTiles()),
+      ]),
+      el('section', { className: 'library-group' }, [
+        el('h3', { className: 'library-group-title', textContent: 'Flags' }),
+        this.flagSearch,
+        this.flagStatus,
+        this.flagGrid,
+      ]),
+    ]);
+  }
+
+  /** "From the picture", "Random" and the ready-made emoji sets. */
+  emojiTiles() {
+    const app = this.app;
+    const preview = (emojis, seed) => emojiPreview(emojis, { seed }).toDataURL();
+    const fromPicture = this.tile({
+      label: 'From the picture',
+      title: 'A small model in your browser looks at the picture and picks emojis for what it sees (downloads about 23 MB the first time). Careful: they can hint at the answer.',
+      image: preview(['✨', '🔍', '🖼️'], 3),
+      onPick: (options) => app.emojiTools.addFromPicture(options),
+    });
+    const fromPictureName = fromPicture.querySelector('.mask-tile-name');
+
+    app.bus.on('emoji-status', (status) => {
+      fromPictureName.textContent = status.busy ? `${status.label}…` : 'From the picture';
+    });
+
+    return [
+      fromPicture,
+      ...EMOJI_SETS.map((set, index) =>
+        this.tile({
+          label: set.name,
+          title: set.emojis ? `${set.emojis.join(' ')}
+Pick your own emojis, density and size in the mask's properties.` : 'Different emojis every time',
+          image: preview(set.emojis ?? ['🎲', '❓', '✨', '🎁'], index + 11),
+          onPick: (options) => app.addEmojiMask(set.emojis ?? randomEmojis(), options),
+        })
+      ),
+    ];
   }
 
   async loadFlags() {

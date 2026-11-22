@@ -500,3 +500,68 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.mask-tile-star {
+  flex: none;
+  padding: 0 2px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mask-tile-star:hover,
+.mask-tile-star.is-on {
+  color: rgb(224, 160, 40);
+}
+
+/* ── emoji masks ───────────────────────────────────────────────────────── */
+
+.emoji-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.emoji-chip,
+.emoji-palette-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--surface-tint);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.emoji-chip:hover {
+  border-color: var(--bg-error);
+  background: var(--surface-tint-strong);
+}
+
+.emoji-palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  gap: 3px;
+}
+
+.emoji-palette-item:hover {
+  background: var(--surface-tint-strong);
+}
+
+.emoji-palette-item.is-active {
+  border-color: var(--bg-slider-thumb);
+  background: var(--surface-tint-strong);
+}
+
+.emoji-palette-title {
+  margin: 6px 0 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}

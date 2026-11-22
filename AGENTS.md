@@ -25,6 +25,8 @@ There is no test runner or linter.
   `--use-angle=d3d11` works). The app instance is exposed as `window.imageMasker`
   (`store.doc`, `store.selection`, `stage`, `exportBlob()`, ...).
 * `docs/manual-smoke-test.md` is the manual checklist.
+* Changing the emoji palette in `src/masks/emojiData.js` means regenerating `src/masks/emojiEmbeddings.json` with
+  `dev/emoji-embeddings.html` (the detector refuses an out-of-date file).
 
 ## Layout
 

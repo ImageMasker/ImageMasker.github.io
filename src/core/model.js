@@ -4,6 +4,8 @@
 
 import { defaultParams, getEffect, normalizeParams } from '../gl/effects.js';
 import { getPattern } from '../gl/patterns.js';
+import { EMOJI_MASK } from '../masks/emojiData.js';
+import { normalizeRepeat } from '../raster/repeat.js';
 import { measureText, TEXT_DEFAULTS } from '../raster/text.js';
 import { apply, invert, layerBounds, layerMatrix, pointInPolygon } from './geometry.js';
 
@@ -75,7 +77,7 @@ export function imageLayer(doc, asset, { name = 'Image', base = false, rect = nu
 
 const MASK_FX = { hue: 0, invert: false, blur: 0, noise: 0, warp: 0, warpSeed: 0.5 };
 
-export function maskLayer(doc, asset, { name = 'Mask', opacity = 0.75, zoom = 55, deform = true, tile = false } = {}) {
+export function maskLayer(doc, asset, { name = 'Mask', opacity = 0.75, zoom = 55, deform = true, tile = false, repeat = null } = {}) {
   const fit = Math.max(doc.width / asset.width, doc.height / asset.height);
   const factor = fit * zoomFactor(zoom);
 
@@ -86,6 +88,8 @@ export function maskLayer(doc, asset, { name = 'Mask', opacity = 0.75, zoom = 55
     source: 'asset',
     assetId: asset.id,
     tile,
+    // { rows, size, stagger }: drawn small and repeated in rows like the flag masks (raster/repeat.js).
+    repeat: normalizeRepeat(repeat),
     zoom,
     natW: asset.width * fit,
     natH: asset.height * fit,
@@ -118,6 +122,33 @@ export function patternLayer(doc, patternId, { opacity = 0.75, params = null, de
     w: side,
     h: side,
   };
+}
+
+/** An overlay mask of emojis, tiled across the picture (raster/emoji.js draws it). */
+export function emojiLayer(doc, emojis, { opacity = 0.9, params = null, deform = true, name = '' } = {}) {
+  const side = Math.max(doc.width, doc.height);
+
+  return {
+    ...baseLayer('mask', name || emojiLayerName(emojis)),
+    ...MASK_FX,
+    ...(deform ? randomDeform() : {}),
+    source: 'emoji',
+    emojis: [...emojis],
+    params: normalizeParams(EMOJI_MASK, params ?? defaultParams(EMOJI_MASK)),
+    seed: Math.random() * 100,
+    zoom: 50,
+    natW: side,
+    natH: side,
+    opacity,
+    x: doc.width / 2,
+    y: doc.height / 2,
+    w: side,
+    h: side,
+  };
+}
+
+export function emojiLayerName(emojis) {
+  return `Emoji ${emojis.slice(0, 4).join('')}${emojis.length > 4 ? '…' : ''}`;
 }
 
 export function rectLayer(doc, { color = '#000000' } = {}) {
@@ -426,7 +457,7 @@ export function rebaseDoc(doc, asset) {
     if (layer.type === 'effect' && layer.coverage === 'full') {
       next.layers.push({ ...layer, ...centre, w: next.width, h: next.height });
     } else if (layer.type === 'mask') {
-      const fit = layer.source === 'pattern'
+      const fit = layer.source === 'pattern' || layer.source === 'emoji'
         ? Math.max(next.width, next.height) / layer.natW
         : Math.max(next.width / layer.natW, next.height / layer.natH);
       const natW = layer.natW * fit;

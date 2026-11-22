@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ImageMasker emoji embeddings</title>
+<style>
+  body { margin: 12px; font: 13px Arial, sans-serif; background: #f0ece4; color: #333; }
+  textarea { width: 100%; height: 160px; font: 11px monospace; }
+  #log { white-space: pre-wrap; font-family: monospace; }
+</style>
+</head>
+<body>
+<h1>Emoji embeddings for “From the picture”</h1>
+<p>
+  Runs the text half of MobileCLIP S0 over every description in <code>src/masks/emojiData.js</code> and
+  produces <code>src/masks/emojiEmbeddings.json</code>, so the masker only has to download the image half.
+  Regenerate it whenever the palette changes: open this page, wait, press <b>Download</b> and replace the file.
+  Downloads about 170 MB the first time. The result is also in <code>window.__emojiEmbeddings</code>.
+</p>
+<button id="download" disabled>Download emojiEmbeddings.json</button>
+<pre id="log"></pre>
+<textarea id="out" readonly></textarea>
+<script type="module">
+import { EMOJI_VOCAB } from '../src/masks/emojiData.js';
+import { EMOJI_MODEL, TRANSFORMERS_URL } from '../src/integrations/EmojiDetector.js';
+
+// A few phrasings per emoji, averaged: CLIP matches pictures better that way.
+const TEMPLATES = ['a photo of {}.', 'a picture of {}.', 'a close-up photo of {}.', '{}'];
+const SCALE = 127;
+const log = (text) => (document.getElementById('log').textContent += `${text}\n`);
+
+const library = await import(TRANSFORMERS_URL);
+
+library.env.allowLocalModels = false;
+log(`Loading ${EMOJI_MODEL} (text model)…`);
+
+const tokenizer = await library.AutoTokenizer.from_pretrained(EMOJI_MODEL);
+// Full precision: this runs once, and the 8-bit image model is broken, so nothing is quantised that need not be.
+const model = await library.CLIPTextModelWithProjection.from_pretrained(EMOJI_MODEL, { dtype: 'fp32', device: 'wasm' });
+let dims = 0;
+const vectors = [];
+
+for (const [index, entry] of EMOJI_VOCAB.entries()) {
+  const texts = TEMPLATES.map((template) => template.replace('{}', entry.name));
+  const inputs = tokenizer(texts, { padding: 'max_length', truncation: true });
+  const { text_embeds: embeds } = await model(inputs);
+  const rows = embeds.normalize().tolist();
+
+  dims = rows[0].length;
+
+  const mean = new Float32Array(dims);
+
+  for (const row of rows) row.forEach((value, d) => (mean[d] += value / rows.length));
+
+  const norm = Math.hypot(...mean) || 1;
+
+  vectors.push(Array.from(mean, (value) => value / norm));
+
+  if (index % 25 === 0) log(`${index + 1} / ${EMOJI_VOCAB.length}`);
+}
+
+// int8, scaled so the largest component of any vector still fits.
+let peak = 0;
+
+for (const vector of vectors) for (const value of vector) peak = Math.max(peak, Math.abs(value));
+
+const scale = Math.floor(SCALE / peak);
+const bytes = new Int8Array(vectors.length * dims);
+
+vectors.forEach((vector, index) => vector.forEach((value, d) => (bytes[index * dims + d] = Math.round(value * scale))));
+
+let binary = '';
+const view = new Uint8Array(bytes.buffer);
+
+for (let offset = 0; offset < view.length; offset += 0x8000) {
+  binary += String.fromCharCode(...view.subarray(offset, offset + 0x8000));
+}
+
+const json = JSON.stringify({
+  model: EMOJI_MODEL,
+  templates: TEMPLATES,
+  dims,
+  scale,
+  emojis: EMOJI_VOCAB.map((entry) => entry.emoji),
+  data: btoa(binary),
+});
+
+document.getElementById('out').value = json;
+window.__emojiEmbeddings = json;
+log(`Done: ${vectors.length} emojis × ${dims} dimensions, ${Math.round(json.length / 1024)} KB.`);
+
+const download = document.getElementById('download');
+
+download.disabled = false;
+download.addEventListener('click', () => {
+  const link = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([json], { type: 'application/json' })), download: 'emojiEmbeddings.json' });
+
+  link.click();
+});
+</script>
+</body>
+</html>

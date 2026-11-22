@@ -20,6 +20,9 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 2. Select Swirl or Fisheye, drag the ⊕ centre, then Reset centre.
 2. Pattern overlay: background transparent by default; Density adds repeats without thickening lines.
 3. "Limit to a region", move / resize / rotate the region, change shape, soft edge, magnify, reflect. "Apply to whole picture".
+4. *Other → Emoji*: add a set, then in its properties remove an emoji, paste a few (`🐙🦀`), pick from the palette, move every slider, Shuffle, undo. Export and compare. *From the picture* on a photo of an animal or a place picks fitting emojis (first run downloads the model).
+4. Select an image mask (classic or custom), turn on *Repeat as a pattern* and move Rows, Size and Row offset; it covers the whole picture at any zoom and angle. A community mask's ⋯ → *Add as a repeated pattern* does the same in one step.
+4. *Custom → Share a mask…* opens the file picker and then the share dialog. Star a community mask: it moves to the top and stays starred after a reload.
 4. *Custom*: add two image files (one large or GIF); they are kept after a reload. With a local gateway (`localStorage['imagemasker.mediaServer'] = 'http://localhost:8090'`), tick the private copy option, add a file, then ⋯ → *Share with the community…*; approve it in Settings → Masks with the moderator token; it appears under *Community masks* and can be added. Paste the mask key in another browser profile: *Get … masks* restores them.
 4. Add a pattern overlay, a classic mask, a flag mask and a custom URL mask. Change opacity, zoom, angle, blend mode, hue, invert, blur, noise, warp, tile.
 5. *Random mask* (header, Shift+R) a few times at each strength in its ▾ menu: each press swaps the previous random layers for new ones (one undo step each); Light is easy to recognise, Strong clearly harder. Untick kinds (only Glass, only Overlays): picks stay within them and don't repeat the last few.

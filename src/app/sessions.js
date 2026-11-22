@@ -4,6 +4,8 @@
 import { createDoc, fitText } from '../core/model.js';
 import { getEffect, hasEffect, normalizeParams } from '../gl/effects.js';
 import { getPattern, hasPattern } from '../gl/patterns.js';
+import { EMOJI_MASK } from '../masks/emojiData.js';
+import { normalizeRepeat } from '../raster/repeat.js';
 
 const DB_NAME = 'imagemasker-v3';
 const AUTOSAVE_ID = 'autosave';
@@ -193,7 +195,7 @@ export function normalizeDoc(raw, hasAsset) {
 
     layer.erased = Array.isArray(source.erased) && source.erased.length ? source.erased.filter(validStroke) : null;
 
-    if (layer.type === 'image' || (layer.type === 'mask' && layer.source !== 'pattern')) {
+    if (layer.type === 'image' || (layer.type === 'mask' && layer.source !== 'pattern' && layer.source !== 'emoji')) {
       if (!hasAsset(layer.assetId)) {
         dropped.push(layer.name);
         continue;
@@ -207,6 +209,13 @@ export function normalizeDoc(raw, hasAsset) {
       }
 
       layer.params = normalizeParams(getPattern(layer.patternId), layer.params);
+    } else if (layer.type === 'mask' && layer.source === 'asset') {
+      layer.repeat = normalizeRepeat(layer.repeat);
+    } else if (layer.type === 'mask' && layer.source === 'emoji') {
+      const emojis = Array.isArray(layer.emojis) ? layer.emojis.filter((entry) => typeof entry === 'string' && entry.length <= 16).slice(0, 40) : [];
+
+      layer.emojis = emojis.length ? emojis : ['🙂'];
+      layer.params = normalizeParams(EMOJI_MASK, layer.params);
     } else if (layer.type === 'effect') {
       if (!hasEffect(layer.effectId)) {
         dropped.push(layer.name);

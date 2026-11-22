@@ -23,7 +23,8 @@ src/gl/Compositor.js         document -> pixels
 src/gl/glsl.js               shared GLSL, blend modes, system shaders
 src/gl/effects.js            effect masks (one fragment shader each)
 src/gl/patterns.js           procedural overlay patterns
-src/raster/                  Canvas 2D rasterisers for strokes and text
+src/raster/                  Canvas 2D rasterisers for strokes, text, emoji mask tiles and repeated image masks
+src/masks/                   classic, flag and emoji mask data (emojiData.js + emojiEmbeddings.json)
 src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
 src/tools/                   select, brush/eraser/effect brush, region, crop, crop-RIS box, text editor
 src/ui/                      panels (library, layers, properties, share, ...), Rounds and Collage
@@ -32,6 +33,7 @@ src/integrations/, storage/  image hosts, RIS, Reddit, background removal model,
                              custom masks in IndexedDB (CustomMasks) and on media.picturega.me (MaskServer)
 dev/effect-sheet.html        contact sheet of every effect/pattern + shader errors
 dev/tests.html               in-browser tests of the document model, undo, geometry and collage cuts
+dev/emoji-embeddings.html    regenerates src/masks/emojiEmbeddings.json from the emoji palette
 old/v2/, old/                previous versions, kept working
 ```
 
@@ -46,7 +48,7 @@ Any layer can have `erased` strokes (document pixels, drawn by the eraser's *Era
 the compositor takes the layer back out wherever they cover it (`Compositor.eraseFrom`). They stay in
 place when the layer moves, shift with a crop and are dropped when the base picture is replaced.
 
-Layer types: `image`, `mask` (`source: 'asset' | 'pattern'`), `effect`, `drawing`, `text`, `rect`.
+Layer types: `image`, `mask` (`source: 'asset' | 'pattern' | 'emoji'`), `effect`, `drawing`, `text`, `rect`.
 An effect layer's `coverage` is `full`, `rect`, `ellipse`, `polygon` or `paint`. The hidden effect id
 `original` (used by the eraser's reveal mode) shows the base picture instead of running a shader;
 `insertMask()` keeps such layers on top when masks are added.
@@ -57,6 +59,13 @@ the compositor keeps that layer's result only inside the polygon, and hit-testin
 Random mask gives every piece (or only the piece chosen under *Masks → Add to*) its own layers with
 `clip`; effects are also fitted to the piece (`polygon` coverage) so centred effects centre on it.
 Cropping shifts `cells` and `clip`, but the collage tools are hidden once the canvas size changes.
+
+An emoji mask (`source: 'emoji'`) keeps its `emojis`, `params` (see `EMOJI_MASK`) and `seed`; the
+compositor draws one seamless tile with `raster/emoji.js` at about the resolution the box is shown at
+and wraps it across the picture. *From the picture* (`app/emojiFromPicture.js`,
+`integrations/EmojiDetector.js`) runs MobileCLIP S0's image model (fp16; the 8-bit one gives wrong
+results) through Transformers.js from jsDelivr, and compares the picture with text embeddings of every
+palette description that were computed once and shipped in `masks/emojiEmbeddings.json`.
 
 ## Rendering
 

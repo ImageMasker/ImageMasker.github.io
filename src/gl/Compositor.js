@@ -4,6 +4,8 @@
 // only the scale differs.
 
 import { apply, invert, layerMatrix, toMat3 } from '../core/geometry.js';
+import { emojiSignature, renderEmojiTile } from '../raster/emoji.js';
+import { renderRepeatTile, repeatSignature } from '../raster/repeat.js';
 import { StrokeSurface } from '../raster/strokes.js';
 import { measureText, renderText, textSignature } from '../raster/text.js';
 import { effectShader, getEffect, hexToVec3, paramUniforms } from './effects.js';
@@ -120,6 +122,42 @@ export class Compositor {
 
     if (item.sig !== sig) {
       this.upload(item, renderText(layer, ratio));
+      item.sig = sig;
+    }
+
+    return item.entry;
+  }
+
+  /** One tile of an emoji mask, at about the resolution the layer's box is drawn at. */
+  emojiTexture(ctx, layer, boxPx) {
+    const size = Math.max(128, Math.min(4096, Math.ceil(Math.max(boxPx[0], boxPx[1]) / 128) * 128));
+    const sig = `${emojiSignature(layer)}@${size}`;
+    const item = this.cached(`${layer.id}:emoji`);
+
+    if (item.sig !== sig) {
+      this.upload(item, renderEmojiTile(layer, size));
+      item.sig = sig;
+    }
+
+    return item.entry;
+  }
+
+  /** An image mask drawn as a repeated pattern (raster/repeat.js), one tile per layer box. */
+  repeatTexture(ctx, layer, boxPx) {
+    const asset = this.assets.get(layer.assetId);
+
+    if (!asset) {
+      return null;
+    }
+
+    const fit = Math.min(1, 4096 / Math.max(boxPx[0], boxPx[1], 1));
+    const width = Math.max(64, Math.ceil((boxPx[0] * fit) / 64) * 64);
+    const height = Math.max(64, Math.ceil((boxPx[1] * fit) / 64) * 64);
+    const sig = `${layer.assetId}|${repeatSignature(layer.repeat)}@${width}x${height}`;
+    const item = this.cached(`${layer.id}:repeat`);
+
+    if (item.sig !== sig) {
+      this.upload(item, renderRepeatTile(asset.source, layer.repeat, width, height));
       item.sig = sig;
     }
 
@@ -368,6 +406,20 @@ export class Compositor {
               uWarp,
             },
           };
+        }
+
+        if (layer.source === 'emoji') {
+          // The tile repeats seamlessly, so the layer always covers the whole picture.
+          return {
+            program: this.textureProgram(),
+            uniforms: { uSrc: this.emojiTexture(ctx, layer, boxPx), uWrap: 1, uInv, uBoxPx: boxPx, uFx, uWarp },
+          };
+        }
+
+        if (layer.repeat) {
+          const uSrc = this.repeatTexture(ctx, layer, boxPx);
+
+          return uSrc && { program: this.textureProgram(), uniforms: { uSrc, uWrap: 1, uInv, uBoxPx: boxPx, uFx, uWarp } };
         }
 
         const uSrc = this.assetTexture(layer.assetId);

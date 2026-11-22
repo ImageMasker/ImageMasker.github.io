@@ -8,6 +8,7 @@ import {
   cloneLayer,
   createDoc,
   effectLayer,
+  emojiLayer,
   imageLayer,
   insertLayer,
   insertMask,
@@ -56,6 +57,7 @@ import { ToastManager } from '../ui/ToastManager.js';
 import { el } from '../utils/dom.js';
 import { Stage } from '../view/Stage.js';
 import { BackgroundTools } from './backgroundRemoval.js';
+import { EmojiTools } from './emojiFromPicture.js';
 import { CollageCommands } from './collageCommands.js';
 import { mixin } from './mixin.js';
 import { RandomCommands } from './randomCommands.js';
@@ -150,6 +152,7 @@ export class App {
     this.inspector = new Inspector(this);
     this.sharePanel = new SharePanel(this);
     this.backgroundTools = new BackgroundTools(this);
+    this.emojiTools = new EmojiTools(this);
     this.settingsUi = new SettingsUi(this);
     this.refs.library.append(this.library.element);
     this.refs.sidePanels.edit.append(this.layersPanel.element, this.inspector.element);
@@ -1012,14 +1015,21 @@ export class App {
     return this.addAssetMask(() => this.assets.fromUrl(url, { name: 'Custom mask' }), { name: 'Custom mask' }, options);
   }
 
+  /** An emoji mask (Masks → Other). */
+  addEmojiMask(emojis, options) {
+    if (this.requireImage('Load an image before adding a mask.')) {
+      this.placeMask(emojiLayer(this.store.doc, emojis), options);
+    }
+  }
+
   /** A mask image kept in this browser (Custom tab). */
-  addBlobMask(blob, name, options) {
-    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name }, options);
+  addBlobMask(blob, name, options = {}) {
+    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name, repeat: options.repeat ? {} : null }, options);
   }
 
   /** A mask from the community list on media.picturega.me. */
-  addCommunityMask(mask, options) {
-    return this.addAssetMask(() => this.assets.fromUrl(mask.publicUrl, { name: mask.name }), { name: mask.name }, options);
+  addCommunityMask(mask, options = {}) {
+    return this.addAssetMask(() => this.assets.fromUrl(mask.publicUrl, { name: mask.name }), { name: mask.name, repeat: options.repeat ? {} : null }, options);
   }
 
   retiltMask(layerId) {

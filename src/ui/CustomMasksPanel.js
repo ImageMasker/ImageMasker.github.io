@@ -12,6 +12,7 @@ import { button, message, row, section, toggle } from './kit.js';
 import { promptDialog } from './PromptDialog.js';
 
 const CLOUD_COPY_KEY = 'imagemasker.maskCloudCopy';
+const STARRED_KEY = 'imagemasker.starredMasks';
 const STATUS_BADGE = {
   private: { kind: 'private', text: '☁', title: 'Private copy on the PictureGame media server' },
   pending: { kind: 'pending', text: 'In review', title: 'Submitted to the community list; a moderator will check it' },
@@ -24,6 +25,16 @@ function preference(key) {
     return localStorage.getItem(key) === '1';
   } catch {
     return false;
+  }
+}
+
+function starredIds() {
+  try {
+    const ids = JSON.parse(localStorage.getItem(STARRED_KEY) ?? '[]');
+
+    return new Set(Array.isArray(ids) ? ids.filter((id) => typeof id === 'string') : []);
+  } catch {
+    return new Set();
   }
 }
 
@@ -66,11 +77,22 @@ export class CustomMasksPanel {
       this.fileInput.value = '';
       void this.addFiles(files);
     });
+    this.shareInput = el('input', { type: 'file', accept: 'image/*', className: 'visually-hidden', 'aria-label': 'Mask image to share' });
+    this.shareInput.addEventListener('change', () => {
+      const [file] = this.shareInput.files ?? [];
+
+      this.shareInput.value = '';
+
+      if (file) {
+        void this.shareFile(file);
+      }
+    });
     this.cloudToggle = toggle({
-      label: `Also keep a private copy on ${this.server.host}`,
+      label: 'Private copy online',
       value: preference(CLOUD_COPY_KEY),
       onChange: (value) => setPreference(CLOUD_COPY_KEY, value),
     });
+    this.cloudToggle.element.title = `New masks also get a private copy on ${this.server.host}, which only you can see (on any device with your mask key).`;
     this.syncButton = button('Get my masks from the server', { iconName: 'download', onClick: () => this.downloadMissing() });
     this.syncRow = row([this.syncButton], 'button-row--fill hidden');
 
@@ -90,7 +112,15 @@ export class CustomMasksPanel {
         el('div', { className: 'stack' }, [
           button('Add image files…', { iconName: 'upload', className: 'app-button--fill', onClick: () => this.fileInput.click() }),
           this.fileInput,
-          this.cloudToggle.element,
+          this.shareInput,
+          row([
+            this.cloudToggle.element,
+            button('Share a mask…', {
+              iconName: 'grid',
+              title: 'Pick an image to share in the community list. A moderator checks it first.',
+              onClick: () => this.shareInput.click(),
+            }),
+          ], 'button-row--fill'),
           this.syncRow,
           this.notice.element,
           section('Mask from a URL', [
@@ -102,7 +132,7 @@ export class CustomMasksPanel {
         el('h3', { className: 'library-group-title', textContent: 'Community masks' }),
         el('p', {
           className: 'panel-intro-copy custom-masks-note',
-          textContent: 'Shared by other players. Share yours from its ⋯ menu; a moderator checks every mask before it shows up here.',
+          textContent: 'Shared by other players. ☆ stars one to keep it at the top (in this browser). Share yours with “Share a mask…” or a mask’s ⋯ menu; a moderator checks every mask first.',
         }),
         this.communitySearch,
         this.communityStatus,
@@ -201,6 +231,7 @@ export class CustomMasksPanel {
 
     return [
       { label: 'Add as a new layer', icon: 'plus', action: () => this.app.addBlobMask(mask.blob, mask.name, { stack: true }) },
+      { label: 'Add as a repeated pattern (like a flag)', icon: 'grid', action: () => this.app.addBlobMask(mask.blob, mask.name, { stack: true, repeat: true }) },
       { label: 'Rename…', icon: 'pencil', action: () => this.rename(mask) },
       { label: 'Download', icon: 'download', action: () => this.download(mask) },
       'separator',
@@ -261,6 +292,17 @@ export class CustomMasksPanel {
     // A single new mask is also put on the picture straight away.
     if (images.length === 1 && last && this.app.store.hasImage) {
       await this.app.addBlobMask(last.blob, last.name, { stack: false });
+    }
+
+    return last;
+  }
+
+  /** "Share a mask…": keeps the image with your masks, then asks to submit it. */
+  async shareFile(file) {
+    const mask = await this.addFiles([file]);
+
+    if (mask) {
+      await this.share((await this.app.customMasks.get(mask.id)) ?? mask);
     }
   }
 
@@ -482,25 +524,52 @@ export class CustomMasksPanel {
   renderCommunity() {
     const query = this.communitySearch.value.trim().toLowerCase();
     const all = this.community ?? [];
-    const masks = all.filter((mask) => `${mask.name} ${mask.author}`.toLowerCase().includes(query));
+    const starred = starredIds();
+    // Starred first; otherwise the server's order (newest first).
+    const masks = all
+      .filter((mask) => `${mask.name} ${mask.author}`.toLowerCase().includes(query))
+      .map((mask, index) => ({ mask, index, starred: starred.has(mask.id) }))
+      .sort((a, b) => Number(b.starred) - Number(a.starred) || a.index - b.index);
 
     this.communitySearch.classList.toggle('hidden', all.length < 9);
     this.communityStatus.classList.toggle('hidden', masks.length > 0);
     this.communityStatus.textContent = all.length ? 'No community masks match.' : 'No community masks yet. Be the first to share one!';
     this.communityGrid.replaceChildren(
-      ...masks.map((mask) =>
+      ...masks.map(({ mask, starred: on }) =>
         this.library.tile({
           label: mask.name,
           title: `${mask.name}${mask.author ? ` · by ${mask.author}` : ''} · ${mask.width} × ${mask.height}`,
           image: mask.publicUrl,
+          star: { on, toggle: () => this.toggleStar(mask.id) },
           onPick: (options) => this.app.addCommunityMask(mask, options),
           menu: () => [
             { label: 'Add as a new layer', icon: 'plus', action: () => this.app.addCommunityMask(mask, { stack: true }) },
-            { label: 'Save to your masks', icon: 'bookmark', action: () => this.saveCommunity(mask) },
+            { label: 'Add as a repeated pattern (like a flag)', icon: 'grid', action: () => this.app.addCommunityMask(mask, { stack: true, repeat: true }) },
+            { label: on ? 'Unstar' : 'Star (keep at the top)', icon: 'bookmark', action: () => this.toggleStar(mask.id) },
+            { label: 'Save to your masks', icon: 'download', action: () => this.saveCommunity(mask) },
           ],
         })
       )
     );
+  }
+
+  /** Stars are kept in this browser only. */
+  toggleStar(id) {
+    const ids = starredIds();
+
+    if (ids.has(id)) {
+      ids.delete(id);
+    } else {
+      ids.add(id);
+    }
+
+    try {
+      localStorage.setItem(STARRED_KEY, JSON.stringify([...ids]));
+    } catch {
+      // Not remembered after this visit.
+    }
+
+    this.renderCommunity();
   }
 
   async saveCommunity(mask) {
