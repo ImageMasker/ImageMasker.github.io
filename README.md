@@ -58,7 +58,7 @@ Export settings (presets, size, format, JPEG quality) are in a collapsed section
 
 Tool options (brush size, colour, type and opacity, eraser mode, blur / pixel amounts, effect brush and region choices, the last text style) and the export settings are remembered in your browser for the next visit.
 
-**Settings** has saved sessions (stored in the browser, pictures included, with autosave and JSON export/import), themes (the built-in ones plus JSON themes) and remappable keyboard shortcuts. **Separate background** is in the properties of an image layer (or of the picture when nothing is selected); it runs in your browser and copies the subject into a new layer above the picture, which stays visible, so masks can go between the two. A layer's ↳ button in the Layers list limits it to the layer right below it (a clipping mask), e.g. a mask only on the subject.
+**Settings** has saved sessions (stored in the browser, pictures included, with autosave and JSON export/import), themes (the built-in ones plus JSON themes) and remappable keyboard shortcuts. **Separate background** is in the properties of an image layer (or of the picture when nothing is selected); it runs in your browser and copies the subject into a new layer above the picture, which stays visible, so masks can go between the two. *Circle one item* next to it separates just the item you draw a loop around, for pictures with several things in them. **New** in the header starts from zero after asking (the last picture can still be restored from the start screen). A layer's ↳ button in the Layers list limits it to the layer right below it (a clipping mask), e.g. a mask only on the subject.
 
 ### Keyboard shortcuts (defaults, all remappable)
 

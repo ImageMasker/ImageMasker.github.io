@@ -11,6 +11,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 ## Loading
 
 1. Load an image by clicking the canvas, by drag and drop, by pasting an image and by pasting / typing an image URL.
+2. *New* in the header asks first; *Keep editing* changes nothing, *Start from zero* goes back to the start screen, where *Restore* brings the picture back.
 2. With a picture loaded, paste another image: it becomes a layer. Turn off "Paste as new layer" and paste again: it replaces the base picture and the masks stay.
 
 ## Masks
@@ -67,6 +68,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 1. Header *Check RIS* (Shift+F): a waiting tab opens at once, the picture uploads to the chosen host, then the ticked sites open (all by default). Untick some in the ▾ menu: only those open, also from the Share tab. Pressing it again without changes reuses the upload.
 1. *Crop RIS* (Shift+C): drag a box over part of the picture; only that part is uploaded and searched. Esc cancels.
 1. Separate background from the picture (nothing selected) and from a pasted image layer: the picture stays visible under the subject.
+1. *Circle one item* on a picture with several things: draw a loop around one; only that item becomes the new layer. Esc cancels the drawing.
 1. *Copy image & post to Reddit*: the Reddit image form opens with `[Round N] title`, CTRL+V attaches the picture.
 1. On a phone: *Share image…* opens the share sheet with the picture; pick Reddit, the title is on the clipboard. Same from a locally saved round in *Rounds*. On a browser that can't share files the button is hidden.
 1. Upload with each host (Imgur, ImgBB with a key, Litterbox), then Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.

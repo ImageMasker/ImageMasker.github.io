@@ -390,6 +390,11 @@ export class Inspector {
         return this.cropSection();
       case 'stamp':
         return this.stampSection();
+      case 'lasso':
+        return section('Separate one item', [
+          el('p', { className: 'panel-intro-copy', textContent: 'Draw a loop around the item on the picture. Only what is inside goes through the background removal, so the other things in the picture stay where they are. A rough outline is fine; leave a little room around the item.' }),
+          row([button('Cancel', { iconName: 'close', onClick: () => app.setTool('select') })], 'button-row--fill'),
+        ], { className: 'tool-section--primary' });
       default:
         return null;
     }
@@ -603,20 +608,26 @@ export class Inspector {
     return element;
   }
 
-  /** "Separate background" button with live progress; `layerId` null means the base picture. */
+  /**
+   * "Separate background" button with live progress, and "Circle one item" to draw around the one
+   * thing to separate; `layerId` null means the base picture.
+   */
   backgroundRemovalRow(layerId) {
     const tools = this.app.backgroundTools;
     const control = button('Separate background', { iconName: 'sparkle', title: 'Copy the subject into its own layer above the picture, so masks can go between them (runs in your browser)', onClick: () => tools.remove(layerId) });
+    const lasso = button('Circle one item', { iconName: 'pencil', title: 'Draw roughly around one item; only that item is separated', onClick: () => tools.startLasso(layerId) });
     const label = control.querySelector('span:last-child');
     const sync = () => {
       control.disabled = tools.status.busy;
+      lasso.disabled = tools.status.busy;
+      lasso.classList.toggle('is-active', this.app.toolName === 'lasso');
       label.textContent = tools.status.busy ? `${tools.status.label}…` : 'Separate background';
     };
 
     this.bindings.push(sync);
     this.app.bus.on('background-status', () => control.isConnected && sync());
     sync();
-    return row([control], 'button-row--fill');
+    return row([control, lasso], 'button-row--fill');
   }
 
   effectSections(layer) {

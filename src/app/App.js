@@ -37,6 +37,7 @@ import { RoundStorage } from '../storage/RoundStorage.js';
 import { Settings } from '../storage/Settings.js';
 import { BrushTool } from '../tools/BrushTool.js';
 import { CropTool } from '../tools/CropTool.js';
+import { LassoTool } from '../tools/LassoTool.js';
 import { StampTool } from '../tools/StampTool.js';
 import { onEmojiArt } from '../raster/emojiArt.js';
 import { RegionTool } from '../tools/RegionTool.js';
@@ -51,6 +52,7 @@ import { button, icon, iconButton } from '../ui/kit.js';
 import { LayersPanel } from '../ui/LayersPanel.js';
 import { LibraryPanel } from '../ui/LibraryPanel.js';
 import { Modal } from '../ui/Modal.js';
+import { promptDialog } from '../ui/PromptDialog.js';
 import { RoundsDialog } from '../ui/RoundsDialog.js';
 import { CollageDialog } from '../ui/CollageDialog.js';
 import { SharePanel } from '../ui/SharePanel.js';
@@ -151,6 +153,7 @@ export class App {
       crop: new CropTool(this),
       stamp: new StampTool(this),
       risCrop: new RisCropTool(this),
+      lasso: new LassoTool(this),
     };
 
     this.library = new LibraryPanel(this);
@@ -187,6 +190,7 @@ export class App {
     const refs = this.refs;
     const headerButton = (iconName, title, onClick) => iconButton(iconName, title, onClick, 'header-button');
 
+    refs.startOver = button('New', { id: 'startOverButton', iconName: 'plus', className: 'header-button', title: 'Start from zero with a new picture', onClick: () => void this.startOver() });
     refs.undo = headerButton('undo', 'Undo', () => this.undo());
     refs.redo = headerButton('redo', 'Redo', () => this.redo());
     refs.zoomOut = headerButton('zoomOut', 'Zoom out', () => this.stage.zoomAt(1 / 1.25));
@@ -215,6 +219,7 @@ export class App {
         el('img', { src: 'images/favicon.png', alt: '', width: '26', height: '26' }),
         el('span', { className: 'brand-name', textContent: 'Image Masker' }),
       ]),
+      el('div', { className: 'header-group' }, [refs.startOver]),
       el('div', { className: 'header-group' }, [refs.undo, refs.redo]),
       el('div', { className: 'header-group' }, [refs.zoomOut, refs.zoomLabel, refs.zoomIn, refs.fit]),
       el('div', { className: 'header-group' }, [refs.compare]),
@@ -343,7 +348,7 @@ export class App {
     refs.undo.disabled = !store.undoStack.length;
     refs.redo.disabled = !store.redoStack.length;
 
-    for (const control of [refs.zoomOut, refs.zoomLabel, refs.zoomIn, refs.fit, refs.compare, refs.random, refs.randomMenuButton, refs.copy, refs.download]) {
+    for (const control of [refs.startOver, refs.zoomOut, refs.zoomLabel, refs.zoomIn, refs.fit, refs.compare, refs.random, refs.randomMenuButton, refs.copy, refs.download]) {
       control.disabled = !loaded;
     }
 
@@ -524,7 +529,7 @@ export class App {
           }
         },
         deselect: () => {
-          if (this.toolName === 'crop' || this.toolName === 'region' || this.toolName === 'risCrop') {
+          if (this.toolName === 'crop' || this.toolName === 'region' || this.toolName === 'risCrop' || this.toolName === 'lasso') {
             this.setTool('select');
           } else {
             this.store.select([]);
@@ -809,6 +814,32 @@ export class App {
     }
 
     this.sharePanel.setUploaded('');
+  }
+
+  /** Back to the empty start screen, after a warning. The picture stays in the autosave, so it can be restored. */
+  async startOver() {
+    if (!this.store.hasImage) {
+      return;
+    }
+
+    const confirmed = await promptDialog(this.root, {
+      title: 'Start from zero?',
+      intro: 'This clears the picture, all its masks and layers, and the undo history. Until you load another picture you can still bring it back with “Restore” on the start screen.',
+      confirm: 'Start from zero',
+      cancel: 'Keep editing',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    await this.persistAutosave();
+    this.setTool('select');
+    this.textEditor.close();
+    this.store.reset(createDoc(1, 1), false);
+    this.sharePanel.setUploaded('');
+    this.afterImageChange();
+    await this.checkAutosave();
   }
 
   replaceDocument(doc) {

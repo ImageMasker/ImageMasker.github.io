@@ -10,7 +10,7 @@ src/app/*Commands.js         more App commands, split by topic (collage, random 
                              sessions) and mixed into App (mixin.js), so callers still use app.x()
 src/app/sessions.js          IndexedDB sessions, autosave, JSON export/import
 src/app/settingsUi.js        settings dialog (sessions, themes, shortcuts, about)
-src/app/backgroundRemoval.js background removal into a new layer
+src/app/backgroundRemoval.js background removal into a new layer, optionally inside a lasso outline (tools/LassoTool.js)
 src/app/randomMask.js        Random mask recipes, strengths and kinds
 src/app/strengthMeter.js     internal "how different does it look" score the random mask aims with
 src/collage/                 collage geometry (cuts → pieces, gaps, presets) and Canvas 2D drawing

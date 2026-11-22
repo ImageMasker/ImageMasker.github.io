@@ -1,11 +1,12 @@
 // A small form in a Modal: a few text fields (or drop-downs, for fields with `options`) and a
-// confirm button. Resolves to the values, or null when it is closed without confirming.
+// confirm button (and an optional cancel button). Resolves to the values, or null when it is closed
+// without confirming. With no fields it is a plain "are you sure?" dialog.
 
 import { el } from '../utils/dom.js';
 import { button, row } from './kit.js';
 import { Modal } from './Modal.js';
 
-export function promptDialog(host, { title, intro = '', fields, confirm = 'OK' }) {
+export function promptDialog(host, { title, intro = '', fields = [], confirm = 'OK', cancel = '' }) {
   return new Promise((resolve) => {
     let done = false;
     const inputs = fields.map((field) =>
@@ -51,12 +52,15 @@ export function promptDialog(host, { title, intro = '', fields, confirm = 'OK' }
         ...fields.map((field, index) =>
           el('label', { className: 'field' }, [el('span', { className: 'field-label', textContent: field.label }), inputs[index]])
         ),
-        row([button(confirm, { className: 'app-button--primary', onClick: submit })], 'button-row--fill'),
+        row([
+          ...(cancel ? [button(cancel, { onClick: () => modal.close() })] : []),
+          button(confirm, { className: 'app-button--primary', onClick: submit }),
+        ], 'button-row--fill'),
       ])
     );
     host.append(modal.element);
     modal.open();
-    inputs[0]?.focus();
+    (inputs[0] ?? modal.body.querySelector('.app-button--primary'))?.focus();
     inputs[0]?.select();
   });
 }
