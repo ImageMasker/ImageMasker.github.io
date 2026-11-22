@@ -38,7 +38,7 @@ import { Settings } from '../storage/Settings.js';
 import { BrushTool } from '../tools/BrushTool.js';
 import { CropTool } from '../tools/CropTool.js';
 import { StampTool } from '../tools/StampTool.js';
-import { onTwemoji } from '../raster/twemoji.js';
+import { onEmojiArt } from '../raster/emojiArt.js';
 import { RegionTool } from '../tools/RegionTool.js';
 import { RisCropTool } from '../tools/RisCropTool.js';
 import { SelectTool } from '../tools/SelectTool.js';
@@ -136,8 +136,8 @@ export class App {
     }
 
     this.assets.maxSize = Math.min(this.stage.glx.maxTextureSize, 8192);
-    // Emoji masks and stamps are redrawn as their Twemoji artwork arrives.
-    onTwemoji(() => this.stage.invalidate());
+    // Emoji masks and stamps are redrawn as their artwork arrives.
+    onEmojiArt(() => this.stage.invalidate());
     this.assets.flagCatalog = () => this.flagCatalog();
     this.textEditor = new TextEditor(this);
     this.tools = {
@@ -1022,10 +1022,12 @@ export class App {
     return this.addAssetMask(() => this.assets.fromUrl(url, { name: 'Custom mask' }), { name: 'Custom mask' }, options);
   }
 
-  /** An emoji mask (Masks → Other). */
-  addEmojiMask(emojis, options) {
+  /** An emoji mask (Masks → Other); `options.style` picks the emoji artwork (EMOJI_STYLES). */
+  addEmojiMask(emojis, options = {}) {
     if (this.requireImage('Load an image before adding a mask.')) {
-      this.placeMask(emojiLayer(this.store.doc, emojis), options);
+      const layer = emojiLayer(this.store.doc, emojis);
+
+      this.placeMask(options.style ? { ...layer, params: { ...layer.params, style: options.style } } : layer, options);
     }
   }
 

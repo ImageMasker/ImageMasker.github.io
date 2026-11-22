@@ -7,7 +7,7 @@ import { PATTERNS } from '../gl/patterns.js';
 import { EMOJI_SETS, randomEmojis } from '../masks/emojiData.js';
 import { PRESET_MASKS } from '../masks/maskData.js';
 import { emojiPreview } from '../raster/emoji.js';
-import { loadTwemoji } from '../raster/twemoji.js';
+import { loadEmojiArt } from '../raster/emojiArt.js';
 import { el } from '../utils/dom.js';
 import { createSampleScene } from '../utils/sampleScene.js';
 import { CustomMasksPanel } from './CustomMasksPanel.js';
@@ -269,14 +269,14 @@ export class LibraryPanel {
   /** "From the picture", "Random" and the ready-made emoji sets. */
   emojiTiles() {
     const app = this.app;
-    // Drawn with the system font straight away, then again once the Twemoji artwork is in.
-    const preview = (emojis, seed) => {
-      void loadTwemoji(emojis).then(() => {
+    // Drawn with the system font straight away, then again once the artwork is in.
+    const preview = (emojis, seed, style = 0) => {
+      void loadEmojiArt(emojis.map((emoji) => [emoji, style])).then(() => {
         const image = tiles.get(seed)?.querySelector('.mask-tile-preview');
 
-        if (image) image.src = emojiPreview(emojis, { seed }).toDataURL();
+        if (image) image.src = emojiPreview(emojis, { seed, style }).toDataURL();
       });
-      return emojiPreview(emojis, { seed }).toDataURL();
+      return emojiPreview(emojis, { seed, style }).toDataURL();
     };
     const tiles = new Map();
     const fromPicture = this.tile({
@@ -300,8 +300,8 @@ export class LibraryPanel {
           label: set.name,
           title: set.emojis ? `${set.emojis.join(' ')}
 Pick your own emojis, density and size in the mask's properties.` : 'Different emojis every time',
-          image: preview(set.emojis ?? ['🎲', '❓', '✨', '🎁'], index + 11),
-          onPick: (options) => app.addEmojiMask(set.emojis ?? randomEmojis(), options),
+          image: preview(set.emojis ?? set.preview ?? ['🎲', '❓', '✨', '🎁'], index + 11, set.style),
+          onPick: (options) => app.addEmojiMask(set.emojis ?? (set.random ?? randomEmojis)(), { ...options, style: set.style }),
         });
 
         tiles.set(index + 11, tile);

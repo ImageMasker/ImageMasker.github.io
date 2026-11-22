@@ -4,7 +4,7 @@
 // spin, style, seed, points }: the emoji drawn at the first point and then every `size × spacing`
 // along the path (stamp tool).
 
-import { drawEmoji, twemojiVersion } from './twemoji.js';
+import { drawEmoji, emojiArtVersion } from './emojiArt.js';
 
 /** How far apart stamps are along a drag, in stamp sizes. */
 export const STAMP_SPACING = 1.1;
@@ -76,7 +76,7 @@ function drawStamps(ctx, stroke) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(base + (random() * 2 - 1) * spin);
-    drawEmoji(ctx, String(stroke.emoji || '🙂').slice(0, 16), size, !stroke.style);
+    drawEmoji(ctx, String(stroke.emoji || '🙂').slice(0, 40), size, stroke.style ?? 0);
     ctx.restore();
   });
   ctx.restore();
@@ -161,8 +161,8 @@ export class StrokeSurface {
 
   /** Returns true when the pixels in `canvas` changed. */
   sync(strokes, width, height, scaleX, scaleY = scaleX) {
-    // Twemoji artwork arriving changes how stamps look, so it redraws everything (rare).
-    const key = `${width}x${height}@${scaleX},${scaleY}#${strokes.some((stroke) => stroke.tool === 'stamp') ? twemojiVersion() : 0}`;
+    // Emoji artwork arriving changes how stamps look, so it redraws everything (rare).
+    const key = `${width}x${height}@${scaleX},${scaleY}#${strokes.some((stroke) => stroke.tool === 'stamp') ? emojiArtVersion() : 0}`;
     let dirty = false;
 
     if (key !== this.key) {

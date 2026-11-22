@@ -5,6 +5,7 @@
 import { defaultParams, getEffect, normalizeParams } from '../gl/effects.js';
 import { getPattern } from '../gl/patterns.js';
 import { EMOJI_MASK } from '../masks/emojiData.js';
+import { DEVICE_STYLE, isCustomEmoji } from '../raster/emojiArt.js';
 import { normalizeRepeat } from '../raster/repeat.js';
 import { measureText, TEXT_DEFAULTS } from '../raster/text.js';
 import { apply, invert, layerBounds, layerMatrix, pointInPolygon } from './geometry.js';
@@ -147,12 +148,15 @@ export function emojiLayer(doc, emojis, { opacity = 0.9, params = null, deform =
   };
 }
 
-/** Every emoji drawn with Twemoji artwork in the document (emoji masks and stamps). */
+/** [emoji, style] of every emoji drawn with artwork in the document (emoji masks and stamps). */
 export function usedEmojis(doc) {
-  return doc.layers.flatMap((layer) => [
-    ...(layer.source === 'emoji' && !layer.params?.style ? layer.emojis : []),
-    ...(layer.strokes ?? []).filter((stroke) => stroke.tool === 'stamp' && !stroke.style).map((stroke) => stroke.emoji),
+  const pairs = doc.layers.flatMap((layer) => [
+    ...(layer.source === 'emoji' ? layer.emojis.map((emoji) => [emoji, layer.params?.style ?? 0]) : []),
+    ...(layer.strokes ?? []).filter((stroke) => stroke.tool === 'stamp').map((stroke) => [stroke.emoji, stroke.style ?? 0]),
   ]);
+
+  // The device's font needs nothing loaded, but server emojis always do.
+  return pairs.filter(([emoji, style]) => style !== DEVICE_STYLE || isCustomEmoji(emoji));
 }
 
 export function emojiLayerName(emojis) {

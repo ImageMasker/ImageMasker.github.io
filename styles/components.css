@@ -81,10 +81,13 @@
 
 .input-row > input {
   flex: 1;
+  /* Inputs have a wide built-in minimum; without this a row pushes its panel wider than the screen. */
+  min-width: 0;
 }
 
 .stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
 }
 
@@ -120,6 +123,7 @@
 }
 
 .field--inline select {
+  min-width: 0;
   max-width: 170px;
 }
 
@@ -457,6 +461,7 @@ select {
 .settings-section,
 .shortcut-panel {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -515,6 +520,8 @@ select {
   margin: 0;
   padding: 12px;
   overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.08);
   color: var(--text-primary);

@@ -42,9 +42,9 @@ import {
 import { Store } from '../src/core/Store.js';
 import { area, COLLAGE_PRESETS, cutPieces, insetPiece, randomCuts } from '../src/collage/layout.js';
 import { normalizeDoc } from '../src/app/sessions.js';
-import { EMOJI_VOCAB, splitEmojis } from '../src/masks/emojiData.js';
+import { EMOJI_VOCAB, SERVER_EMOJIS, splitEmojis } from '../src/masks/emojiData.js';
 import { normalizeRepeat } from '../src/raster/repeat.js';
-import { twemojiCode } from '../src/raster/twemoji.js';
+import { emojiArtUrl, twemojiCode } from '../src/raster/emojiArt.js';
 import { restoreToolState } from '../src/app/toolState.js';
 import { Compositor } from '../src/gl/Compositor.js';
 
@@ -218,6 +218,9 @@ test('emoji masks and stamps: Twemoji names, used emojis, stamps restored', () =
   equal(twemojiCode('❤️'), '2764');
   equal(twemojiCode('🐦‍⬛'), '1f426-200d-2b1b');
   equal(twemojiCode('👩‍⚕️'), '1f469-200d-2695-fe0f');
+  assert(emojiArtUrl('❤️', 2).endsWith('/emoji_u2764.svg'), 'blob name of ❤️');
+  assert(emojiArtUrl('👩‍⚕️', 2).endsWith('/emoji_u1f469_200d_2695.svg'), 'blob name of a ZWJ sequence');
+  assert(emojiArtUrl('©️', 2).endsWith('/emoji_u00a9.svg'), 'blob names pad to 4 digits');
 
   const doc = pictureDoc();
   const stamp = { tool: 'stamp', emoji: '🦜', size: 30, opacity: 1, angle: 0, spin: 0, style: 0, seed: 0.3, points: [10, 10] };
@@ -226,7 +229,16 @@ test('emoji masks and stamps: Twemoji names, used emojis, stamps restored', () =
   const system = { ...emojiLayer(doc, ['🚗']), params: { ...emoji.params, style: 1 } };
   const full = insertLayer(insertLayer(insertLayer(doc, drawing), emoji), system);
 
-  equal(usedEmojis(full).sort(), ['🐱', '🐶', '🦜'].sort());
+  equal(usedEmojis(full).map(([emoji]) => emoji).sort(), ['🐱', '🐶', '🦜'].sort());
+
+  // Server emojis are `:name:`, always drawn from their picture, even in the device style.
+  const server = SERVER_EMOJIS[0];
+
+  if (server) {
+    equal(splitEmojis(`a ${server} :not_a_server_emoji: 🐦 ${server}`), [server, '🐦']);
+    assert(emojiArtUrl(server, 1).includes('/images/discord-emojis/'), 'server emoji URL');
+    equal(usedEmojis(insertLayer(doc, { ...system, emojis: [server, '🚗'] })), [[server, 1]]);
+  }
   equal(emoji.params.style, 0);
 
   const restored = normalizeDoc(JSON.parse(JSON.stringify(full)), () => true).doc;

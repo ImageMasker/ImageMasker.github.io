@@ -5,6 +5,8 @@
 // turns them into src/masks/emojiEmbeddings.json), so describe what the emoji shows in a photo.
 // Adding, removing or rewording entries needs that file to be regenerated.
 
+import { DISCORD_EMOJIS } from './discordEmojis.js';
+
 const R = (key, label, min, max, value, step = 1) => ({ key, label, type: 'range', min, max, value, step });
 
 /** Sliders of an emoji mask (normalised like effect and pattern params). */
@@ -12,7 +14,8 @@ export const EMOJI_MASK = {
   id: 'emoji',
   name: 'Emoji',
   params: [
-    { key: 'style', label: 'Emoji style', type: 'select', options: ['Twemoji', 'This device'], value: 0 },
+    // Indexes are EMOJI_STYLES values (raster/emojiArt.js).
+    { key: 'style', label: 'Emoji style', type: 'select', options: ['Twemoji', 'This device', 'Google blobs'], value: 0 },
     R('density', 'Density', 2, 40, 9),
     R('size', 'Emoji size', 20, 400, 95),
     R('variety', 'Size variety', 0, 100, 35),
@@ -214,9 +217,21 @@ export const EMOJI_PALETTE = [
 /** Every palette emoji with its description, category and theme, in a fixed order. */
 export const EMOJI_VOCAB = EMOJI_PALETTE.flatMap((group) => group.items.map(([emoji, name, theme, part]) => ({ emoji, name, group: group.id, theme, part })));
 
-/** Ready-made sets shown in Masks → Other. `null` emojis means "pick at random". */
+/**
+ * The PictureGame Discord server's emojis, written `:name:` (raster/emojiArt.js draws them). They
+ * are in the emoji picker but not in EMOJI_VOCAB: "From the picture" has no descriptions for them.
+ */
+export const SERVER_EMOJIS = DISCORD_EMOJIS.map((emoji) => `:${emoji.name}:`);
+
+/** `count` different PictureGame server emojis. */
+export function randomServerEmojis(count = 4 + Math.floor(Math.random() * 3)) {
+  return [...SERVER_EMOJIS].sort(() => Math.random() - 0.5).slice(0, count);
+}
+
+/** Ready-made sets shown in Masks → Other. `null` emojis means "pick at random" (with `random`). */
 export const EMOJI_SETS = [
   { id: 'random', name: 'Random', emojis: null },
+  ...(SERVER_EMOJIS.length ? [{ id: 'picturegame', name: 'PictureGame', emojis: null, preview: SERVER_EMOJIS.slice(0, 6), random: randomServerEmojis }] : []),
   { id: 'faces', name: 'Faces', emojis: ['😀', '😂', '😎', '🤔', '😱', '🥳'] },
   { id: 'animals', name: 'Animals', emojis: ['🐶', '🐱', '🦊', '🐼', '🐸', '🦁'] },
   { id: 'food', name: 'Food', emojis: ['🍕', '🍔', '🍟', '🌮', '🍩', '🍣'] },
@@ -228,16 +243,34 @@ export const EMOJI_SETS = [
   { id: 'party', name: 'Party', emojis: ['🎉', '🎈', '🎁', '🎂', '✨', '🥳'] },
   { id: 'spooky', name: 'Spooky', emojis: ['👻', '💀', '🎃', '🕷️', '🦇', '🧟'] },
   { id: 'shapes', name: 'Shapes', emojis: ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣'] },
+  { id: 'blobs', name: 'Google blobs', emojis: ['😀', '😂', '😍', '🤔', '😎', '🥳'], style: 2 },
 ];
 
 const segmenter = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
 const PICTOGRAPHIC = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
+const SERVER_SET = new Set(SERVER_EMOJIS);
 
-/** The emojis in a piece of text, in order, without repeats (at most 40). */
+/** The same emoji, with or without the FE0F that asks for the colour version. */
+export function sameEmoji(a, b) {
+  return a === b || a.replace(/\ufe0f/g, '') === b.replace(/\ufe0f/g, '');
+}
+
+/** The emojis in a piece of text, in order, without repeats (at most 40). `:name:` is a server emoji. */
 export function splitEmojis(text) {
-  const graphemes = segmenter ? [...segmenter.segment(String(text ?? ''))].map((part) => part.segment) : [...String(text ?? '')];
+  const found = [];
 
-  return [...new Set(graphemes.filter((part) => PICTOGRAPHIC.test(part)))].slice(0, 40);
+  for (const piece of String(text ?? '').split(/(:[\w~-]{2,32}:)/)) {
+    if (SERVER_SET.has(piece)) {
+      found.push(piece);
+      continue;
+    }
+
+    const graphemes = segmenter ? [...segmenter.segment(piece)].map((part) => part.segment) : [...piece];
+
+    found.push(...graphemes.filter((part) => PICTOGRAPHIC.test(part)));
+  }
+
+  return [...new Set(found)].slice(0, 40);
 }
 
 /** `count` different emojis, mostly from one palette group so the result looks like a theme. */

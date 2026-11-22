@@ -1,12 +1,12 @@
-// Emoji masks rasterised with Canvas 2D, with Twemoji artwork (raster/twemoji.js) or the system's
-// colour emoji font (params.style 1).
+// Emoji masks rasterised with Canvas 2D, with Twemoji or Google blob artwork (raster/emojiArt.js)
+// or the system's colour emoji font (params.style, see EMOJI_STYLES).
 //
 // The tile is a jittered grid of emojis drawn on a torus (an emoji crossing an edge is drawn
 // again on the opposite side), so the texture repeats without seams and the layer can be wrapped
 // across the whole picture like a tiled mask. Everything is seeded, so the same layer always
 // draws the same way, in the preview and in the export.
 
-import { drawEmoji, twemojiState } from './twemoji.js';
+import { drawEmoji, emojiArtState } from './emojiArt.js';
 
 // Density 9 (the default) is the reference: the emoji size slider means the same at any density,
 // so density only changes how far apart the emojis are.
@@ -28,7 +28,7 @@ export function emojiSignature(layer) {
 
   return [
     emojis.join(''),
-    p.style ? 'system' : twemojiState(emojis),
+    `${p.style ?? 0}:${emojiArtState(emojis, p.style ?? 0)}`,
     layer.seed,
     p.density,
     p.size,
@@ -56,7 +56,7 @@ export function renderEmojiTile(layer, size) {
   const scatter = (p.scatter ?? 55) / 100;
   const variety = (p.variety ?? 35) / 100;
   const turn = ((p.turn ?? 25) * Math.PI) / 180;
-  const twemoji = !p.style;
+  const style = p.style ?? 0;
   const baseSize = (size / REFERENCE_ROWS) * ((p.size ?? 95) / 100);
 
   canvas.width = size;
@@ -91,7 +91,7 @@ export function renderEmojiTile(layer, size) {
           context.save();
           context.translate(x + ox, y + oy);
           context.rotate(angle);
-          drawEmoji(context, emoji, fontSize, twemoji);
+          drawEmoji(context, emoji, fontSize, style);
           context.restore();
         }
       }
@@ -102,8 +102,8 @@ export function renderEmojiTile(layer, size) {
 }
 
 /** A small preview of an emoji set (library tiles). */
-export function emojiPreview(emojis, { width = 176, height = 128, seed = 7 } = {}) {
-  const tile = renderEmojiTile({ emojis, seed, params: { density: 4, size: 95 * (9 / 4), variety: 30, turn: 25, scatter: 55, bgAlpha: 0 } }, 128);
+export function emojiPreview(emojis, { width = 176, height = 128, seed = 7, style = 0 } = {}) {
+  const tile = renderEmojiTile({ emojis, seed, params: { style, density: 4, size: 95 * (9 / 4), variety: 30, turn: 25, scatter: 55, bgAlpha: 0 } }, 128);
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
 

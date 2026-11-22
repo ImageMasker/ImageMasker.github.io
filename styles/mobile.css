@@ -35,10 +35,15 @@
     padding: 4px;
   }
 
+  /* Everything stays on screen: the header and the tools wrap onto a second row instead of scrolling. */
   .app-header {
-    gap: 6px;
+    flex-wrap: wrap;
+    gap: 4px 6px;
     padding: 4px 6px;
-    overflow-x: auto;
+  }
+
+  .app-header .header-spacer {
+    display: none;
   }
 
   .header-group {
@@ -70,15 +75,15 @@
   }
 
   .tool-rail {
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
     align-self: stretch;
-    overflow-x: auto;
     padding: 4px;
   }
 
   .tool-button {
-    flex: 1 0 44px;
-    height: 40px;
+    width: auto;
+    height: 38px;
   }
 
   .side-column {

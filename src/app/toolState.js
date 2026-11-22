@@ -8,6 +8,7 @@ import { TEXT_DEFAULTS } from '../raster/text.js';
 import { PAINT_AMOUNT } from '../tools/BrushTool.js';
 import { STAMP_DRAG_MODES } from '../tools/StampTool.js';
 import { splitEmojis } from '../masks/emojiData.js';
+import { EMOJI_STYLES } from '../raster/emojiArt.js';
 import { ERASER_MODES, REGION_SHAPES } from '../ui/Inspector.js';
 
 export function defaultToolState() {
@@ -24,7 +25,7 @@ export function defaultToolState() {
 const number = (value, min, max, fallback) => (Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback);
 const oneOf = (value, values, fallback) => (values.includes(value) ? value : fallback);
 const colour = (value, fallback) => (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : fallback);
-const oneEmoji = (value) => (typeof value === 'string' && value.length <= 16 ? splitEmojis(value)[0] : undefined);
+const oneEmoji = (value) => (typeof value === 'string' && value.length <= 40 ? splitEmojis(value)[0] : undefined);
 const effect = (value, fallback) => (typeof value === 'string' && hasEffect(value) ? value : fallback);
 
 export function restoreToolState(stored) {
@@ -55,7 +56,7 @@ export function restoreToolState(stored) {
     opacity: number(stamp.opacity, 1, 100, state.stamp.opacity),
     angle: number(stamp.angle, -180, 180, state.stamp.angle),
     spin: number(stamp.spin, 0, 180, state.stamp.spin),
-    style: stamp.style === 1 ? 1 : 0,
+    style: EMOJI_STYLES.some((entry) => entry.value === stamp.style) ? stamp.style : 0,
     drag: oneOf(stamp.drag, STAMP_DRAG_MODES.map((mode) => mode.value), state.stamp.drag),
     recent: Array.isArray(stamp.recent) ? stamp.recent.map(oneEmoji).filter(Boolean).slice(0, 12) : [],
   };

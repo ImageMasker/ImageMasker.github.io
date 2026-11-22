@@ -29,8 +29,15 @@ There is no test runner or linter.
   `src/masks/emojiEmbeddings.json` with `dev/emoji-embeddings.html` (the detector refuses an out-of-date file;
   vectors are matched by emoji, so reordering entries or changing themes needs no regeneration). It can be
   run headless: open the page and read `window.__emojiEmbeddings` once it is set (a few minutes).
-* Emoji masks and stamps draw Twemoji SVGs from jsDelivr (`src/raster/twemoji.js`, pinned version) and fall
-  back to the system font while they load or when offline; `exportBlob()` waits for them.
+* Emoji masks and stamps draw Twemoji or Google blob SVGs from jsDelivr (`src/raster/emojiArt.js`, pinned
+  versions; style 0 Twemoji, 1 device font, 2 blobs) and fall back blobs → Twemoji → device font while they
+  load or when offline; `exportBlob()` waits for them. The emoji picker (`src/ui/EmojiPicker.js`) loads the
+  full emoji list from Emojibase on jsDelivr when first opened.
+* The PictureGame Discord server's emojis (`:name:`, `src/masks/discordEmojis.js` + `images/discord-emojis/`)
+  come from `scripts/fetch-discord-emojis.mjs`, run on picturegame-vm with the bot's config
+  (`node fetch-discord-emojis.mjs /opt/pg/discord/config.json /tmp/out`; the token stays there), then copied back.
+* Check that nothing leaves the screen at 320 px wide as well as on desktop: grids and stacks need
+  `minmax(0, 1fr)` columns and inputs `min-width: 0`, or one wide control pushes a whole panel past the edge.
 
 ## Layout
 

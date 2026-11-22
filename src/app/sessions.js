@@ -213,7 +213,7 @@ export function normalizeDoc(raw, hasAsset) {
     } else if (layer.type === 'mask' && layer.source === 'asset') {
       layer.repeat = normalizeRepeat(layer.repeat);
     } else if (layer.type === 'mask' && layer.source === 'emoji') {
-      const emojis = Array.isArray(layer.emojis) ? layer.emojis.filter((entry) => typeof entry === 'string' && entry.length <= 16).slice(0, 40) : [];
+      const emojis = Array.isArray(layer.emojis) ? layer.emojis.filter((entry) => typeof entry === 'string' && entry.length <= 40).slice(0, 40) : [];
 
       layer.emojis = emojis.length ? emojis : ['🙂'];
       layer.params = normalizeParams(EMOJI_MASK, layer.params);

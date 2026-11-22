@@ -5,14 +5,15 @@ import { emojiLayerName, fitText, updateLayer, zoomFactor } from '../core/model.
 import { EFFECT_CATEGORIES, EFFECTS, getEffect, defaultParams, hasIntensity, INTENSITY_LEVELS, intensityParams } from '../gl/effects.js';
 import { BLEND_MODES } from '../gl/glsl.js';
 import { getPattern } from '../gl/patterns.js';
-import { EMOJI_MASK, EMOJI_PALETTE, randomEmojis, splitEmojis } from '../masks/emojiData.js';
+import { EMOJI_MASK, randomEmojis, sameEmoji } from '../masks/emojiData.js';
 import { REPEAT_DEFAULTS } from '../raster/repeat.js';
 import { BRUSH_TYPES } from '../raster/strokes.js';
 import { PAINT_AMOUNT } from '../tools/BrushTool.js';
 import { STAMP_DRAG_MODES } from '../tools/StampTool.js';
-import { emojiGlyph } from '../raster/twemoji.js';
+import { EMOJI_STYLES, emojiGlyph } from '../raster/emojiArt.js';
 import { FONTS } from '../raster/text.js';
 import { el } from '../utils/dom.js';
+import { EmojiPicker } from './EmojiPicker.js';
 import { button, color, row, section, select, slider, toggle } from './kit.js';
 
 const percent = (value) => `${Math.round(value)}%`;
@@ -438,40 +439,10 @@ export class Inspector {
     ], { className: 'tool-section--primary' });
   }
 
-  /** A collapsible palette of every emoji; built on first open since it has a few hundred buttons. */
-  emojiPalette(onPick, isActive, title = 'Emoji palette') {
-    const palette = section(title, [], { open: false });
-    const body = palette.querySelector('.tool-section-body');
-    const buttons = new Map();
-    const sync = () => {
-      for (const [emoji, control] of buttons) control.classList.toggle('is-active', isActive(emoji));
-    };
-
-    palette.addEventListener('toggle', () => {
-      if (!palette.open || buttons.size) {
-        return;
-      }
-
-      body.append(
-        ...EMOJI_PALETTE.flatMap((group) => [
-          el('div', { className: 'emoji-palette-title', textContent: group.label }),
-          el(
-            'div',
-            { className: 'emoji-palette' },
-            group.items.map(([emoji, name]) => {
-              const control = el('button', { type: 'button', className: 'emoji-palette-item', title: name, 'aria-label': name }, [emojiGlyph(emoji)]);
-
-              control.addEventListener('click', () => onPick(emoji));
-              buttons.set(emoji, control);
-              return control;
-            })
-          ),
-        ])
-      );
-      sync();
-    });
-
-    return { element: palette, sync };
+  /** The shared emoji picker popover (ui/EmojiPicker.js), made on first use. */
+  emojiPicker() {
+    this.picker ??= new EmojiPicker(this.app);
+    return this.picker;
   }
 
   /** Stamp tool: which emoji, how big, turned how, and what dragging does. */
@@ -483,40 +454,24 @@ export class Inspector {
       app.bus.emit('tool-settings');
       sync();
     };
-    const current = el('div', { className: 'stamp-current' });
+    const current = el('button', { type: 'button', className: 'stamp-current', title: 'Choose the emoji to stamp', 'aria-label': 'Choose the emoji to stamp' });
+    const choose = button('Choose emoji…', { iconName: 'search', className: 'app-button--fill' });
+    const openPicker = (anchor) =>
+      this.emojiPicker().open(anchor, { style: state.style, isActive: (emoji) => sameEmoji(emoji, state.emoji), onPick: setEmoji });
     const recent = el('div', { className: 'emoji-chips' });
-    const input = el('input', { type: 'text', placeholder: 'Type or paste an emoji…', 'aria-label': 'Emoji to stamp' });
-    const useTyped = () => {
-      const [emoji] = splitEmojis(input.value);
-
-      if (!emoji) {
-        app.notify('Type or paste an emoji first (Win + . or Ctrl + Cmd + Space opens the emoji keyboard).', 'info', 4200);
-        input.focus();
-        return;
-      }
-
-      input.value = '';
-      setEmoji(emoji);
-    };
-
-    input.addEventListener('keydown', (event) => event.key === 'Enter' && useTyped());
-
-    const palette = this.emojiPalette(setEmoji, (emoji) => emoji === state.emoji);
     const sync = () => {
       const key = `${state.emoji}|${state.style}|${state.recent.join(' ')}`;
-
-      palette.sync();
 
       if (current.dataset.value === key) {
         return;
       }
 
       current.dataset.value = key;
-      current.replaceChildren(state.style ? document.createTextNode(state.emoji) : emojiGlyph(state.emoji));
+      current.replaceChildren(emojiGlyph(state.emoji, state.style));
       recent.replaceChildren(
         ...state.recent.map((emoji) => {
           const chip = el('button', { type: 'button', className: `emoji-chip${emoji === state.emoji ? ' is-active' : ''}`, title: `Stamp ${emoji}` }, [
-            state.style ? document.createTextNode(emoji) : emojiGlyph(emoji),
+            emojiGlyph(emoji, state.style),
           ]);
 
           chip.addEventListener('click', () => setEmoji(emoji));
@@ -529,17 +484,13 @@ export class Inspector {
       state[key] = next;
     };
 
+    current.addEventListener('click', () => openPicker(current));
+    choose.addEventListener('click', () => openPicker(choose));
     this.bindings.push(sync);
     sync();
 
     return section('Stamp', [
-      el('div', { className: 'stamp-picker' }, [
-        current,
-        el('div', { className: 'stack' }, [
-          el('div', { className: 'input-row' }, [input, button('Use', { onClick: useTyped })]),
-          recent,
-        ]),
-      ]),
+      el('div', { className: 'stamp-picker' }, [current, el('div', { className: 'stack' }, [choose, recent])]),
       this.toolSlider({ label: 'Stamp size', min: 2, max: 200 }, value('size'), write('size')),
       this.toolSlider({ label: 'Opacity', min: 1, max: 100, format: percent }, value('opacity'), write('opacity')),
       this.toolSlider({ label: 'Angle', min: -180, max: 180, format: degrees }, value('angle'), write('angle')),
@@ -547,7 +498,7 @@ export class Inspector {
       select({ label: 'Dragging', options: STAMP_DRAG_MODES, value: state.drag, onChange: this.toolChange(write('drag')) }).element,
       select({
         label: 'Emoji style',
-        options: [{ value: '0', label: 'Twemoji' }, { value: '1', label: 'This device' }],
+        options: EMOJI_STYLES,
         value: String(state.style),
         onChange: this.toolChange((next) => {
           state.style = Number(next);
@@ -555,7 +506,6 @@ export class Inspector {
         }),
       }).element,
       el('p', { className: 'panel-intro-copy', textContent: 'Click to stamp. Stamps go into a drawing layer, so the eraser and undo work on them.' }),
-      palette.element,
     ], { className: 'tool-section--primary' });
   }
 
@@ -758,11 +708,12 @@ export class Inspector {
     ];
   }
 
-  /** Emojis of an emoji mask: chips, typing/pasting, random, from the picture, palette, sliders. */
+  /** Emojis of an emoji mask: chips, the emoji picker, random, from the picture, sliders. */
   emojiSection(layer) {
     const app = this.app;
     const id = layer.id;
     const current = () => app.store.layer(id)?.emojis ?? [];
+    const style = () => app.store.layer(id)?.params?.style ?? 0;
     const setEmojis = (emojis, label) => {
       if (!emojis.length) {
         return;
@@ -772,21 +723,26 @@ export class Inspector {
         updateLayer(doc, id, (entry) => ({ emojis, ...(/^Emoji /.test(entry.name) ? { name: emojiLayerName(emojis) } : {}) }))
       );
     };
+    const has = (emoji) => current().some((entry) => sameEmoji(entry, emoji));
     const toggleEmoji = (emoji) => {
       const emojis = current();
 
-      if (emojis.includes(emoji)) {
-        if (emojis.length > 1) setEmojis(emojis.filter((entry) => entry !== emoji), 'Remove emoji');
+      if (has(emoji)) {
+        if (emojis.length > 1) {
+          setEmojis(emojis.filter((entry) => !sameEmoji(entry, emoji)), 'Remove emoji');
+        } else {
+          app.notify('An emoji mask needs at least one emoji: add another one first.', 'info', 3200);
+        }
       } else {
         setEmojis([...emojis, emoji].slice(0, 40), 'Add emoji');
       }
     };
 
     const chips = el('div', { className: 'emoji-chips' });
+    const choose = button('Add or remove emojis…', { iconName: 'plus', className: 'app-button--fill' });
     const syncChips = () => {
       const emojis = current();
-      const system = Boolean(app.store.layer(id)?.params?.style);
-      const key = `${system}|${emojis.join(' ')}`;
+      const key = `${style()}|${emojis.join(' ')}`;
 
       if (chips.dataset.value === key) {
         return;
@@ -796,7 +752,7 @@ export class Inspector {
       chips.replaceChildren(
         ...emojis.map((emoji) => {
           const chip = el('button', { type: 'button', className: 'emoji-chip', title: emojis.length > 1 ? `Remove ${emoji}` : 'An emoji mask needs at least one emoji' }, [
-            system ? document.createTextNode(emoji) : emojiGlyph(emoji),
+            emojiGlyph(emoji, style()),
           ]);
 
           chip.addEventListener('click', () => toggleEmoji(emoji));
@@ -805,21 +761,15 @@ export class Inspector {
       );
     };
 
-    const input = el('input', { type: 'text', placeholder: 'Type or paste emojis…', 'aria-label': 'Emojis to add' });
-    const addTyped = (replace) => {
-      const typed = splitEmojis(input.value);
-
-      if (!typed.length) {
-        app.notify('Type or paste some emojis first (Win + . or Ctrl + Cmd + Space opens the emoji keyboard).', 'info', 4200);
-        input.focus();
-        return;
-      }
-
-      setEmojis(replace ? typed : [...new Set([...current(), ...typed])].slice(0, 40), replace ? 'Replace emojis' : 'Add emojis');
-      input.value = '';
-    };
-
-    input.addEventListener('keydown', (event) => event.key === 'Enter' && addTyped(false));
+    choose.addEventListener('click', () =>
+      this.emojiPicker().open(choose, {
+        style: style(),
+        multiple: true,
+        isActive: has,
+        onPick: toggleEmoji,
+        hint: 'Click emojis to add them to the mask, or click a highlighted one to take it out.',
+      })
+    );
 
     const fromPicture = button('From the picture', {
       iconName: 'sparkle',
@@ -836,24 +786,19 @@ export class Inspector {
 
     app.bus.on('emoji-status', () => fromPicture.isConnected && syncStatus());
 
-    const palette = this.emojiPalette(toggleEmoji, (emoji) => current().includes(emoji));
-    const syncPalette = palette.sync;
-
-    this.bindings.push(syncChips, syncPalette, syncStatus);
+    this.bindings.push(syncChips, syncStatus);
     syncChips();
     syncStatus();
 
     return section('Emojis', [
       chips,
-      el('div', { className: 'input-row' }, [input, button('Add', { title: 'Add these to the mask', onClick: () => addTyped(false) })]),
-      row([button('Use only the typed emojis', { onClick: () => addTyped(true) })], 'button-row--fill'),
+      row([choose], 'button-row--fill'),
       row([
         button('Random', { iconName: 'dice', title: 'A random set of emojis', onClick: () => setEmojis(randomEmojis(), 'Random emojis') }),
         fromPicture,
         button('Shuffle', { iconName: 'shuffle', title: 'Same emojis, new arrangement', onClick: () => app.store.apply('Shuffle', (doc) => updateLayer(doc, id, { seed: Math.random() * 100 })) }),
       ]),
       ...this.paramControls(id, EMOJI_MASK),
-      palette.element,
     ], { className: 'tool-section--primary' });
   }
 

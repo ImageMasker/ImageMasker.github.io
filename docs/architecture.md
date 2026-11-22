@@ -24,11 +24,12 @@ src/gl/glsl.js               shared GLSL, blend modes, system shaders
 src/gl/effects.js            effect masks (one fragment shader each)
 src/gl/patterns.js           procedural overlay patterns
 src/raster/                  Canvas 2D rasterisers for strokes and stamps, text, emoji mask tiles, repeated image
-                             masks, and the Twemoji artwork they draw (twemoji.js)
-src/masks/                   classic, flag and emoji mask data (emojiData.js + emojiEmbeddings.json)
+                             masks, and the emoji artwork they draw (emojiArt.js: Twemoji, Google blobs, server)
+src/masks/                   classic, flag and emoji mask data (emojiData.js + emojiEmbeddings.json), the
+                             PictureGame Discord server's emojis (discordEmojis.js, images/discord-emojis/)
 src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
 src/tools/                   select, brush/eraser/effect brush, region, crop, emoji stamp, crop-RIS box, text editor
-src/ui/                      panels (library, layers, properties, share, ...), Rounds and Collage
+src/ui/                      panels (library, layers, properties, share, ...), the emoji picker, Rounds and Collage
                              dialogs (Modal.js), header ▾ menus (Dropdown.js)
 src/integrations/, storage/  image hosts, RIS, Reddit, background removal model, localStorage wrappers,
                              custom masks in IndexedDB (CustomMasks) and on media.picturega.me (MaskServer)
@@ -68,8 +69,10 @@ like a clipping mask. Clipping to the base picture or to an effect does nothing.
 An emoji mask (`source: 'emoji'`) keeps its `emojis`, `params` (see `EMOJI_MASK`) and `seed`; the
 compositor draws one seamless tile with `raster/emoji.js` at about the resolution the box is shown at
 and wraps it across the picture. Density is the number of rows in the tile; the emoji size does not
-depend on it. Emojis are Twemoji artwork (`raster/twemoji.js`) unless `params.style` is 1 (the device's
-font). The stamp tool adds `{ tool: 'stamp', emoji, size, angle, spin, style, points }` strokes to a
+depend on it. `params.style` picks the artwork (`raster/emojiArt.js`): 0 Twemoji, 1 the device's font,
+2 Google's blobs; missing artwork falls back down that list. `:name:` entries are the PictureGame
+server's emojis, always drawn from `images/discord-emojis/`. Emojis are chosen in `ui/EmojiPicker.js`
+(search, categories, recently used, every Unicode emoji from Emojibase). The stamp tool adds `{ tool: 'stamp', emoji, size, angle, spin, style, points }` strokes to a
 drawing layer, so stamps erase, undo and save like brush strokes.
 
 A repeated image mask (`repeat: { rows, size, stagger, wobble, warp, seed }`, `raster/repeat.js`) draws

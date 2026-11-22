@@ -4,11 +4,11 @@
 // they undo, erase and save like brush strokes.
 
 import { drawingLayer, insertLayer, updateLayer } from '../core/model.js';
-import { twemojiImage, twemojiUrl } from '../raster/twemoji.js';
+import { emojiGlyph, emojiImage } from '../raster/emojiArt.js';
 
 export const STAMP_DRAG_MODES = [
-  { value: 'trail', label: 'Lays a trail of stamps' },
-  { value: 'size', label: 'Sizes and turns the stamp' },
+  { value: 'trail', label: 'Lays a trail' },
+  { value: 'size', label: 'Sizes the stamp' },
 ];
 
 export class StampTool {
@@ -19,10 +19,7 @@ export class StampTool {
     this.layerId = null;
     this.ghost = document.createElement('div');
     this.ghost.className = 'stamp-ghost hidden';
-    this.ghostImage = document.createElement('img');
-    this.ghostImage.alt = '';
-    this.ghostText = document.createElement('span');
-    this.ghost.append(this.ghostImage, this.ghostText);
+    this.ghostKey = '';
     app.stage.html.append(this.ghost);
     app.bus.on('view', () => this.syncGhost());
     app.bus.on('tool-settings', () => this.syncGhost());
@@ -51,19 +48,15 @@ export class StampTool {
   syncGhost() {
     const { emoji, style, opacity, angle } = this.options;
     const side = Math.max(6, this.size() * this.app.stage.view.zoom);
-    const twemoji = !style;
-    const url = twemoji ? twemojiUrl(emoji) : '';
 
     // Starts loading the artwork the stamp will be drawn with.
-    if (twemoji) twemojiImage(emoji);
-    if (this.ghostImage.getAttribute('src') !== url) {
-      if (url) this.ghostImage.src = url;
-      else this.ghostImage.removeAttribute('src');
+    emojiImage(emoji, style);
+
+    if (this.ghostKey !== `${style}:${emoji}`) {
+      this.ghostKey = `${style}:${emoji}`;
+      this.ghost.replaceChildren(emojiGlyph(emoji, style));
     }
 
-    this.ghostImage.classList.toggle('hidden', !twemoji);
-    this.ghostText.classList.toggle('hidden', twemoji);
-    this.ghostText.textContent = emoji;
     this.ghost.style.width = `${side}px`;
     this.ghost.style.height = `${side}px`;
     this.ghost.style.fontSize = `${side * 0.86}px`;
