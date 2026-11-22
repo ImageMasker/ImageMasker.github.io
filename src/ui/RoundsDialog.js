@@ -209,7 +209,7 @@ export class RoundsDialog {
 
     try {
       if (this.saveMode === 'upload') {
-        const url = await app.uploadForRis();
+        const url = await app.uploadPicture();
 
         app.roundStorage.addRound(url, title, answer);
         this.currentKey = `url:${url}`;

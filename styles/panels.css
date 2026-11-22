@@ -403,3 +403,100 @@
   color: var(--text-muted);
   align-self: center;
 }
+
+/* ── custom masks ──────────────────────────────────────────────────────── */
+
+.mask-tile-more {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-button);
+  color: var(--text-button);
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.mask-tile:hover .mask-tile-more,
+.mask-tile:focus-visible .mask-tile-more {
+  display: inline-flex;
+}
+
+@media (hover: none) {
+  .mask-tile-more {
+    display: inline-flex;
+  }
+}
+
+.mask-tile-more:hover {
+  background: var(--bg-slider-thumb);
+}
+
+.mask-tile-badge {
+  position: absolute;
+  right: 6px;
+  bottom: 22px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  font-size: 0.62rem;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.mask-tile-badge--approved {
+  background: var(--bg-success);
+  color: white;
+}
+
+.mask-tile-badge--pending {
+  background: var(--bg-warning);
+  color: white;
+}
+
+.custom-masks-note {
+  margin: 0;
+}
+
+.mask-review-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mask-review-item {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 6px;
+  border-radius: 9px;
+  background: var(--surface-tint);
+}
+
+.mask-review-item img {
+  width: 96px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: repeating-conic-gradient(rgba(128, 128, 128, 0.25) 0 25%, transparent 0 50%) 0 0 / 12px 12px;
+}
+
+.mask-review-meta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.78rem;
+}
+
+.mask-review-meta strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -28,7 +28,8 @@ src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
 src/tools/                   select, brush/eraser/effect brush, region, crop, crop-RIS box, text editor
 src/ui/                      panels (library, layers, properties, share, ...), Rounds and Collage
                              dialogs (Modal.js), header ▾ menus (Dropdown.js)
-src/integrations/, storage/  image hosts, RIS, Reddit, background removal model, localStorage wrappers
+src/integrations/, storage/  image hosts, RIS, Reddit, background removal model, localStorage wrappers,
+                             custom masks in IndexedDB (CustomMasks) and on media.picturega.me (MaskServer)
 dev/effect-sheet.html        contact sheet of every effect/pattern + shader errors
 dev/tests.html               in-browser tests of the document model, undo, geometry and collage cuts
 old/v2/, old/                previous versions, kept working
@@ -40,6 +41,10 @@ The document is `{ width, height, layers: [bottom ... top] }` in picture pixels.
 `store.apply(label, (doc) => nextDoc)` for one-shot changes, or `store.begin()` / `store.set()` /
 `store.end(label)` around a drag or slider scrub so the whole gesture is one undo step. Unchanged
 layers are shared between history entries, and pictures live in the `AssetStore`, so undo is cheap.
+
+Any layer can have `erased` strokes (document pixels, drawn by the eraser's *Erase selected layer* mode):
+the compositor takes the layer back out wherever they cover it (`Compositor.eraseFrom`). They stay in
+place when the layer moves, shift with a crop and are dropped when the base picture is replaced.
 
 Layer types: `image`, `mask` (`source: 'asset' | 'pattern'`), `effect`, `drawing`, `text`, `rect`.
 An effect layer's `coverage` is `full`, `rect`, `ellipse`, `polygon` or `paint`. The hidden effect id

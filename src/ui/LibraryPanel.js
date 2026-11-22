@@ -1,12 +1,13 @@
-// The mask library: effect masks, overlay masks (procedural + classic images), flags and the
-// user's own mask URLs. Thumbnails are rendered live from the loaded picture.
+// The mask library: effect masks, overlay masks (procedural + classic images), flags, and the
+// user's own and community masks (CustomMasksPanel). Thumbnails are rendered live from the loaded picture.
 
 import { EFFECT_CATEGORIES, EFFECTS, defaultParams } from '../gl/effects.js';
 import { PATTERNS } from '../gl/patterns.js';
 import { PRESET_MASKS } from '../masks/maskData.js';
 import { el } from '../utils/dom.js';
 import { createSampleScene } from '../utils/sampleScene.js';
-import { button, icon, message } from './kit.js';
+import { CustomMasksPanel } from './CustomMasksPanel.js';
+import { icon } from './kit.js';
 
 const TABS = [
   { id: 'effects', label: 'Effects' },
@@ -113,10 +114,14 @@ export class LibraryPanel {
     if (id === 'flags') {
       this.loadFlags();
     }
+
+    if (id === 'custom') {
+      this.custom.shown();
+    }
   }
 
   /** A gallery tile. `render(source)` returns ImageData for live thumbnails. */
-  tile({ label, title = '', strength = 0, image = '', render = null, onPick }) {
+  tile({ label, title = '', strength = 0, image = '', render = null, onPick, badge = null, menu = null }) {
     const preview = render
       ? el('canvas', { className: 'mask-tile-preview', width: '8', height: '8' })
       : el('img', { className: 'mask-tile-preview', src: image, alt: '', loading: 'lazy' });
@@ -130,9 +135,28 @@ export class LibraryPanel {
           : []),
       ]),
       add,
+      ...(badge ? [el('span', { className: `mask-tile-badge mask-tile-badge--${badge.kind}`, title: badge.title, textContent: badge.text })] : []),
     ]);
+    const more = menu
+      ? el('span', { className: 'mask-tile-more', title: 'More options', role: 'button', 'aria-label': `Options for ${label}`, textContent: '⋯' })
+      : null;
+
+    if (more) {
+      tileButton.append(more);
+      tileButton.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        this.app.contextMenu.open(event.clientX, event.clientY, menu());
+      });
+    }
 
     tileButton.addEventListener('click', (event) => {
+      if (more?.contains(event.target)) {
+        const box = more.getBoundingClientRect();
+
+        this.app.contextMenu.open(box.left, box.bottom + 4, menu());
+        return;
+      }
+
       onPick({ stack: event.shiftKey || add.contains(event.target) });
     });
 
@@ -245,75 +269,8 @@ export class LibraryPanel {
   }
 
   renderCustom() {
-    this.customGrid = el('div', { className: 'mask-grid' });
-    this.customEmpty = el('div', { className: 'panel-empty-state', textContent: 'No custom masks saved yet.' });
-    this.customInput = el('input', { id: 'customMaskURL', type: 'url', placeholder: 'Mask URL (Imgur)', 'aria-label': 'Custom mask URL' });
-    this.customMessage = message();
-    this.customFile = el('input', { type: 'file', accept: 'image/*', className: 'visually-hidden', 'aria-label': 'Mask image file' });
-    this.customInput.addEventListener('input', () => this.customMessage.set(''));
-    this.customInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        this.saveCustomMask();
-      }
-    });
-    this.customFile.addEventListener('change', () => {
-      const [file] = this.customFile.files ?? [];
-
-      if (file) {
-        this.app.addFileMask(file);
-      }
-
-      this.customFile.value = '';
-    });
-    this.renderCustomGrid();
-
-    return el('div', { className: 'library-tab hidden' }, [
-      this.customEmpty,
-      this.customGrid,
-      el('div', { className: 'stack' }, [
-        this.customInput,
-        el('div', { className: 'button-row' }, [
-          button('Submit mask', { id: 'submitmask', onClick: () => this.saveCustomMask() }),
-          button('Delete masks', {
-            id: 'deletemask',
-            onClick: () => {
-              this.app.maskStorage.clearAll();
-              this.renderCustomGrid();
-              this.customMessage.set('All custom masks were removed.', 'info');
-            },
-          }),
-        ]),
-        button('Use an image file as a mask', { iconName: 'upload', onClick: () => this.customFile.click() }),
-        this.customFile,
-        this.customMessage.element,
-      ]),
-    ]);
-  }
-
-  saveCustomMask() {
-    const url = this.customInput.value.trim();
-
-    if (!url) {
-      this.customMessage.set('Enter a mask URL first.', 'warning');
-      this.customInput.focus();
-      return;
-    }
-
-    this.app.maskStorage.addMask(url);
-    this.customInput.value = '';
-    this.renderCustomGrid();
-    this.customMessage.set('Custom mask saved for reuse.', 'success');
-  }
-
-  renderCustomGrid() {
-    const urls = this.app.maskStorage.getMasks();
-
-    this.customEmpty.classList.toggle('hidden', urls.length > 0);
-    this.customGrid.replaceChildren(
-      ...urls.map((url, index) =>
-        this.tile({ label: `Custom ${index + 1}`, title: url, image: url, onPick: (options) => this.app.addCustomMask(url, options) })
-      )
-    );
+    this.custom = new CustomMasksPanel(this.app, this);
+    return this.custom.element;
   }
 
   // ── live thumbnails ───────────────────────────────────────────────────────

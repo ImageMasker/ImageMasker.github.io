@@ -26,8 +26,10 @@ import { Store } from '../core/Store.js';
 import { defaultParams, getEffect } from '../gl/effects.js';
 import { ImageHosts } from '../integrations/ImageHosts.js';
 import { RedditPoster } from '../integrations/RedditPoster.js';
+import { MaskServer } from '../integrations/MaskServer.js';
 import { RISChecker } from '../integrations/RISChecker.js';
 import { loadFlagMaskCatalog } from '../masks/FlagMaskCatalog.js';
+import { CustomMasks } from '../storage/CustomMasks.js';
 import { MaskStorage } from '../storage/MaskStorage.js';
 import { LocalRounds } from '../storage/LocalRounds.js';
 import { RoundStorage } from '../storage/RoundStorage.js';
@@ -94,6 +96,8 @@ export class App {
     this.roundStorage = new RoundStorage();
     this.sessionStore = new SessionStore();
     this.localRounds = new LocalRounds(this.sessionStore);
+    this.customMasks = new CustomMasks(this.sessionStore);
+    this.maskServer = new MaskServer();
     this.assets = new AssetStore();
     this.store = new Store();
     this.redditPoster = new RedditPoster();
@@ -1008,8 +1012,14 @@ export class App {
     return this.addAssetMask(() => this.assets.fromUrl(url, { name: 'Custom mask' }), { name: 'Custom mask' }, options);
   }
 
-  addFileMask(file) {
-    return this.addAssetMask(() => this.assets.fromBlob(file, { name: file.name }), { name: file.name.replace(/\.[^.]+$/, '') || 'Mask' }, { stack: false });
+  /** A mask image kept in this browser (Custom tab). */
+  addBlobMask(blob, name, options) {
+    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name }, options);
+  }
+
+  /** A mask from the community list on media.picturega.me. */
+  addCommunityMask(mask, options) {
+    return this.addAssetMask(() => this.assets.fromUrl(mask.publicUrl, { name: mask.name }), { name: mask.name }, options);
   }
 
   retiltMask(layerId) {

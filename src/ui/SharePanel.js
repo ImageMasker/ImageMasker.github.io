@@ -173,7 +173,7 @@ export class SharePanel {
 
     refs.host = select({
       label: 'Upload to',
-      options: hosts.hosts.map((host) => ({ value: host.id, label: host.label })),
+      options: hosts.choices().map((host) => ({ value: host.id, label: host.label })),
       value: hosts.getHostId(),
       onChange: (value) => {
         hosts.setHostId(value);

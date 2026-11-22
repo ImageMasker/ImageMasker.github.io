@@ -1,7 +1,8 @@
 // Freehand tools. One class covers three modes:
 //   brush  - paints into a drawing layer
-//   eraser - erases from a drawing layer or from a painted effect's coverage; it can also
-//            "reveal" the original picture through every mask, or restore what was revealed
+//   eraser - erases from a drawing layer or from a painted effect's coverage, or erases any kind
+//            of selected layer (its `erased` strokes); it can also "reveal" the original
+//            picture through every mask, or restore what was revealed
 //   paint  - brushes an effect (blur, pixelate, cut glass, ...) onto the picture
 
 import { drawingLayer, effectLayer, insertLayer, insertMask, updateLayer } from '../core/model.js';
@@ -94,6 +95,11 @@ export class BrushTool {
 
     const eraserMode = this.mode === 'eraser' ? this.app.toolState.eraser.mode : '';
 
+    // Any layer can be erased; its `erased` strokes take it back out where they cover it.
+    if (eraserMode === 'layer') {
+      return usable(selected) ? { layer: selected, field: 'erased' } : null;
+    }
+
     if (eraserMode === 'reveal' || eraserMode === 'restore') {
       const existing = topmost(painted('original'));
 
@@ -129,6 +135,25 @@ export class BrushTool {
     return { create: drawingLayer(doc, count ? `Drawing ${count + 1}` : 'Drawing') };
   }
 
+  missingTargetMessage() {
+    const mode = this.mode === 'eraser' ? this.app.toolState.eraser.mode : '';
+    const selected = this.app.store.selectedLayer;
+
+    if (mode === 'restore') {
+      return 'Nothing has been revealed yet.';
+    }
+
+    if (mode === 'layer') {
+      if (!selected) {
+        return 'Select the layer to erase first (click it in the Layers list).';
+      }
+
+      return selected.locked ? `“${selected.name}” is locked. Unlock it in the Layers list to erase it.` : `“${selected.name}” is hidden.`;
+    }
+
+    return 'There is nothing to erase yet.';
+  }
+
   paintEffectId() {
     return this.effectId ?? this.app.toolState.paint.effectId;
   }
@@ -146,27 +171,27 @@ export class BrushTool {
     this.moveRing(event);
 
     if (!target) {
-      this.app.notify(
-        this.mode === 'eraser' && toolState.eraser.mode === 'restore' ? 'Nothing has been revealed yet.' : 'There is nothing to erase yet.',
-        'info'
-      );
+      this.app.notify(this.missingTargetMessage(), 'info', 3600);
       return;
     }
 
     const brush = toolState.brush;
-    const erasing = this.mode === 'eraser' && !reveal;
+    const layerErase = target.field === 'erased';
+    const erasing = this.mode === 'eraser' && !reveal && !layerErase;
 
     this.stroke = {
       tool: erasing ? 'eraser' : 'brush',
       type: this.mode === 'brush' ? brush.type : 'smooth',
       color: this.mode === 'brush' ? brush.color : '#ffffff',
       size: this.size(),
+      // The erased area is painted like a brush stroke (more coverage = more erased), at the eraser's strength.
       opacity: erasing ? 1 : brush.opacity / 100,
       seed: Math.random(),
       points: [event.x, event.y],
     };
     this.created = Boolean(target.create);
     this.layerId = (target.layer ?? target.create).id;
+    this.field = target.field ?? 'strokes';
 
     store.begin();
 
@@ -174,7 +199,7 @@ export class BrushTool {
       store.set(target.create.type === 'effect' ? insertMask(store.doc, target.create) : insertLayer(store.doc, target.create));
     }
 
-    store.set(updateLayer(store.doc, this.layerId, (layer) => ({ strokes: [...layer.strokes, this.stroke] })));
+    store.set(updateLayer(store.doc, this.layerId, (layer) => ({ [this.field]: [...(layer[this.field] ?? []), this.stroke] })));
   }
 
   onMove(event) {
@@ -198,7 +223,7 @@ export class BrushTool {
     const stroke = this.stroke;
 
     this.app.store.set(
-      updateLayer(this.app.store.doc, this.layerId, (layer) => ({ strokes: [...layer.strokes.slice(0, -1), stroke] }))
+      updateLayer(this.app.store.doc, this.layerId, (layer) => ({ [this.field]: [...layer[this.field].slice(0, -1), stroke] }))
     );
   }
 
@@ -220,7 +245,9 @@ export class BrushTool {
             ? 'Reveal original'
             : eraserMode === 'restore'
               ? 'Restore masks'
-              : 'Erase';
+              : eraserMode === 'layer'
+                ? 'Erase layer'
+                : 'Erase';
 
     store.end(label);
 

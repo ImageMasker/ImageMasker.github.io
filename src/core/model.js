@@ -330,6 +330,10 @@ function shiftClip(layer, rect) {
     patch.clip = { ...layer.clip, points: shift(layer.clip.points) };
   }
 
+  if (layer.erased?.length) {
+    patch.erased = shiftStrokes(layer.erased, rect.x, rect.y);
+  }
+
   if (Array.isArray(layer.cells)) {
     patch.cells = layer.cells.map((cell) => ({ ...cell, points: shift(cell.points) }));
   }
@@ -411,10 +415,13 @@ export function rebaseDoc(doc, asset) {
 
   next.layers = [imageLayer(next, asset, { name: 'Base image', base: true })];
 
-  for (const layer of doc.layers) {
-    if (layer.type === 'drawing' || (layer.type === 'image' && layer.base) || (layer.type === 'effect' && layer.coverage === 'paint')) {
+  for (const source of doc.layers) {
+    if (source.type === 'drawing' || (source.type === 'image' && source.base) || (source.type === 'effect' && source.coverage === 'paint')) {
       continue;
     }
+
+    // Erased areas were painted over the old picture.
+    const layer = source.erased ? { ...source, erased: null } : source;
 
     if (layer.type === 'effect' && layer.coverage === 'full') {
       next.layers.push({ ...layer, ...centre, w: next.width, h: next.height });

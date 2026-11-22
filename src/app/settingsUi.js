@@ -1,5 +1,6 @@
-// Settings dialog wiring: sessions, themes, keyboard shortcuts and the about page.
+// Settings dialog wiring: sessions, themes, keyboard shortcuts, mask key / moderation and the about page.
 
+import { MaskSettingsPanel } from '../ui/MaskSettingsPanel.js';
 import { SessionPanel } from '../ui/SessionPanel.js';
 import { SettingsModal } from '../ui/SettingsModal.js';
 import { ShortcutsPanel } from '../ui/ShortcutsPanel.js';
@@ -29,6 +30,9 @@ export class SettingsUi {
     this.modal.refs.panels.sessions.append(this.sessions.element);
     this.modal.refs.panels.themes.append(this.themes.element);
     this.modal.refs.panels.shortcuts.append(this.shortcuts.element);
+    this.masks = new MaskSettingsPanel(app);
+    this.modal.refs.panels.masks.append(this.masks.element);
+    this.modal.refs.tabs.masks.addEventListener('click', () => this.masks.shown());
     this.modal.refs.panels.about.append(this.renderAbout());
     this.element = this.modal.element;
     this.bindSessions();
@@ -40,6 +44,10 @@ export class SettingsUi {
     this.modal.setActiveTab(tab);
     this.modal.setOpen(true);
     this.renderSessions();
+
+    if (tab === 'masks') {
+      this.masks.shown();
+    }
     this.modal.refs.closeButton.focus();
   }
 

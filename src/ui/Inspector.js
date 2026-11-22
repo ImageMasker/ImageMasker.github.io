@@ -15,11 +15,13 @@ const percent = (value) => `${Math.round(value)}%`;
 const degrees = (value) => `${Math.round(value)}°`;
 export const ERASER_MODES = [
   { value: 'erase', label: 'Erase drawings' },
+  { value: 'layer', label: 'Erase selected layer' },
   { value: 'reveal', label: 'Reveal original' },
   { value: 'restore', label: 'Restore masks' },
 ];
 const ERASER_HINTS = {
   erase: 'Erases drawings, or the painted area of the selected effect.',
+  layer: 'Erases only the selected layer (a mask, an image, text, an effect…) and leaves everything else alone. Strength below 100% erases partly. “Clear erased area” in its properties brings it back.',
   reveal: 'Brushes through every mask and effect to show the original picture underneath.',
   restore: 'Paints the masks back over areas you revealed.',
 };
@@ -108,7 +110,7 @@ export class Inspector {
 
       // The collage piece goes right under the layer's main settings.
       sections.splice(1, 0, ...this.pieceSection(layers[0]));
-      parts.push(...sections);
+      parts.push(...sections, this.erasedRow(layers[0]));
     } else if (layers.length > 1) {
       parts.push(
         section(`${layers.length} layers selected`, [
@@ -506,6 +508,22 @@ export class Inspector {
       default:
         return [];
     }
+  }
+
+  /** "Clear erased area", shown while the layer has been erased with "Erase selected layer". */
+  erasedRow(layer) {
+    const app = this.app;
+    const clear = button('Clear erased area', {
+      iconName: 'eraser',
+      title: 'Brings back everything erased from this layer',
+      onClick: () => app.store.apply('Clear erased area', (doc) => updateLayer(doc, layer.id, { erased: null })),
+    });
+    const element = row([clear], 'button-row--fill');
+    const sync = () => element.classList.toggle('hidden', !app.store.layer(layer.id)?.erased?.length);
+
+    this.bindings.push(sync);
+    sync();
+    return element;
   }
 
   /** "Remove background" button with live progress; `layerId` null means the base picture. */

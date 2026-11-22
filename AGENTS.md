@@ -40,4 +40,7 @@ compositor, effects, patterns), `src/view` + `src/tools` (canvas interaction), `
 * Theme compatibility: keep the CSS variable names in `styles/main.css` and class names like
   `.panel-fieldset`, `.app-button`, `.tool-section`, `#settingsButton`; user JSON themes target them.
 * localStorage keys (`rounds`, `masks`, `accessToken`, `imagemasker.*`) are shared with `old/v2/`; do not
-  change their format. v3 sessions and locally saved rounds (no upload) live in IndexedDB (`imagemasker-v3`, stores `sessions`, `assets`, `rounds`).
+  change their format. v3 sessions, locally saved rounds (no upload) and custom masks live in IndexedDB (`imagemasker-v3`, stores `sessions`, `assets`, `rounds`, `masks`).
+* Custom masks can be stored on media.picturega.me (picturegame-media-gateway, `src/masks.mjs`, deployed
+  separately on the NUC). `localStorage['imagemasker.mediaServer']` points the masker at a local gateway for testing.
+  Never send round pictures there: RIS uploads go to third-party hosts only.

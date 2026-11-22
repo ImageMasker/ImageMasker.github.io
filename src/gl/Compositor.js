@@ -98,12 +98,13 @@ export class Compositor {
     }
   }
 
-  strokeTexture(ctx, layer) {
-    const item = this.cached(`${layer.id}:strokes:${ctx.W}x${ctx.H}`);
+  /** Raster of a stroke list in document space; `field` is 'strokes' or 'erased'. */
+  strokeTexture(ctx, layer, field = 'strokes') {
+    const item = this.cached(`${layer.id}:${field}:${ctx.W}x${ctx.H}`);
 
     item.surface ??= new StrokeSurface();
 
-    if (item.surface.sync(layer.strokes, ctx.W, ctx.H, ctx.sx, ctx.sy) || !item.entry) {
+    if (item.surface.sync(layer[field], ctx.W, ctx.H, ctx.sx, ctx.sy) || !item.entry) {
       this.upload(item, item.surface.canvas);
     }
 
@@ -220,6 +221,29 @@ export class Compositor {
     return out;
   }
 
+  /**
+   * Takes the layer back out where it was erased with the "Erase selected layer" eraser: inside
+   * the erased area the result is what was below the layer (`acc`), elsewhere `next`.
+   */
+  eraseFrom(ctx, acc, next, layer) {
+    const out = this.glx.acquire(ctx.W, ctx.H);
+
+    this.glx.draw(this.glx.program('mix', MIX_SHADER), out, {
+      uDst: next,
+      uSrc: acc,
+      uCov: this.strokeTexture(ctx, layer, 'erased'),
+      uDocSize: ctx.docSize,
+      uInv: ctx.docInv,
+      uBoxPx: [ctx.W, ctx.H],
+      uKind: 4,
+      uFeather: 0,
+      uOpacity: 1,
+      uBlend: 0,
+    });
+    this.glx.release(next);
+    return out;
+  }
+
   /** Drops rasters that were not needed by the most recent frames (old scales, deleted layers). */
   prune() {
     for (const [key, item] of this.cache) {
@@ -269,6 +293,10 @@ export class Compositor {
 
       if (next !== acc && layer.clip?.points?.length >= 6) {
         next = this.clipTo(ctx, acc, next, layer);
+      }
+
+      if (next !== acc && layer.erased?.length) {
+        next = this.eraseFrom(ctx, acc, next, layer);
       }
 
       if (next !== acc) {

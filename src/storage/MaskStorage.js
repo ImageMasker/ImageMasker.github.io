@@ -18,6 +18,10 @@ export class MaskStorage {
     localStorage.setItem('masks', masks.join(';'));
   }
 
+  removeMask(url) {
+    localStorage.setItem('masks', this.getMasks().filter((entry) => entry !== url).join(';'));
+  }
+
   clearAll() {
     localStorage.removeItem('masks');
   }

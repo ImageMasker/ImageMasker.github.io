@@ -20,6 +20,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 2. Select Swirl or Fisheye, drag the ⊕ centre, then Reset centre.
 2. Pattern overlay: background transparent by default; Density adds repeats without thickening lines.
 3. "Limit to a region", move / resize / rotate the region, change shape, soft edge, magnify, reflect. "Apply to whole picture".
+4. *Custom*: add two image files (one large or GIF); they are kept after a reload. With a local gateway (`localStorage['imagemasker.mediaServer'] = 'http://localhost:8090'`), tick the private copy option, add a file, then ⋯ → *Share with the community…*; approve it in Settings → Masks with the moderator token; it appears under *Community masks* and can be added. Paste the mask key in another browser profile: *Get … masks* restores them.
 4. Add a pattern overlay, a classic mask, a flag mask and a custom URL mask. Change opacity, zoom, angle, blend mode, hue, invert, blur, noise, warp, tile.
 5. *Random mask* (header, Shift+R) a few times at each strength in its ▾ menu: each press swaps the previous random layers for new ones (one undo step each); Light is easy to recognise, Strong clearly harder. Untick kinds (only Glass, only Overlays): picks stay within them and don't repeat the last few.
 6. *Collage*: try several layouts, *Random cuts*, and *Draw cuts* (a long line slices across, a short one splits only its piece); undo a cut. Add pictures with *Choose…*, dropping files and pasting (clicking an empty piece only selects it); drag and scroll to move/zoom inside a piece; drag a picture onto another piece (or a tile in *Pictures* onto another tile) to swap them, into an empty piece to move it; *Shuffle*; change shape, gap and gap colour. *Create collage*: each picture gets its own mask clipped to its piece, Random mask rerolls them all. Pick a picture under *Masks → Add to* (or right-click a picture): library masks, overlays included, and Random mask then only touch that picture. A selected layer's *Collage piece → Show on* moves it to another picture or the whole collage.
@@ -28,6 +29,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 
 1. Brush with each brush type, then erase part of a stroke.
 2. Blur brush (G), pixel brush (X) and effect brush (Shift+G); change the amount slider; erase part of the painted area with the painted layer selected.
+2. Eraser in *Erase selected layer* mode: select an overlay mask in the Layers list and erase part of it; only that mask disappears there. Try 50% strength, undo, and *Clear erased area*.
 2. Eraser in *Reveal original* mode over a few stacked masks, then *Restore masks*. Add another mask afterwards: the revealed area must stay clear.
 3. Region tool with rectangle, ellipse and freehand.
 4. Rectangle and text. Double-click the text and edit it in place; try multiline, font, alignment, bold, italic, outline and shadow.
@@ -46,6 +48,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 ## Sharing
 
 1. Check RIS with a URL containing `?a=1&b=2`: every search site gets the full URL.
+1. With the computer's time zone set to London, *Check RIS* uploads to Litterbox (1 hour) and the Share tab's link stays empty. Elsewhere it uses the chosen host and falls back to Litterbox if that fails.
 1. Header *Check RIS* (Shift+F): a waiting tab opens at once, the picture uploads to the chosen host, then the ticked sites open (all by default). Untick some in the ▾ menu: only those open, also from the Share tab. Pressing it again without changes reuses the upload.
 1. *Crop RIS* (Shift+C): drag a box over part of the picture; only that part is uploaded and searched. Esc cancels.
 1. Remove background from the picture (nothing selected) and from a pasted image layer.

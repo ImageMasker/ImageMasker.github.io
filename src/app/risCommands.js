@@ -40,23 +40,42 @@ export class RisCommands {
   updateRisTitle() {
     const ids = this.risChecker.getEngineIds();
     const names = RIS_ENGINES.filter((engine) => ids.includes(engine.id)).map((engine) => engine.label);
-    const host = this.imageHosts.getHost().label;
+    const host = this.imageHosts.getHost(this.imageHosts.risHostId()).label;
 
     this.refs.ris.title = `Upload to ${host} and search ${names.length === RIS_ENGINES.length ? 'every RIS site' : names.join(', ')} (${this.keyboard?.getBinding('checkRis') ?? ''})`;
   }
 
-  /** Remembers which version of the picture an uploaded URL shows, so it is not uploaded twice. */
-  noteUpload(doc, options, url) {
-    this.lastUpload = { doc, key: JSON.stringify([options, this.imageHosts.getHostId()]), url };
+  /**
+   * Remembers which version of the picture an uploaded URL shows, so it is not uploaded twice.
+   * `keep` marks a lasting upload to the chosen host; RIS-only uploads may expire within the hour.
+   */
+  noteUpload(doc, options, url, { keep = true, hostId = this.imageHosts.getHostId() } = {}) {
+    this.lastUpload = { doc, key: JSON.stringify(options), hostId, keep, url, at: Date.now() };
   }
 
-  async uploadForRis() {
+  reusableUpload(doc, options, { keep }) {
+    const last = this.lastUpload;
+
+    if (!last?.url || last.doc !== doc || last.key !== JSON.stringify(options)) {
+      return null;
+    }
+
+    // A lasting upload also serves RIS checks; a one-hour one only RIS checks within the hour.
+    if (keep) {
+      return last.keep && last.hostId === this.imageHosts.getHostId() ? last.url : null;
+    }
+
+    return last.keep || Date.now() - last.at < 45 * 60 * 1000 ? last.url : null;
+  }
+
+  /** Uploads the picture to the chosen host and keeps the link (Save round with upload). */
+  async uploadPicture() {
     const doc = this.store.doc;
     const options = this.sharePanel.getExportOptions();
-    const key = JSON.stringify([options, this.imageHosts.getHostId()]);
+    const reused = this.reusableUpload(doc, options, { keep: true });
 
-    if (this.lastUpload?.doc === doc && this.lastUpload.key === key && this.lastUpload.url) {
-      return this.lastUpload.url;
+    if (reused) {
+      return reused;
     }
 
     const url = await this.imageHosts.upload(await this.exportBlob(options));
@@ -65,6 +84,34 @@ export class RisCommands {
     this.sharePanel.setUploaded(url);
     this.queueAutosave();
     return url;
+  }
+
+  /** Puts the picture online for a RIS check (Litterbox for an hour in the UK, see ImageHosts). */
+  async uploadForRis() {
+    const doc = this.store.doc;
+    const options = this.sharePanel.getExportOptions();
+    const reused = this.reusableUpload(doc, options, { keep: false });
+
+    if (reused) {
+      return reused;
+    }
+
+    const { url, hostId } = await this.imageHosts.uploadForRis(await this.exportBlob(options), (label) => this.notifyRisFallback(label));
+    const keep = hostId === this.imageHosts.getHostId();
+
+    this.noteUpload(doc, options, url, { keep, hostId });
+
+    // Only a lasting link belongs in the Share tab (for link posts and Copy YML).
+    if (keep) {
+      this.sharePanel.setUploaded(url);
+      this.queueAutosave();
+    }
+
+    return url;
+  }
+
+  notifyRisFallback(label) {
+    this.notify(`The upload to ${label} failed, so this RIS check uses Litterbox (the link expires in an hour).`, 'warning', 5200);
   }
 
   /** Uploads the current picture in the background and opens the ticked RIS sites with it. */
@@ -138,7 +185,7 @@ export class RisCommands {
           throw new Error('The area could not be encoded.');
         }
 
-        return this.imageHosts.upload(blob);
+        return (await this.imageHosts.uploadForRis(blob, (label) => this.notifyRisFallback(label))).url;
       });
     } catch (error) {
       console.error(error);

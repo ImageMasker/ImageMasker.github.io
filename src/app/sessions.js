@@ -23,7 +23,7 @@ export class SessionStore {
 
   async open() {
     if (!this.database) {
-      const opening = indexedDB.open(DB_NAME, 2);
+      const opening = indexedDB.open(DB_NAME, 3);
 
       opening.onupgradeneeded = () => {
         const database = opening.result;
@@ -31,8 +31,15 @@ export class SessionStore {
         if (!database.objectStoreNames.contains('sessions')) database.createObjectStore('sessions', { keyPath: 'id' });
         if (!database.objectStoreNames.contains('assets')) database.createObjectStore('assets');
         if (!database.objectStoreNames.contains('rounds')) database.createObjectStore('rounds', { keyPath: 'id' });
+        // Custom masks kept in this browser (see storage/CustomMasks.js).
+        if (!database.objectStoreNames.contains('masks')) database.createObjectStore('masks', { keyPath: 'id' });
       };
       this.database = await request(opening);
+      // Another tab with a newer version wants to upgrade: let it, and reopen on next use.
+      this.database.onversionchange = () => {
+        this.database?.close();
+        this.database = null;
+      };
     }
 
     return this.database;
@@ -154,6 +161,10 @@ function finite(value, fallback) {
   return Number.isFinite(number) ? number : fallback;
 }
 
+function validStroke(stroke) {
+  return Boolean(stroke) && Array.isArray(stroke.points) && stroke.points.length >= 2 && stroke.points.every(Number.isFinite);
+}
+
 /** Repairs anything a stale or hand-edited session might get wrong so the renderer never chokes. */
 export function normalizeDoc(raw, hasAsset) {
   const doc = createDoc(finite(raw?.width, 1), finite(raw?.height, 1));
@@ -179,6 +190,8 @@ export function normalizeDoc(raw, hasAsset) {
       skewX: finite(source.skewX, 0),
       skewY: finite(source.skewY, 0),
     };
+
+    layer.erased = Array.isArray(source.erased) && source.erased.length ? source.erased.filter(validStroke) : null;
 
     if (layer.type === 'image' || (layer.type === 'mask' && layer.source !== 'pattern')) {
       if (!hasAsset(layer.assetId)) {
