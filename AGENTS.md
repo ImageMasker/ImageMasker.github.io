@@ -19,6 +19,8 @@ There is no test runner or linter.
 * `dev/effect-sheet.html` compiles and renders every effect and pattern; shader errors are printed on
   the page and exposed as `window.__sheet.errors`. Check it after editing `src/gl/effects.js`,
   `src/gl/patterns.js` or `src/gl/glsl.js`.
+* `dev/tests.html` runs the core logic tests (model, undo, geometry, collage cuts) in the browser;
+  results are in `window.__tests`. Add a test there when you change `src/core` or `src/collage`.
 * For behaviour, drive the real page in a browser (headless Chromium needs WebGL2; on Windows
   `--use-angle=d3d11` works). The app instance is exposed as `window.imageMasker`
   (`store.doc`, `store.selection`, `stage`, `exportBlob()`, ...).
@@ -28,7 +30,7 @@ There is no test runner or linter.
 
 See `docs/architecture.md`. Short version: `src/core` (immutable document + undo), `src/gl` (WebGL2
 compositor, effects, patterns), `src/view` + `src/tools` (canvas interaction), `src/ui` + `src/app`
-(panels and commands). `old/v2/` and `old/` are archived previous versions: do not edit them.
+(panels and commands; App's commands are split over `src/app/*Commands.js` and mixed in). `old/v2/` and `old/` are archived previous versions: do not edit them.
 
 ## Conventions
 

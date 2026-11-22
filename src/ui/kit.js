@@ -46,6 +46,7 @@ const ICONS = {
   right: '<path d="M9 5l7 7-7 7"/>',
   chevronDown: '<path d="M6 9l6 6 6-6"/>',
   dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.010M15 15h.010M15 9h.010M9 15h.010M12 12h.010"/>',
+  share: '<circle cx="18" cy="5" r="2.500"/><circle cx="6" cy="12" r="2.500"/><circle cx="18" cy="19" r="2.500"/><path d="M8.200 10.800l7.600-4.400M8.200 13.200l7.600 4.400"/>',
   reddit: '<circle cx="12" cy="13" r="7"/><path d="M9.500 12.500h.010M14.500 12.500h.010M9.500 15.500c1.500 1 3.500 1 5 0M12 6l1-3 4 1"/>',
 };
 

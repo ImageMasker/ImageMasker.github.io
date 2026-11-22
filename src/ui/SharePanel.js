@@ -144,6 +144,20 @@ export class SharePanel {
       title: 'Copies the picture and opens the Reddit image post with the next round number in the title. Paste (Ctrl+V) there and submit.',
       onClick: () => this.copyAndPost(),
     });
+    // Phones (and some desktops) can hand the picture straight to another app, e.g. the Reddit app.
+    refs.share = button('Share image…', {
+      id: 'shareImage',
+      iconName: 'share',
+      title: 'Opens the share sheet with the picture, e.g. to post it from the Reddit app. The [Round N] title is copied too.',
+      onClick: () => this.shareImage(),
+    });
+    refs.share.classList.toggle('hidden', !app.canShareFiles());
+
+    if (app.canShareFiles() && window.matchMedia?.('(pointer: coarse)')?.matches) {
+      refs.share.classList.add('app-button--primary');
+      refs.copyPost.classList.remove('app-button--primary');
+    }
+
     refs.upload = button('Upload', { id: 'uploadbutton', iconName: 'upload', className: 'app-button--fill', onClick: () => this.upload() });
     refs.url = el('input', { id: 'uploadedUrl', type: 'text', 'aria-label': 'Uploaded image URL', placeholder: 'Uploaded image URL' });
     refs.copyUrl = button('Copy', { id: 'copyToClipboard', onClick: () => this.requireUrl('There is no uploaded URL to copy yet.') && app.copyText(refs.url.value, 'Image URL copied.') });
@@ -231,7 +245,7 @@ export class SharePanel {
       refs.title,
       refs.answer,
       refs.subreddit,
-      refs.copyPost,
+      ...(refs.share.classList.contains('app-button--primary') ? [refs.share, refs.copyPost] : [refs.copyPost, refs.share]),
       row([refs.save], 'button-row--fill'),
       refs.shareMessage.element,
       section('Upload to an image host', [refs.host.element, refs.hostNote, refs.imgbbBlock, refs.imgurBlock, refs.upload, refs.uploaded], { open: false }),
@@ -260,6 +274,20 @@ export class SharePanel {
 
       this.refs.shareMessage.set('The picture is on your clipboard. ', 'warning');
       this.refs.shareMessage.element.append(link);
+    }
+  }
+
+  async shareImage() {
+    const label = this.refs.share.querySelector('span:last-child');
+
+    label.textContent = 'Preparing…';
+
+    try {
+      const result = await this.app.shareImage(this.refs.title.value);
+
+      label.textContent = result === 'retry' ? 'Share now' : 'Share image…';
+    } catch {
+      label.textContent = 'Share image…';
     }
   }
 
@@ -422,7 +450,7 @@ export class SharePanel {
   sync() {
     const enabled = this.app.store.hasImage;
 
-    for (const control of [this.refs.upload, this.refs.copyPost, this.refs.save]) {
+    for (const control of [this.refs.upload, this.refs.copyPost, this.refs.share, this.refs.save]) {
       control.disabled = !enabled;
     }
 

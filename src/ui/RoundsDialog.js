@@ -415,6 +415,9 @@ export class RoundsDialog {
         title: local ? 'Copies the picture and opens the Reddit image post. Paste (Ctrl+V) there.' : 'Opens the Reddit submission with the link and title',
         onClick: () => this.post(round, title.value),
       }),
+      ...(local && app.canShareFiles()
+        ? [button('Share…', { iconName: 'share', title: 'Opens the share sheet with the picture, e.g. to post it from the Reddit app', onClick: () => app.shareImage(title.value, round.blob) })]
+        : []),
       button('Check RIS', { iconName: 'search', title: local ? 'Uploads it (it then keeps its link) and searches it' : 'Searches the saved link', onClick: () => this.checkRis(round, title.value, answer.value) }),
       ...(local ? [button('Upload', { iconName: 'upload', title: `Upload to ${app.imageHosts.getHost().label} and keep the link`, onClick: (event) => this.upload(round, title.value, answer.value, event.currentTarget) })] : []),
       ...(!local ? [button('Copy link', { iconName: 'clipboard', onClick: () => app.copyText(round.url, 'Image URL copied.') })] : []),

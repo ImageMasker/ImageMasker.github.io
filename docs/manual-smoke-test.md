@@ -3,9 +3,10 @@
 Lightweight browser checklist after larger changes. Serve the repository over HTTP
 (`python -m http.server 8000`), open `http://localhost:8000/` and keep the DevTools console open.
 
-## Shaders
+## Shaders and core tests
 
 1. Open `dev/effect-sheet.html`. No red error text, every tile shows a picture.
+2. Open `dev/tests.html`. Every test passes.
 
 ## Loading
 
@@ -49,6 +50,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 1. *Crop RIS* (Shift+C): drag a box over part of the picture; only that part is uploaded and searched. Esc cancels.
 1. Remove background from the picture (nothing selected) and from a pasted image layer.
 1. *Copy image & post to Reddit*: the Reddit image form opens with `[Round N] title`, CTRL+V attaches the picture.
+1. On a phone: *Share image…* opens the share sheet with the picture; pick Reddit, the title is on the clipboard. Same from a locally saved round in *Rounds*. On a browser that can't share files the button is hidden.
 1. Upload with each host (Imgur, ImgBB with a key, Litterbox), then Copy, Check RIS, Submit, Save round, Copy YML. Insert shows the subreddit field.
 2. *Rounds* (header): save with title and answer, kept in this browser and uploaded; save from URL. In *Saved rounds*: search, filter, show answers, open one, step with ← →, edit title/answer, post, Check RIS (a local round gets uploaded), upload, open in editor, download, delete.
 2. Right-click the picture: every menu item works and Escape closes it. CTRL+C right after moving a slider copies the picture.

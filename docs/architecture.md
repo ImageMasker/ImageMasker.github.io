@@ -5,7 +5,9 @@ Static site, native ES modules, no dependencies and no build step. WebGL2 is req
 ```text
 index.html, styles/          shell and theme (CSS variables, same names as v2 so JSON themes keep working)
 src/main.js                  boots App
-src/app/App.js               layout, shared services, every editing command
+src/app/App.js               layout, shared services, editing commands
+src/app/*Commands.js         more App commands, split by topic (collage, random mask, RIS, share,
+                             sessions) and mixed into App (mixin.js), so callers still use app.x()
 src/app/sessions.js          IndexedDB sessions, autosave, JSON export/import
 src/app/settingsUi.js        settings dialog (sessions, themes, shortcuts, about)
 src/app/backgroundRemoval.js background removal into a new layer
@@ -28,6 +30,7 @@ src/ui/                      panels (library, layers, properties, share, ...), R
                              dialogs (Modal.js), header ▾ menus (Dropdown.js)
 src/integrations/, storage/  image hosts, RIS, Reddit, background removal model, localStorage wrappers
 dev/effect-sheet.html        contact sheet of every effect/pattern + shader errors
+dev/tests.html               in-browser tests of the document model, undo, geometry and collage cuts
 old/v2/, old/                previous versions, kept working
 ```
 

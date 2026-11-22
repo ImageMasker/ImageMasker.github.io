@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ImageMasker tests</title>
+<style>
+  body { margin: 12px; font: 13px Arial, sans-serif; background: #f0ece4; color: #333; }
+  h1 { font-size: 16px; }
+  li { padding: 2px 0; }
+  .pass { color: #276b2e; }
+  .fail { color: #b00020; white-space: pre-wrap; font-family: monospace; }
+  #summary { font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>Core logic tests</h1>
+<p>Document model, undo history, geometry and collage cuts. No WebGL needed. Results are also in
+<code>window.__tests</code> (<code>{ passed, failed, failures }</code>).</p>
+<p id="summary">Running…</p>
+<ul id="results"></ul>
+<script type="module">
+import { apply, invert, layerMatrix, multiply, pointInPolygon } from '../src/core/geometry.js';
+import {
+  cloneLayer,
+  createDoc,
+  effectLayer,
+  findLayer,
+  imageLayer,
+  insertLayer,
+  insertMask,
+  moveLayer,
+  rebaseDoc,
+  rectLayer,
+  removeLayers,
+  resizeCanvas,
+  updateLayer,
+} from '../src/core/model.js';
+import { Store } from '../src/core/Store.js';
+import { area, COLLAGE_PRESETS, cutPieces, insetPiece, randomCuts } from '../src/collage/layout.js';
+
+const tests = [];
+const test = (name, run) => tests.push({ name, run });
+const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
+
+function assert(condition, message = 'assertion failed') {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+function equal(actual, expected, message = '') {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`${message}\n  expected ${JSON.stringify(expected)}\n  got      ${JSON.stringify(actual)}`.trim());
+  }
+}
+
+const asset = (width, height) => ({ id: `asset-${width}x${height}`, width, height });
+
+function pictureDoc(width = 400, height = 300) {
+  const doc = createDoc(width, height);
+
+  doc.layers.push(imageLayer(doc, asset(width, height), { name: 'Base image', base: true }));
+  return doc;
+}
+
+// ── document model ──────────────────────────────────────────────────────────
+
+test('edits return new documents and leave the old one alone', () => {
+  const doc = pictureDoc();
+  const rect = rectLayer(doc);
+  const added = insertLayer(doc, rect);
+  const moved = updateLayer(added, rect.id, { x: 10 });
+
+  equal(doc.layers.length, 1, 'original doc changed');
+  equal(added.layers.length, 2);
+  assert(findLayer(added, rect.id).x !== 10, 'updateLayer mutated the previous doc');
+  equal(findLayer(moved, rect.id).x, 10);
+  assert(moved.layers[0] === added.layers[0], 'untouched layers should be shared');
+});
+
+test('updateLayer with an unknown id returns the same document', () => {
+  const doc = pictureDoc();
+
+  assert(updateLayer(doc, 'nope', { x: 1 }) === doc);
+});
+
+test('updateLayer accepts a function patch', () => {
+  const doc = insertLayer(pictureDoc(), rectLayer(pictureDoc()));
+  const id = doc.layers[1].id;
+
+  equal(findLayer(updateLayer(doc, id, (layer) => ({ opacity: layer.opacity / 2 })), id).opacity, 0.5);
+});
+
+test('insertMask keeps "reveal original" layers on top', () => {
+  let doc = pictureDoc();
+  const reveal = effectLayer(doc, 'original', { coverage: 'paint' });
+  const blur = effectLayer(doc, 'blur');
+
+  doc = insertMask(doc, reveal);
+  doc = insertMask(doc, blur);
+  equal(doc.layers.map((layer) => layer.effectId ?? 'base'), ['base', 'blur', 'original']);
+});
+
+test('removeLayers and moveLayer', () => {
+  let doc = pictureDoc();
+  const a = rectLayer(doc);
+  const b = rectLayer(doc);
+
+  doc = insertLayer(insertLayer(doc, a), b);
+  equal(moveLayer(doc, b.id, 1).layers.map((layer) => layer.id).slice(1), [b.id, a.id]);
+  equal(moveLayer(doc, 'nope', 0), doc);
+  equal(removeLayers(doc, [a.id]).layers.map((layer) => layer.id).slice(1), [b.id]);
+});
+
+test('cloneLayer gets a new id, is never the base and names itself once', () => {
+  const base = pictureDoc().layers[0];
+  const copy = cloneLayer(base, 5);
+
+  assert(copy.id !== base.id);
+  equal([copy.base, copy.locked, copy.x - base.x, copy.name], [false, false, 5, 'Base image copy']);
+  equal(cloneLayer(copy).name, 'Base image copy');
+});
+
+test('resizeCanvas shifts layers and collage areas', () => {
+  let doc = pictureDoc(400, 300);
+  const rect = { ...rectLayer(doc), x: 100, y: 100, clip: { piece: 0, points: [0, 0, 200, 0, 200, 300] } };
+
+  doc = insertLayer(doc, rect);
+  doc = updateLayer(doc, doc.layers[0].id, { cells: [{ points: [0, 0, 200, 0, 200, 300, 0, 300] }] });
+
+  const next = resizeCanvas(doc, { x: 50, y: 20, width: 300, height: 200 });
+  const moved = findLayer(next, rect.id);
+
+  equal([next.width, next.height], [300, 200]);
+  equal([moved.x, moved.y], [50, 80]);
+  equal(moved.clip.points, [-50, -20, 150, -20, 150, 280]);
+  equal(next.layers[0].cells[0].points.slice(0, 2), [-50, -20]);
+});
+
+test('rebaseDoc fits full-picture effects to the new picture and drops drawings', () => {
+  let doc = pictureDoc(400, 300);
+
+  doc = insertMask(doc, effectLayer(doc, 'blur'));
+  doc = insertLayer(doc, { ...rectLayer(doc), type: 'drawing', strokes: [] });
+
+  const next = rebaseDoc(doc, asset(800, 600));
+
+  equal([next.width, next.height], [800, 600]);
+  equal(next.layers.map((layer) => layer.type), ['image', 'effect']);
+  equal([next.layers[1].w, next.layers[1].h, next.layers[1].x, next.layers[1].y], [800, 600, 400, 300]);
+});
+
+// ── undo history ────────────────────────────────────────────────────────────
+
+test('apply, undo and redo', () => {
+  const store = new Store();
+  const rect = rectLayer(pictureDoc());
+
+  store.reset(pictureDoc());
+  store.apply('Add', (doc) => insertLayer(doc, rect));
+  equal(store.doc.layers.length, 2);
+  store.undo();
+  equal(store.doc.layers.length, 1);
+  store.redo();
+  equal(store.doc.layers.length, 2);
+});
+
+test('a gesture (begin/set/end) is one undo step', () => {
+  const store = new Store();
+
+  store.reset(insertLayer(pictureDoc(), rectLayer(pictureDoc())));
+
+  const id = store.doc.layers[1].id;
+
+  store.begin();
+  for (let x = 1; x <= 5; x += 1) {
+    store.set(updateLayer(store.doc, id, { x }));
+  }
+  store.end('Drag');
+  equal(store.undoStack.length, 1);
+  store.undo();
+  assert(findLayer(store.doc, id).x !== 5);
+});
+
+test('a gesture that changes nothing adds no history', () => {
+  const store = new Store();
+
+  store.reset(pictureDoc());
+  store.begin();
+  store.end('Nothing');
+  equal(store.undoStack.length, 0);
+});
+
+test('a new edit clears redo, and undo restores the selection', () => {
+  const store = new Store();
+  const a = rectLayer(pictureDoc());
+
+  store.reset(pictureDoc());
+  store.apply('Add', (doc) => insertLayer(doc, a));
+  store.select([a.id]);
+  store.apply('Move', (doc) => updateLayer(doc, a.id, { x: 3 }));
+  store.undo();
+  equal(store.selection, [a.id]);
+  store.apply('Move again', (doc) => updateLayer(doc, a.id, { x: 4 }));
+  equal(store.redoStack.length, 0);
+});
+
+test('history is capped', () => {
+  const store = new Store();
+
+  store.reset(insertLayer(pictureDoc(), rectLayer(pictureDoc())));
+
+  const id = store.doc.layers[1].id;
+
+  for (let x = 0; x < 300; x += 1) {
+    store.apply('Move', (doc) => updateLayer(doc, id, { x }));
+  }
+
+  assert(store.undoStack.length < 300, `undo stack has ${store.undoStack.length} entries`);
+});
+
+// ── geometry ────────────────────────────────────────────────────────────────
+
+test('invert undoes a layer matrix', () => {
+  const layer = { x: 120, y: 80, w: 60, h: 40, rotation: 0.4, skewX: 0.1, skewY: -0.05 };
+  const m = layerMatrix(layer);
+  const back = multiply(invert(m), m);
+
+  [1, 0, 0, 1, 0, 0].forEach((value, index) => assert(near(back[index], value, 1e-9), `entry ${index} is ${back[index]}`));
+
+  const p = apply(m, 0.25, -0.3);
+  const q = apply(invert(m), p.x, p.y);
+
+  assert(near(q.x, 0.25, 1e-9) && near(q.y, -0.3, 1e-9));
+});
+
+test('pointInPolygon', () => {
+  const triangle = [0, 0, 10, 0, 0, 10];
+
+  assert(pointInPolygon(2, 2, triangle));
+  assert(!pointInPolygon(8, 8, triangle));
+  assert(!pointInPolygon(-1, 1, triangle));
+});
+
+// ── collage cuts ────────────────────────────────────────────────────────────
+
+test('every preset tiles the whole frame', () => {
+  for (const preset of COLLAGE_PRESETS) {
+    const pieces = cutPieces(900, 600, preset.cuts);
+    const total = pieces.reduce((sum, piece) => sum + Math.abs(area(piece)), 0);
+
+    assert(pieces.length >= 2, `${preset.id}: ${pieces.length} pieces`);
+    assert(near(total, 900 * 600, 1), `${preset.id}: pieces cover ${total}`);
+  }
+});
+
+test('grid of four gives four equal pieces in reading order', () => {
+  const pieces = cutPieces(800, 600, COLLAGE_PRESETS.find((preset) => preset.id === 'grid').cuts);
+
+  equal(pieces.length, 4);
+  pieces.forEach((piece) => assert(near(Math.abs(area(piece)), 120000, 1)));
+
+  const corners = pieces.map((piece) => [Math.min(...piece.map((p) => p.x)), Math.min(...piece.map((p) => p.y))]);
+
+  equal(corners, [[0, 0], [400, 0], [0, 300], [400, 300]]);
+});
+
+test('a short cut only splits the piece it is drawn in', () => {
+  const half = { a: { x: 0.5, y: -0.05 }, b: { x: 0.5, y: 1.05 } };
+  const short = { a: { x: 0.6, y: 0.5 }, b: { x: 0.9, y: 0.5 } };
+
+  equal(cutPieces(800, 600, [half, short]).length, 3);
+});
+
+test('insetPiece leaves gaps and drops pieces that vanish', () => {
+  const square = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }];
+  const inset = insetPiece(square, 10, 100, 100);
+
+  assert(near(Math.abs(area(inset)), 80 * 80, 1), `area ${Math.abs(area(inset))}`);
+  equal(insetPiece(square, 0, 100, 100), square);
+  equal(insetPiece(square, 120, 100, 100), null);
+});
+
+test('randomCuts gives 3-6 pieces with none tiny', () => {
+  for (let run = 0; run < 25; run += 1) {
+    const pieces = cutPieces(900, 600, randomCuts(900, 600));
+    const smallest = Math.min(...pieces.map((piece) => Math.abs(area(piece))));
+
+    assert(pieces.length >= 2 && pieces.length <= 6, `${pieces.length} pieces`);
+    assert(smallest > 900 * 600 * 0.03, `smallest piece ${smallest}`);
+  }
+});
+
+// ── runner ──────────────────────────────────────────────────────────────────
+
+const list = document.getElementById('results');
+const failures = [];
+
+for (const { name, run } of tests) {
+  const item = document.createElement('li');
+
+  try {
+    await run();
+    item.className = 'pass';
+    item.textContent = `✓ ${name}`;
+  } catch (error) {
+    failures.push({ name, message: error.message });
+    item.className = 'fail';
+    item.textContent = `✗ ${name}\n  ${error.message}`;
+  }
+
+  list.append(item);
+}
+
+const summary = document.getElementById('summary');
+
+summary.textContent = failures.length ? `${failures.length} of ${tests.length} failed` : `All ${tests.length} passed`;
+summary.className = failures.length ? 'fail' : 'pass';
+window.__tests = { passed: tests.length - failures.length, failed: failures.length, failures };
+</script>
+</body>
+</html>

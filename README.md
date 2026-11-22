@@ -40,6 +40,7 @@ Mouse wheel zooms, Space+drag or middle mouse pans. Hold **Original** in the hea
 The **Share** tab has the round title / answer and **Copy image & post to Reddit**, the main way to submit:
 
 * **Copy image & post to Reddit** – needs no image host. It copies the picture to the clipboard and opens Reddit's image post form for /r/PictureGame with `[Round N]` and your title filled in (N is the next round number from picturega.me). Press CTRL+V there to attach the picture and submit.
+* **Share image…** – shown where the browser can share files (most phones): opens the share sheet with the picture, so you can pick the Reddit app. `[Round N] title` goes along as the share text and is also copied, in case the app does not fill it in. If preparing a large picture takes too long the browser refuses; press it again and it shares straight away. Saved rounds kept in this browser have the same button.
 * **Upload to an image host** (collapsed) – uploads to the chosen host and gives you the image URL, *Copy*, *Check RIS* (opens Yandex, TinEye, Google Lens, Google and Bing – allow popups), *Submit to /r/PictureGame* (link post), *Save round* and *Copy YML*.
 
 Image hosts: **Imgur** (blocked in the UK since September 2025), **ImgBB** (works in the UK; needs a free API key from https://api.imgbb.com/, stored in your browser) and **Litterbox** (no account, but links expire after 72 hours, so only for short rounds). **Save round** works without uploading: if nothing was uploaded, the finished picture (a flattened JPEG, capped at 3840 px, usually a few hundred KB to ~2 MB, no layers or history) is kept in this browser with the title and answer. Saved rounds are listed at the bottom of the tab; a locally saved one can be posted with *Copy image & post*, uploaded later, opened in the editor or downloaded.
@@ -86,6 +87,7 @@ npx serve .
 Then open `http://localhost:8000`. There is nothing to build or install.
 
 * `dev/effect-sheet.html` renders every effect and pattern on one page and lists shader compile errors. Open it after touching `src/gl/effects.js` or `src/gl/patterns.js` (`?img=URL`, `?only=id,id` and `?size=480` are supported).
+* `dev/tests.html` runs the core logic tests (document model, undo, geometry, collage cuts).
 * [`docs/manual-smoke-test.md`](./docs/manual-smoke-test.md) is a browser checklist for larger changes.
 * [`docs/architecture.md`](./docs/architecture.md) explains how the pieces fit together and how to add an effect.
 
