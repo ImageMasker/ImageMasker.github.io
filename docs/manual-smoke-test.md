@@ -55,7 +55,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 1. Masks → Other → PictureGame: server emojis; they also work as stamps and in exports.
 1. *Add or remove emojis…* opens the picker: search ("cat"), category tabs, recently used; clicking toggles emojis on the mask. On a phone it is a sheet at the bottom of the screen.
 1. At 320 px wide and on desktop, no panel, menu or popup goes past the edge of the screen (header and tools wrap).
-1. *From the picture* on a bird photo picks bird emojis.
+1. *From the picture* on a bird photo picks bird emojis; a horse gets horses (🐴 🐎), not other farm animals.
 1. *Stamp* (M, below Crop): click stamps the emoji at the chosen size, dragging lays a trail (or, with *Dragging → Sizes and turns*, sizes one stamp). The eraser and undo work on stamps; the export has Twemoji stamps.
 1. A repeated image mask: Density spaces the copies without resizing them; *Wobble each* and *Warp each* change every copy differently, Shuffle reseeds them.
 1. Layers list ↳ on a mask above a separated subject: the mask only shows on the subject. Click again to undo.

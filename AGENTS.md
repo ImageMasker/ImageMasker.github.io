@@ -25,10 +25,13 @@ There is no test runner or linter.
   `--use-angle=d3d11` works). The app instance is exposed as `window.imageMasker`
   (`store.doc`, `store.selection`, `stage`, `exportBlob()`, ...).
 * `docs/manual-smoke-test.md` is the manual checklist.
-* Adding an emoji to the palette in `src/masks/emojiData.js` or changing a description means regenerating
+* Adding an emoji to the palette in `src/masks/emojiData.js` or to `src/masks/pictureEmojis.js` (the extra
+  emojis only "From the picture" chooses), or changing a description, means regenerating
   `src/masks/emojiEmbeddings.json` with `dev/emoji-embeddings.html` (the detector refuses an out-of-date file;
-  vectors are matched by emoji, so reordering entries or changing themes needs no regeneration). It can be
-  run headless: open the page and read `window.__emojiEmbeddings` once it is set (a few minutes).
+  vectors are matched by emoji, so reordering entries needs no regeneration). It can be run headless: open
+  the page and read `window.__emojiEmbeddings` once it is set (a few minutes). The selection rules in
+  `src/integrations/EmojiDetector.js` were tuned on ~120 photos; re-check a varied set of photos after changing
+  them or the descriptions (in the app, `imageMasker.emojiTools.suggest()` after loading a picture).
 * Emoji masks and stamps draw Twemoji or Google blob SVGs from jsDelivr (`src/raster/emojiArt.js`, pinned
   versions; style 0 Twemoji, 1 device font, 2 blobs) and fall back blobs → Twemoji → device font while they
   load or when offline; `exportBlob()` waits for them. The emoji picker (`src/ui/EmojiPicker.js`) loads the

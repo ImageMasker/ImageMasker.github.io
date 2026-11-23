@@ -27,7 +27,7 @@ src/gl/StrokeRenderer.js     brush, eraser and stamp strokes drawn on the GPU at
 src/raster/                  stroke and stamp geometry (strokes.js), Canvas 2D rasterisers for text, emoji mask
                              tiles and repeated image masks, and the emoji artwork they draw (emojiArt.js:
                              Twemoji, Google blobs, server)
-src/masks/                   classic, flag and emoji mask data (emojiData.js + emojiEmbeddings.json), the
+src/masks/                   classic, flag and emoji mask data (emojiData.js, pictureEmojis.js, emojiEmbeddings.json), the
                              PictureGame Discord server's emojis (discordEmojis.js, images/discord-emojis/)
 src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
 src/tools/                   select, brush/eraser/effect brush, region, crop, emoji stamp, crop-RIS box, text editor
@@ -37,7 +37,7 @@ src/integrations/, storage/  image hosts, RIS, Reddit, background removal model,
                              custom masks in IndexedDB (CustomMasks) and on media.picturega.me (MaskServer)
 dev/effect-sheet.html        contact sheet of every effect/pattern + shader errors
 dev/tests.html               in-browser tests of the document model, undo, geometry and collage cuts
-dev/emoji-embeddings.html    regenerates src/masks/emojiEmbeddings.json from the emoji palette
+dev/emoji-embeddings.html    regenerates src/masks/emojiEmbeddings.json from the emoji descriptions
 old/v2/, old/                previous versions, kept working
 ```
 
@@ -82,10 +82,13 @@ the image small in staggered rows; `rows` (Density) only spaces the copies, `siz
 `wobble` / `warp` tilt and bend each copy on its own. Community masks carry `use: 'image' | 'pattern'`,
 set by the moderator, which decides how a click adds them. *From the picture* (`app/emojiFromPicture.js`,
 `integrations/EmojiDetector.js`) runs MobileCLIP S0's image model (fp16; the 8-bit one gives wrong
-results) through Transformers.js from jsDelivr, and compares the picture with text embeddings of every
-palette description that were computed once and shipped in `masks/emojiEmbeddings.json`. It picks
-from one theme (birds, fruit, …: the third field of each palette entry), the one whose emojis match
-the picture best together, so a robin gets birds rather than an orange for its breast.
+results) through Transformers.js from jsDelivr, and compares the picture with text embeddings of about
+800 emoji descriptions (the palette without its symbols, plus `masks/pictureEmojis.js`) that were computed
+once and shipped in `masks/emojiEmbeddings.json`. The model sees a square, so it looks at both its own middle
+crop and the whole picture letterboxed on grey, averaged. It takes every emoji the picture matches at least a
+tenth as well as the best one (up to five), then, while it has fewer than three, close relatives of those
+(descriptions near each other in the text embedding: 🐴 → 🐎) that the picture still somewhat matches. Unrelated
+fillers are never added, so one clear subject can give one or two emojis.
 
 ## Rendering
 

@@ -12,16 +12,17 @@
 <body>
 <h1>Emoji embeddings for “From the picture”</h1>
 <p>
-  Runs the text half of MobileCLIP S0 over every description in <code>src/masks/emojiData.js</code> and
-  produces <code>src/masks/emojiEmbeddings.json</code>, so the masker only has to download the image half.
-  Regenerate it whenever the palette changes: open this page, wait, press <b>Download</b> and replace the file.
+  Runs the text half of MobileCLIP S0 over the description of every emoji “From the picture” can choose
+  (the palette in <code>src/masks/emojiData.js</code> and the extra emojis in <code>src/masks/pictureEmojis.js</code>)
+  and produces <code>src/masks/emojiEmbeddings.json</code>, so the masker only has to download the image half.
+  Regenerate it whenever either list changes: open this page, wait, press <b>Download</b> and replace the file.
   Downloads about 170 MB the first time. The result is also in <code>window.__emojiEmbeddings</code>.
 </p>
 <button id="download" disabled>Download emojiEmbeddings.json</button>
 <pre id="log"></pre>
 <textarea id="out" readonly></textarea>
 <script type="module">
-import { EMOJI_VOCAB } from '../src/masks/emojiData.js';
+import { PICTURE_VOCAB } from '../src/masks/pictureEmojis.js';
 import { EMOJI_MODEL, TRANSFORMERS_URL } from '../src/integrations/EmojiDetector.js';
 
 // A few phrasings per emoji, averaged: CLIP matches pictures better that way.
@@ -40,7 +41,7 @@ const model = await library.CLIPTextModelWithProjection.from_pretrained(EMOJI_MO
 let dims = 0;
 const vectors = [];
 
-for (const [index, entry] of EMOJI_VOCAB.entries()) {
+for (const [index, entry] of PICTURE_VOCAB.entries()) {
   const texts = TEMPLATES.map((template) => template.replace('{}', entry.name));
   const inputs = tokenizer(texts, { padding: 'max_length', truncation: true });
   const { text_embeds: embeds } = await model(inputs);
@@ -56,7 +57,7 @@ for (const [index, entry] of EMOJI_VOCAB.entries()) {
 
   vectors.push(Array.from(mean, (value) => value / norm));
 
-  if (index % 25 === 0) log(`${index + 1} / ${EMOJI_VOCAB.length}`);
+  if (index % 25 === 0) log(`${index + 1} / ${PICTURE_VOCAB.length}`);
 }
 
 // int8, scaled so the largest component of any vector still fits.
@@ -81,8 +82,8 @@ const json = JSON.stringify({
   templates: TEMPLATES,
   dims,
   scale,
-  emojis: EMOJI_VOCAB.map((entry) => entry.emoji),
-  names: EMOJI_VOCAB.map((entry) => entry.name),
+  emojis: PICTURE_VOCAB.map((entry) => entry.emoji),
+  names: PICTURE_VOCAB.map((entry) => entry.name),
   data: btoa(binary),
 });
 

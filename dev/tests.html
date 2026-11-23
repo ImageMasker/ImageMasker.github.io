@@ -43,6 +43,7 @@ import { Store } from '../src/core/Store.js';
 import { area, COLLAGE_PRESETS, cutPieces, insetPiece, randomCuts } from '../src/collage/layout.js';
 import { normalizeDoc } from '../src/app/sessions.js';
 import { EMOJI_VOCAB, SERVER_EMOJIS, splitEmojis } from '../src/masks/emojiData.js';
+import { PICTURE_VOCAB } from '../src/masks/pictureEmojis.js';
 import { normalizeRepeat } from '../src/raster/repeat.js';
 import { emojiArtUrl, twemojiCode } from '../src/raster/emojiArt.js';
 import { smoothedPath, STAMP_SPACING, strokeGeometry } from '../src/raster/strokes.js';
@@ -205,13 +206,19 @@ test('repeated image masks keep a valid setting through a session', () => {
   equal(normalizeRepeat({ wobble: 250, warp: -3, size: 1000 }), { rows: 12, size: 300, stagger: 50, wobble: 100, warp: 0, seed: 0.5 });
 });
 
-test('every palette emoji is listed once, with a theme', () => {
+test('every palette emoji is listed once, with a description', () => {
   equal(new Set(EMOJI_VOCAB.map((entry) => entry.emoji)).size, EMOJI_VOCAB.length);
-  assert(EMOJI_VOCAB.every((entry) => typeof entry.theme === 'string' && entry.theme), 'an emoji has no theme');
-  // Every theme has something that is not just a part to pick first.
-  for (const theme of new Set(EMOJI_VOCAB.map((entry) => entry.theme))) {
-    assert(EMOJI_VOCAB.some((entry) => entry.theme === theme && !entry.part), `${theme} only has parts`);
-  }
+  assert(EMOJI_VOCAB.every((entry) => typeof entry.name === 'string' && entry.name), 'an emoji has no description');
+});
+
+test('"From the picture" knows each emoji once and has no symbols or shapes', () => {
+  const plain = (emoji) => emoji.replace(/️/g, '');
+  const segments = new Intl.Segmenter();
+
+  equal(new Set(PICTURE_VOCAB.map((entry) => plain(entry.emoji))).size, PICTURE_VOCAB.length);
+  assert(PICTURE_VOCAB.every((entry) => [...segments.segment(entry.emoji)].length === 1 && entry.name), 'one emoji and a description each');
+  assert(!PICTURE_VOCAB.some((entry) => ['🔴', '❤️', '💯'].includes(entry.emoji)), 'symbols left out');
+  assert(['🐴', '🐎', '🏇', '🐐'].every((emoji) => PICTURE_VOCAB.some((entry) => entry.emoji === emoji)), 'has the extra animals');
 });
 
 test('emoji masks and stamps: Twemoji names, used emojis, stamps restored', () => {
