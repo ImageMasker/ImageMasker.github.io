@@ -87,10 +87,15 @@ async function fetchImage(url) {
   if (!response.ok) throw new Error(`error ${response.status}`);
 
   // The SVGs have only a viewBox (or a 100% size); a fixed size makes them drawable on a canvas in
-  // every browser.
-  const svg = (await response.text()).replace(/<svg\b[^>]*>/, (tag) =>
-    tag.replace(/\s(width|height)="[^"]*"/g, '').replace(/^<svg/, `<svg width="${SVG_SIZE}" height="${SVG_SIZE}"`)
-  );
+  // every browser. Some have a pixel size and no viewBox: that size becomes the viewBox, or the
+  // artwork would stay that small in the corner of the bigger box.
+  const svg = (await response.text()).replace(/<svg\b[^>]*>/, (tag) => {
+    const width = tag.match(/\swidth="([\d.]+)(?:px)?"/)?.[1];
+    const height = tag.match(/\sheight="([\d.]+)(?:px)?"/)?.[1];
+    const viewBox = /\sviewBox=/.test(tag) || !width || !height ? '' : ` viewBox="0 0 ${width} ${height}"`;
+
+    return tag.replace(/\s(width|height)="[^"]*"/g, '').replace(/^<svg/, `<svg width="${SVG_SIZE}" height="${SVG_SIZE}"${viewBox}`);
+  });
   const objectUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
   const image = new Image();
 
