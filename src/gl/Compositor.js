@@ -6,7 +6,7 @@
 import { apply, invert, layerMatrix, toMat3 } from '../core/geometry.js';
 import { emojiSignature, renderEmojiTile } from '../raster/emoji.js';
 import { renderRepeatTile, repeatSignature } from '../raster/repeat.js';
-import { StrokeSurface } from '../raster/strokes.js';
+import { drawEmoji, emojiArtState } from '../raster/emojiArt.js';
 import { measureText, renderText, textSignature } from '../raster/text.js';
 import { effectShader, getEffect, hexToVec3, paramUniforms } from './effects.js';
 import {
@@ -21,12 +21,10 @@ import {
   layerShader,
 } from './glsl.js';
 import { getPattern, patternSource, patternUniforms } from './patterns.js';
+import { StrokeRenderer } from './StrokeRenderer.js';
 
 const NONE = [0, 0, 0, 0];
 const COVERAGE_KIND = { full: 0, rect: 1, ellipse: 2, polygon: 3, paint: 4 };
-// Full-size stroke rasters kept between exports (pixels of all of them together, ~4 bytes each).
-// Drawing hundreds of brush strokes at full size takes long enough to make Download lag.
-const KEEP_STROKE_PIXELS = 40e6;
 
 export class Compositor {
   constructor(glx, assets) {
@@ -35,6 +33,7 @@ export class Compositor {
     this.textures = new Map();
     this.cache = new Map();
     this.frame = 0;
+    this.strokes = new StrokeRenderer(glx);
 
     glx.onRestore(() => {
       this.textures.clear();
@@ -103,16 +102,36 @@ export class Compositor {
     }
   }
 
-  /** Raster of a stroke list in document space; `field` is 'strokes' or 'erased'. */
-  strokeTexture(ctx, layer, field = 'strokes') {
-    const item = this.cached(`${layer.id}:${field}:${ctx.W}x${ctx.H}`);
+  /**
+   * A stroke list drawn at this render's size, in document space; `field` is 'strokes' or
+   * 'erased'. Returns a pooled target: release it once it has been used.
+   */
+  strokeTarget(ctx, layer, field = 'strokes') {
+    return this.strokes.render(this.cached(`${layer.id}:${field}`), layer[field], ctx, (emoji, style, px) => this.stampTexture(emoji, style, px));
+  }
 
-    item.surface ??= new StrokeSurface();
-    item.layerId = layer.id;
-    item.size = `${ctx.W}x${ctx.H}`;
+  /**
+   * An emoji for the stamps at about the size it is shown, so it stays sharp in an export. It is
+   * drawn with drawEmoji at half the texture's side, centred, so emojis from the device's font
+   * that run a little wide still fit.
+   */
+  stampTexture(emoji, style, px) {
+    const side = Math.min(2048, Math.max(64, 2 ** Math.ceil(Math.log2(Math.max(1, px * 2)))));
+    const sig = emojiArtState([emoji], style);
+    const item = this.cached(`stamp:${style}:${emoji}:${side}`);
 
-    if (item.surface.sync(layer[field], ctx.W, ctx.H, ctx.sx, ctx.sy) || !item.entry) {
-      this.upload(item, item.surface.canvas);
+    if (item.sig !== sig) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      const gl = this.glx.gl;
+
+      canvas.width = canvas.height = side;
+      context.translate(side / 2, side / 2);
+      drawEmoji(context, emoji, side / 2, style);
+      this.upload(item, canvas);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      item.sig = sig;
     }
 
     return item.entry;
@@ -275,11 +294,12 @@ export class Compositor {
    */
   eraseFrom(ctx, acc, next, layer) {
     const out = this.glx.acquire(ctx.W, ctx.H);
+    const erased = this.strokeTarget(ctx, layer, 'erased');
 
     this.glx.draw(this.glx.program('mix', MIX_SHADER), out, {
       uDst: next,
       uSrc: acc,
-      uCov: this.strokeTexture(ctx, layer, 'erased'),
+      uCov: erased,
       uDocSize: ctx.docSize,
       uInv: ctx.docInv,
       uBoxPx: [ctx.W, ctx.H],
@@ -288,6 +308,7 @@ export class Compositor {
       uOpacity: 1,
       uBlend: 0,
     });
+    this.glx.release(erased);
     this.glx.release(next);
     return out;
   }
@@ -338,28 +359,12 @@ export class Compositor {
     return shape;
   }
 
-  /**
-   * Drops rasters that were not needed by the most recent frames (old scales, deleted layers).
-   * Stroke rasters at the document's full size stay (in memory, not on the GPU), so the next
-   * export only has to draw the strokes added since.
-   */
-  prune(doc = null) {
-    const layers = new Set(doc?.layers.map((layer) => layer.id));
-    const fullSize = doc ? `${doc.width}x${doc.height}` : '';
-    let kept = 0;
-
-    for (const [key, item] of [...this.cache].sort((a, b) => b[1].used - a[1].used)) {
-      if (item.used >= this.frame - 2) {
-        continue;
-      }
-
-      this.glx.deleteTexture(item.entry);
-      item.entry = null;
-
-      if (item.surface && item.size === fullSize && layers.has(item.layerId) && kept + item.surface.keptPixels <= KEEP_STROKE_PIXELS) {
-        item.surface.shrink();
-        kept += item.surface.keptPixels;
-      } else {
+  /** Drops rasters that were not needed by the most recent frames (old scales, deleted layers). */
+  prune() {
+    for (const [key, item] of this.cache) {
+      if (item.used < this.frame - 2) {
+        item.dispose?.();
+        this.glx.deleteTexture(item.entry);
         this.cache.delete(key);
       }
     }
@@ -539,20 +544,19 @@ export class Compositor {
           program: this.textureProgram(),
           uniforms: { uSrc: this.textTexture(ctx, layer), uWrap: 0, uInv, uBoxPx: boxPx, uFx: [0, 0, 0, 1], uWarp: NONE },
         };
-      case 'drawing':
-        return layer.strokes?.length
-          ? {
-              program: this.textureProgram(),
-              uniforms: {
-                uSrc: this.strokeTexture(ctx, layer),
-                uWrap: 0,
-                uInv: ctx.docInv,
-                uBoxPx: [ctx.W, ctx.H],
-                uFx: NONE,
-                uWarp: NONE,
-              },
-            }
-          : null;
+      case 'drawing': {
+        if (!layer.strokes?.length) {
+          return null;
+        }
+
+        const strokes = this.strokeTarget(ctx, layer);
+
+        return {
+          program: this.textureProgram(),
+          temp: strokes,
+          uniforms: { uSrc: strokes, uWrap: 0, uInv: ctx.docInv, uBoxPx: [ctx.W, ctx.H], uFx: NONE, uWarp: NONE },
+        };
+      }
       default:
         return null;
     }
@@ -599,6 +603,7 @@ export class Compositor {
       glx.draw(spec.program, out, { ...spec.uniforms, ...common });
     }
 
+    glx.release(spec.temp);
     return out;
   }
 
@@ -607,13 +612,14 @@ export class Compositor {
     const kind = COVERAGE_KIND[layer.coverage] ?? 0;
     const region = kind >= 1 && kind <= 3;
     let uCov = acc;
+    let painted = null;
 
     if (kind === 4) {
       if (!layer.strokes?.length) {
         return acc;
       }
 
-      uCov = this.strokeTexture(ctx, layer);
+      uCov = painted = this.strokeTarget(ctx, layer);
     } else if (kind === 3) {
       uCov = this.polygonTexture(ctx, layer);
     }
@@ -665,6 +671,8 @@ export class Compositor {
       uOpacity: layer.opacity,
       uBlend: blendIndex(layer.blend),
     });
+    glx.release(painted);
+
     if (!reveal) {
       glx.release(processed);
     }

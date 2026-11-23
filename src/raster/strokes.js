@@ -1,10 +1,9 @@
-// Vector brush strokes rasterised with Canvas 2D.
+// Brush strokes and stamps as geometry for the GPU (gl/StrokeRenderer.js draws it).
 // A stroke is { tool: 'brush' | 'eraser', type, color, size, opacity, seed, points: [x0, y0, x1, y1, ...] }
 // with points in document pixels. A stamp stroke is { tool: 'stamp', emoji, size, opacity, angle,
 // spin, style, seed, points }: the emoji drawn at the first point and then every `size × spacing`
-// along the path (stamp tool).
-
-import { drawEmoji, emojiArtVersion } from './emojiArt.js';
+// along the path (stamp tool). Smooth and marker strokes curve through the midpoints between
+// their points; the eraser's strokes take pixels away.
 
 /** How far apart stamps are along a drag, in stamp sizes. */
 export const STAMP_SPACING = 1.1;
@@ -16,7 +15,7 @@ export const BRUSH_TYPES = [
   { id: 'spray', label: 'Spray' },
 ];
 
-function seededRandom(seed) {
+export function seededRandom(seed) {
   let state = (Math.floor((seed || 0.5) * 2147483646) % 2147483646) + 1;
 
   return () => {
@@ -25,19 +24,8 @@ function seededRandom(seed) {
   };
 }
 
-function tracePath(ctx, points) {
-  ctx.beginPath();
-  ctx.moveTo(points[0], points[1]);
-
-  for (let i = 2; i < points.length - 2; i += 2) {
-    ctx.quadraticCurveTo(points[i], points[i + 1], (points[i] + points[i + 2]) / 2, (points[i + 1] + points[i + 3]) / 2);
-  }
-
-  ctx.lineTo(points[points.length - 2], points[points.length - 1]);
-}
-
 /** Calls visit(x, y) at evenly spaced positions along the polyline. */
-function walk(points, spacing, visit) {
+export function walk(points, spacing, visit) {
   let carry = 0;
 
   visit(points[0], points[1]);
@@ -64,175 +52,132 @@ function walk(points, spacing, visit) {
   }
 }
 
-function drawStamps(ctx, stroke) {
-  const size = Math.max(1, stroke.size || 1);
-  const random = seededRandom(stroke.seed);
-  const base = ((stroke.angle || 0) * Math.PI) / 180;
-  const spin = ((stroke.spin || 0) * Math.PI) / 180;
+/**
+ * How far a smoothed piece may stray from the true curve, in document pixels. Small enough that
+ * an export at full size can't show the corners.
+ */
+const CURVE_TOLERANCE = 0.2;
+const geometryCache = new WeakMap();
 
-  ctx.save();
-  ctx.globalAlpha = Math.max(0, Math.min(1, stroke.opacity ?? 1));
-  walk(stroke.points, size * STAMP_SPACING, (x, y) => {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(base + (random() * 2 - 1) * spin);
-    drawEmoji(ctx, String(stroke.emoji || '🙂').slice(0, 40), size, stroke.style ?? 0);
-    ctx.restore();
-  });
-  ctx.restore();
+/** Pushes the quadratic curve a → c → b as line pieces (flattened to CURVE_TOLERANCE). */
+function flattenQuad(out, ax, ay, cx, cy, bx, by) {
+  const deviation = Math.hypot(ax - 2 * cx + bx, ay - 2 * cy + by) / 4;
+  const pieces = Math.max(1, Math.min(64, Math.ceil(Math.sqrt(deviation / CURVE_TOLERANCE))));
+
+  for (let step = 1; step <= pieces; step += 1) {
+    const t = step / pieces;
+    const u = 1 - t;
+
+    out.push(u * u * ax + 2 * u * t * cx + t * t * bx, u * u * ay + 2 * u * t * cy + t * t * by);
+  }
 }
 
-export function drawStroke(ctx, stroke) {
-  const points = stroke.points;
+/** A stroke's path as a polyline: from the first point through the midpoints, curving at each point, to the last. */
+export function smoothedPath(points) {
+  const out = [points[0], points[1]];
+  let x = points[0];
+  let y = points[1];
 
-  if (!points || points.length < 2) {
-    return;
+  for (let i = 2; i < points.length - 2; i += 2) {
+    const mx = (points[i] + points[i + 2]) / 2;
+    const my = (points[i + 1] + points[i + 3]) / 2;
+
+    flattenQuad(out, x, y, points[i], points[i + 1], mx, my);
+    x = mx;
+    y = my;
   }
 
-  if (stroke.tool === 'stamp') {
-    drawStamps(ctx, stroke);
-    return;
-  }
-
-  const erase = stroke.tool === 'eraser';
-  const size = Math.max(0.5, stroke.size || 1);
-  const type = erase ? 'smooth' : stroke.type || 'smooth';
-  const color = erase ? '#000000' : stroke.color || '#000000';
-
-  ctx.save();
-  ctx.globalCompositeOperation = erase ? 'destination-out' : 'source-over';
-  ctx.globalAlpha = Math.max(0, Math.min(1, stroke.opacity ?? 1));
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-
-  if (type === 'dotted') {
-    ctx.beginPath();
-    walk(points, size * 1.7, (x, y) => {
-      ctx.moveTo(x + size / 2, y);
-      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-    });
-    ctx.fill();
-  } else if (type === 'spray') {
-    const random = seededRandom(stroke.seed);
-    const dot = Math.max(0.6, size * 0.07);
-
-    ctx.beginPath();
-    walk(points, Math.max(1, size * 0.3), (x, y) => {
-      for (let i = 0; i < 7; i += 1) {
-        const angle = random() * Math.PI * 2;
-        const radius = Math.sqrt(random()) * size * 1.2;
-        const px = x + Math.cos(angle) * radius;
-        const py = y + Math.sin(angle) * radius;
-
-        ctx.moveTo(px + dot, py);
-        ctx.arc(px, py, dot, 0, Math.PI * 2);
-      }
-    });
-    ctx.fill();
-  } else if (points.length === 2) {
-    ctx.beginPath();
-    ctx.arc(points[0], points[1], size / 2, 0, Math.PI * 2);
-    ctx.fill();
-  } else {
-    const marker = type === 'marker';
-
-    ctx.lineWidth = marker ? size * 1.3 : size;
-    ctx.lineCap = marker ? 'square' : 'round';
-    ctx.lineJoin = marker ? 'bevel' : 'round';
-    tracePath(ctx, points);
-    ctx.stroke();
-  }
-
-  ctx.restore();
+  out.push(points[points.length - 2], points[points.length - 1]);
+  return out;
 }
 
 /**
- * Cached raster of a stroke list. All strokes but the last live in `base`, so the stroke being
- * drawn (or the most recent one) can be redrawn cheaply on every pointer move.
+ * A stroke as shapes for the GPU, in document pixels so one geometry serves every scale:
+ * `pieces` holds [x0, y0, x1, y1, radius, ends] per line piece (a dot is a piece of length 0;
+ * `ends` is 1 for a square start, 2 for a square end, 3 for both: the marker's two ends, the
+ * rest is round), `stamps` holds [x, y, size, angle] per stamp. Cached per
+ * stroke object; strokes are never changed in place except the one being drawn, which gets a new
+ * object on every move.
  */
-export class StrokeSurface {
-  constructor() {
-    this.base = document.createElement('canvas');
-    this.canvas = document.createElement('canvas');
-    this.refs = [];
-    this.last = null;
-    this.key = '';
+export function strokeGeometry(stroke) {
+  let geometry = geometryCache.get(stroke);
+
+  if (geometry) {
+    return geometry;
   }
 
-  /** Returns true when the pixels in `canvas` changed. */
-  sync(strokes, width, height, scaleX, scaleY = scaleX) {
-    // Emoji artwork arriving changes how stamps look, so it redraws everything (rare).
-    const key = `${width}x${height}@${scaleX},${scaleY}#${strokes.some((stroke) => stroke.tool === 'stamp') ? emojiArtVersion() : 0}`;
-    let dirty = false;
+  const points = stroke.points ?? [];
+  const pieces = [];
+  const stamps = [];
+  const piece = (x0, y0, x1, y1, radius, square = 0) => pieces.push(x0, y0, x1, y1, radius, square);
 
-    if (key !== this.key) {
-      this.base.width = this.canvas.width = width;
-      this.base.height = this.canvas.height = height;
-      this.key = key;
-      this.refs = [];
-      this.last = null;
-      dirty = true;
-    } else if (this.canvas.width !== width || this.canvas.height !== height) {
-      // Shrunk while kept for the next export: only the copy with the last stroke needs redoing.
-      this.canvas.width = width;
-      this.canvas.height = height;
-      this.last = null;
-      dirty = true;
+  if (points.length < 2) {
+    // Nothing to draw.
+  } else if (stroke.tool === 'stamp') {
+    const size = Math.max(1, stroke.size || 1);
+    const random = seededRandom(stroke.seed);
+    const base = ((stroke.angle || 0) * Math.PI) / 180;
+    const spin = ((stroke.spin || 0) * Math.PI) / 180;
+
+    walk(points, size * STAMP_SPACING, (x, y) => stamps.push(x, y, size, base + (random() * 2 - 1) * spin));
+  } else {
+    const size = Math.max(0.5, stroke.size || 1);
+    const type = stroke.tool === 'eraser' ? 'smooth' : stroke.type || 'smooth';
+
+    if (type === 'dotted') {
+      walk(points, size * 1.7, (x, y) => piece(x, y, x, y, size / 2));
+    } else if (type === 'spray') {
+      const random = seededRandom(stroke.seed);
+      const dot = Math.max(0.6, size * 0.07);
+
+      walk(points, Math.max(1, size * 0.3), (x, y) => {
+        for (let i = 0; i < 7; i += 1) {
+          const angle = random() * Math.PI * 2;
+          const radius = Math.sqrt(random()) * size * 1.2;
+          const px = x + Math.cos(angle) * radius;
+          const py = y + Math.sin(angle) * radius;
+
+          piece(px, py, px, py, dot);
+        }
+      });
+    } else if (points.length === 2) {
+      piece(points[0], points[1], points[0], points[1], size / 2);
+    } else {
+      const marker = type === 'marker';
+      const radius = (marker ? size * 1.3 : size) / 2;
+      const path = smoothedPath(points);
+
+      for (let i = 2; i < path.length; i += 2) {
+        piece(path[i - 2], path[i - 1], path[i], path[i + 1], radius, marker ? (i === 2 ? 1 : 0) | (i === path.length - 2 ? 2 : 0) : 0);
+      }
     }
-
-    const committed = Math.max(0, strokes.length - 1);
-    const baseCtx = this.base.getContext('2d');
-    let shared = 0;
-
-    while (shared < this.refs.length && shared < committed && this.refs[shared] === strokes[shared]) {
-      shared += 1;
-    }
-
-    if (shared < this.refs.length) {
-      baseCtx.setTransform(1, 0, 0, 1, 0, 0);
-      baseCtx.clearRect(0, 0, width, height);
-      this.refs = [];
-      shared = 0;
-      dirty = true;
-    }
-
-    baseCtx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
-
-    for (let index = shared; index < committed; index += 1) {
-      drawStroke(baseCtx, strokes[index]);
-      this.refs.push(strokes[index]);
-      dirty = true;
-    }
-
-    const last = strokes[strokes.length - 1] ?? null;
-
-    if (!dirty && last === this.last) {
-      return false;
-    }
-
-    const ctx = this.canvas.getContext('2d');
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(this.base, 0, 0);
-
-    if (last) {
-      ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
-      drawStroke(ctx, last);
-    }
-
-    this.last = last;
-    return true;
   }
 
-  /** Frees the copy with the last stroke and keeps `base`, so a later sync only adds new strokes. */
-  shrink() {
-    this.canvas.width = this.canvas.height = 0;
-    this.last = null;
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  const grow = (x, y, reach) => {
+    x0 = Math.min(x0, x - reach);
+    y0 = Math.min(y0, y - reach);
+    x1 = Math.max(x1, x + reach);
+    y1 = Math.max(y1, y + reach);
+  };
+
+  for (let i = 0; i < pieces.length; i += 6) {
+    // A square end reaches √2 × radius out at its corners.
+    const reach = pieces[i + 4] * (pieces[i + 5] ? Math.SQRT2 : 1);
+
+    grow(pieces[i], pieces[i + 1], reach);
+    grow(pieces[i + 2], pieces[i + 3], reach);
   }
 
-  /** Pixels held while shrunk. */
-  get keptPixels() {
-    return this.base.width * this.base.height;
+  for (let i = 0; i < stamps.length; i += 4) {
+    // Emoji drawn with the device's font can be a little wider than the stamp size.
+    grow(stamps[i], stamps[i + 1], stamps[i + 2]);
   }
+
+  geometry = { pieces: new Float32Array(pieces), stamps: new Float32Array(stamps), bounds: x0 <= x1 ? [x0, y0, x1, y1] : null };
+  geometryCache.set(stroke, geometry);
+  return geometry;
 }

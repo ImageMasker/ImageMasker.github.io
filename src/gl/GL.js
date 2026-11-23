@@ -89,7 +89,8 @@ export class GL {
     return shader;
   }
 
-  program(key, fragmentSource) {
+  /** A cached program; the vertex shader defaults to the full-screen triangle. */
+  program(key, fragmentSource, vertexSource = VERTEX_SHADER) {
     const cached = this.programs.get(key);
 
     if (cached) {
@@ -98,7 +99,7 @@ export class GL {
 
     const gl = this.gl;
     const handle = gl.createProgram();
-    const vertex = this.compile(gl.VERTEX_SHADER, VERTEX_SHADER);
+    const vertex = this.compile(gl.VERTEX_SHADER, vertexSource);
     const fragment = this.compile(
       gl.FRAGMENT_SHADER,
       typeof fragmentSource === 'function' ? fragmentSource() : fragmentSource
@@ -140,6 +141,13 @@ export class GL {
 
   /** Runs a full-screen pass. `target` is a pooled render target, or null for the canvas. */
   draw(program, target, values = {}) {
+    this.use(program, target, values);
+    this.gl.bindVertexArray(this.vao);
+    this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+  }
+
+  /** Binds `target` and `program` and sets the uniforms, for passes that draw their own geometry. */
+  use(program, target, values = {}) {
     const gl = this.gl;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.fbo : null);
@@ -150,7 +158,6 @@ export class GL {
       target ? target.height : gl.drawingBufferHeight
     );
     gl.useProgram(program.handle);
-    gl.bindVertexArray(this.vao);
 
     let unit = 0;
 
@@ -189,8 +196,6 @@ export class GL {
           break;
       }
     }
-
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
   createTexture(width, height, { filter = this.gl.LINEAR, wrap = this.gl.MIRRORED_REPEAT } = {}) {

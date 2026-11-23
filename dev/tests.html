@@ -14,7 +14,7 @@
 </head>
 <body>
 <h1>Core logic tests</h1>
-<p>Document model, undo history, geometry and collage cuts. No WebGL needed. Results are also in
+<p>Document model, undo history, geometry, collage cuts and stroke shapes. No WebGL needed. Results are also in
 <code>window.__tests</code> (<code>{ passed, failed, failures }</code>).</p>
 <p id="summary">Running…</p>
 <ul id="results"></ul>
@@ -45,6 +45,7 @@ import { normalizeDoc } from '../src/app/sessions.js';
 import { EMOJI_VOCAB, SERVER_EMOJIS, splitEmojis } from '../src/masks/emojiData.js';
 import { normalizeRepeat } from '../src/raster/repeat.js';
 import { emojiArtUrl, twemojiCode } from '../src/raster/emojiArt.js';
+import { smoothedPath, STAMP_SPACING, strokeGeometry } from '../src/raster/strokes.js';
 import { restoreToolState } from '../src/app/toolState.js';
 import { Compositor } from '../src/gl/Compositor.js';
 
@@ -412,6 +413,77 @@ test('randomCuts gives 3-6 pieces with none tiny', () => {
     assert(pieces.length >= 2 && pieces.length <= 6, `${pieces.length} pieces`);
     assert(smallest > 900 * 600 * 0.03, `smallest piece ${smallest}`);
   }
+});
+
+// ── stroke shapes ───────────────────────────────────────────────────────────
+
+const stroke = (extra) => ({ tool: 'brush', type: 'smooth', color: '#000000', size: 10, opacity: 1, seed: 0.4, ...extra });
+const pieceList = (geometry) => Array.from({ length: geometry.pieces.length / 6 }, (_, i) => [...geometry.pieces.subarray(i * 6, i * 6 + 6)]);
+
+test('a smooth stroke is one unbroken path from its first point to its last', () => {
+  const points = [0, 0, 100, 0, 100, 100, 200, 100];
+  const pieces = pieceList(strokeGeometry(stroke({ points })));
+
+  assert(near(pieces[0][0], 0) && near(pieces[0][1], 0), 'starts at the first point');
+  assert(near(pieces.at(-1)[2], 200, 1e-3) && near(pieces.at(-1)[3], 100, 1e-3), 'ends at the last point');
+  assert(pieces.every((piece, i) => i === 0 || (near(piece[0], pieces[i - 1][2], 1e-3) && near(piece[1], pieces[i - 1][3], 1e-3))), 'pieces join up');
+  assert(pieces.every((piece) => piece[4] === 5 && piece[5] === 0), 'radius is half the size, round ends');
+});
+
+test('smoothed curves stay within a fraction of a pixel of the true curve', () => {
+  const points = [0, 0, 400, 0, 400, 400];
+  const path = smoothedPath(points);
+  // The curve runs (0,0) → control (400,0) → midpoint (400,200), then straight on to (400,400).
+  for (let t = 0; t <= 1; t += 0.01) {
+    const x = 2 * (1 - t) * t * 400 + t * t * 400;
+    const y = t * t * 200;
+    let best = Infinity;
+
+    for (let i = 2; i < path.length; i += 2) {
+      const [ax, ay, bx, by] = [path[i - 2], path[i - 1], path[i], path[i + 1]];
+      const u = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2 || 1)));
+
+      best = Math.min(best, Math.hypot(ax + (bx - ax) * u - x, ay + (by - ay) * u - y));
+    }
+
+    assert(best < 0.25, `${best.toFixed(3)} px off at t = ${t.toFixed(2)}`);
+  }
+});
+
+test('marker strokes have square ends only at the start and the end', () => {
+  const pieces = pieceList(strokeGeometry(stroke({ type: 'marker', points: [0, 0, 50, 10, 100, 0, 150, 10] })));
+
+  assert(pieces[0][5] === 1, 'square start');
+  assert(pieces.at(-1)[5] === 2, 'square end');
+  assert(pieces.slice(1, -1).every((piece) => piece[5] === 0), 'round joins in between');
+  assert(near(pieces[0][4], 6.5), 'marker is 1.3 × the size wide');
+  assert(pieceList(strokeGeometry(stroke({ type: 'marker', points: [0, 0, 50, 0] })))[0][5] === 3, 'one piece: both ends square');
+});
+
+test('dots, spray and stamps are placed the same way every time', () => {
+  const dotted = pieceList(strokeGeometry(stroke({ type: 'dotted', points: [0, 0, 170, 0] })));
+
+  assert(dotted.length === 11 && dotted.every((piece, i) => near(piece[0], i * 17, 1e-3) && piece[0] === piece[2]), `${dotted.length} dots, 1.7 × size apart`);
+
+  const spray = (seed) => [...strokeGeometry(stroke({ type: 'spray', seed, points: [0, 0, 30, 0] })).pieces];
+
+  assert(JSON.stringify(spray(0.4)) === JSON.stringify(spray(0.4)), 'same seed, same spray');
+  assert(JSON.stringify(spray(0.4)) !== JSON.stringify(spray(0.6)), 'new seed, new spray');
+
+  const stamps = strokeGeometry({ tool: 'stamp', emoji: '😀', size: 40, opacity: 1, angle: 90, spin: 0, seed: 0.2, points: [0, 0, 440, 0] }).stamps;
+
+  assert(stamps.length / 4 === Math.floor(440 / (40 * STAMP_SPACING)) + 1, `${stamps.length / 4} stamps`);
+  assert(near(stamps[3], Math.PI / 2, 1e-6) && stamps[2] === 40, 'angle in radians, size kept');
+});
+
+test('stroke shapes are cached per stroke and have bounds that cover them', () => {
+  const brush = stroke({ size: 20, points: [10, 10, 60, 30] });
+  const geometry = strokeGeometry(brush);
+
+  assert(strokeGeometry(brush) === geometry, 'cached');
+  assert(geometry.bounds.join() === [0, 0, 70, 40].join(), `bounds ${geometry.bounds}`);
+  assert(strokeGeometry(stroke({ points: [5, 5] })).pieces.length === 6, 'a click is one dot');
+  assert(strokeGeometry(stroke({ points: [] })).bounds === null, 'no points, nothing to draw');
 });
 
 // ── runner ──────────────────────────────────────────────────────────────────

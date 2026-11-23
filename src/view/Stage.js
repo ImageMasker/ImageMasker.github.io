@@ -196,7 +196,7 @@ export class Stage {
       }
 
       this.contentDirty = false;
-      this.compositor.prune(doc);
+      this.compositor.prune();
 
       if (scaleChanged) {
         this.glx.trim(this.target.width, this.target.height);

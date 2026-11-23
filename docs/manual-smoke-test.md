@@ -31,7 +31,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 
 ## Tools
 
-1. Brush with each brush type, then erase part of a stroke.
+1. Brush with each brush type (also at a lower opacity, crossing itself: no darker crossing), then erase part of a stroke. Zoom in close: edges stay sharp. Download: the strokes look the same as on screen.
 2. Blur brush (G), pixel brush (X) and effect brush (Shift+G); change the amount slider; erase part of the painted area with the painted layer selected.
 2. Eraser in *Erase selected layer* mode: select an overlay mask in the Layers list and erase part of it; only that mask disappears there. Try 50% strength, undo, and *Clear erased area*.
 2. Eraser in *Reveal original* mode over a few stacked masks, then *Restore masks*. Add another mask afterwards: the revealed area must stay clear.

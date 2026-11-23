@@ -23,8 +23,10 @@ src/gl/Compositor.js         document -> pixels
 src/gl/glsl.js               shared GLSL, blend modes, system shaders
 src/gl/effects.js            effect masks (one fragment shader each)
 src/gl/patterns.js           procedural overlay patterns
-src/raster/                  Canvas 2D rasterisers for strokes and stamps, text, emoji mask tiles, repeated image
-                             masks, and the emoji artwork they draw (emojiArt.js: Twemoji, Google blobs, server)
+src/gl/StrokeRenderer.js     brush, eraser and stamp strokes drawn on the GPU at any scale
+src/raster/                  stroke and stamp geometry (strokes.js), Canvas 2D rasterisers for text, emoji mask
+                             tiles and repeated image masks, and the emoji artwork they draw (emojiArt.js:
+                             Twemoji, Google blobs, server)
 src/masks/                   classic, flag and emoji mask data (emojiData.js + emojiEmbeddings.json), the
                              PictureGame Discord server's emojis (discordEmojis.js, images/discord-emojis/)
 src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
@@ -91,7 +93,16 @@ the picture best together, so a robin gets birds rather than an orange for its b
 
 * content layers are drawn through their inverse transform and blended over it;
 * effect layers run a shader over what is already there, then mix the result back through their
-  coverage (analytic rectangle/ellipse, a polygon texture, or a painted stroke texture).
+  coverage (analytic rectangle/ellipse, a polygon texture, or painted strokes).
+
+Strokes (drawing layers, painted effects, `erased` areas) are not rasterised on the CPU: `raster/strokes.js`
+turns each one into line pieces, dots and stamp placements in document pixels (cached per stroke object), and
+`gl/StrokeRenderer.js` draws them straight into a render target at the scale being rendered, anti-aliased in
+the fragment shader. So a full-size export costs no more than the preview, and nothing is kept between
+them but a small vertex buffer per layer. Opaque strokes are drawn in batches; a see-through stroke is drawn
+alone into a scratch target with `MAX` blending, then laid down once, so it does not darken where it overlaps
+itself (as in Canvas 2D). Stamps are textured quads; their emoji is drawn with `drawEmoji` into a texture
+sized to how big it is shown.
 
 The preview renders at roughly screen resolution (`Stage.pickScale`), the export at scale 1 with the
 same code. To keep both identical, effect shaders work in *units* where the picture's short side is
