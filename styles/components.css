@@ -41,6 +41,22 @@
   background: var(--bg-success);
 }
 
+/* Copy / Download while the picture is being prepared: not dimmed like a disabled button. */
+.app-button.is-busy:disabled {
+  opacity: 1;
+  cursor: progress;
+}
+
+.app-button.is-busy .icon {
+  animation: busy-pulse 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes busy-pulse {
+  to {
+    opacity: 0.3;
+  }
+}
+
 .app-button--primary {
   width: 100%;
   min-height: 36px;

@@ -172,6 +172,12 @@ export class StrokeSurface {
       this.refs = [];
       this.last = null;
       dirty = true;
+    } else if (this.canvas.width !== width || this.canvas.height !== height) {
+      // Shrunk while kept for the next export: only the copy with the last stroke needs redoing.
+      this.canvas.width = width;
+      this.canvas.height = height;
+      this.last = null;
+      dirty = true;
     }
 
     const committed = Math.max(0, strokes.length - 1);
@@ -217,5 +223,16 @@ export class StrokeSurface {
 
     this.last = last;
     return true;
+  }
+
+  /** Frees the copy with the last stroke and keeps `base`, so a later sync only adds new strokes. */
+  shrink() {
+    this.canvas.width = this.canvas.height = 0;
+    this.last = null;
+  }
+
+  /** Pixels held while shrunk. */
+  get keptPixels() {
+    return this.base.width * this.base.height;
   }
 }

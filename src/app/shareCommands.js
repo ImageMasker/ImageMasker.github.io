@@ -37,6 +37,32 @@ export class ShareCommands {
     return blob;
   }
 
+  /**
+   * Shows `label` on a header button while `task` runs and ignores clicks meanwhile. Rendering a
+   * big picture blocks the page, so the label is painted before the work starts.
+   */
+  async whileBusy(control, label, task) {
+    if (control.disabled) {
+      return;
+    }
+
+    const text = control.querySelector('span:last-child');
+    const original = text.textContent;
+
+    control.disabled = true;
+    control.classList.add('is-busy');
+    text.textContent = label;
+    await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
+
+    try {
+      await task();
+    } finally {
+      text.textContent = original;
+      control.classList.remove('is-busy');
+      this.syncChrome();
+    }
+  }
+
   async copyImage() {
     if (!this.requireImage('Load an image before copying.')) {
       return;
@@ -53,15 +79,17 @@ export class ShareCommands {
       return;
     }
 
-    try {
-      // PNG is the only image type every browser accepts on the clipboard.
-      const blob = await this.exportBlob({ ...this.sharePanel.getExportOptions(), format: 'png' });
+    await this.whileBusy(this.refs.copy, 'Copying…', async () => {
+      try {
+        // PNG is the only image type every browser accepts on the clipboard.
+        const blob = await this.exportBlob({ ...this.sharePanel.getExportOptions(), format: 'png' });
 
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      this.notify('Image copied to clipboard.', 'success');
-    } catch (error) {
-      this.notify(`Clipboard image copy failed. ${error?.name ?? ''} ${error?.message ?? ''}`.trim(), 'warning', 6200);
-    }
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        this.notify('Image copied to clipboard.', 'success');
+      } catch (error) {
+        this.notify(`Clipboard image copy failed. ${error?.name ?? ''} ${error?.message ?? ''}`.trim(), 'warning', 6200);
+      }
+    });
   }
 
   async downloadImage() {
@@ -69,23 +97,25 @@ export class ShareCommands {
       return;
     }
 
-    try {
-      const options = this.sharePanel.getExportOptions();
-      const url = URL.createObjectURL(await this.exportBlob(options));
-      const now = new Date();
-      const pad = (value) => String(value).padStart(2, '0');
-      const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
-      const link = el('a', { href: url, download: `round ${stamp}.${options.format === 'jpeg' ? 'jpg' : 'png'}` });
+    await this.whileBusy(this.refs.download, 'Preparing…', async () => {
+      try {
+        const options = this.sharePanel.getExportOptions();
+        const url = URL.createObjectURL(await this.exportBlob(options));
+        const now = new Date();
+        const pad = (value) => String(value).padStart(2, '0');
+        const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
+        const link = el('a', { href: url, download: `round ${stamp}.${options.format === 'jpeg' ? 'jpg' : 'png'}` });
 
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      this.notify('Download started.', 'success');
-    } catch (error) {
-      console.error(error);
-      this.notify('Download failed.', 'error');
-    }
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        this.notify('Download started.', 'success');
+      } catch (error) {
+        console.error(error);
+        this.notify('Download failed.', 'error');
+      }
+    });
   }
 
   /** True when the browser can hand picture files to other apps (the phone's share sheet). */

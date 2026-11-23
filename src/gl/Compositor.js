@@ -24,6 +24,9 @@ import { getPattern, patternSource, patternUniforms } from './patterns.js';
 
 const NONE = [0, 0, 0, 0];
 const COVERAGE_KIND = { full: 0, rect: 1, ellipse: 2, polygon: 3, paint: 4 };
+// Full-size stroke rasters kept between exports (pixels of all of them together, ~4 bytes each).
+// Drawing hundreds of brush strokes at full size takes long enough to make Download lag.
+const KEEP_STROKE_PIXELS = 40e6;
 
 export class Compositor {
   constructor(glx, assets) {
@@ -105,6 +108,8 @@ export class Compositor {
     const item = this.cached(`${layer.id}:${field}:${ctx.W}x${ctx.H}`);
 
     item.surface ??= new StrokeSurface();
+    item.layerId = layer.id;
+    item.size = `${ctx.W}x${ctx.H}`;
 
     if (item.surface.sync(layer[field], ctx.W, ctx.H, ctx.sx, ctx.sy) || !item.entry) {
       this.upload(item, item.surface.canvas);
@@ -333,11 +338,28 @@ export class Compositor {
     return shape;
   }
 
-  /** Drops rasters that were not needed by the most recent frames (old scales, deleted layers). */
-  prune() {
-    for (const [key, item] of this.cache) {
-      if (item.used < this.frame - 2) {
-        this.glx.deleteTexture(item.entry);
+  /**
+   * Drops rasters that were not needed by the most recent frames (old scales, deleted layers).
+   * Stroke rasters at the document's full size stay (in memory, not on the GPU), so the next
+   * export only has to draw the strokes added since.
+   */
+  prune(doc = null) {
+    const layers = new Set(doc?.layers.map((layer) => layer.id));
+    const fullSize = doc ? `${doc.width}x${doc.height}` : '';
+    let kept = 0;
+
+    for (const [key, item] of [...this.cache].sort((a, b) => b[1].used - a[1].used)) {
+      if (item.used >= this.frame - 2) {
+        continue;
+      }
+
+      this.glx.deleteTexture(item.entry);
+      item.entry = null;
+
+      if (item.surface && item.size === fullSize && layers.has(item.layerId) && kept + item.surface.keptPixels <= KEEP_STROKE_PIXELS) {
+        item.surface.shrink();
+        kept += item.surface.keptPixels;
+      } else {
         this.cache.delete(key);
       }
     }
