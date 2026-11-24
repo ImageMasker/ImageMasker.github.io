@@ -1,10 +1,13 @@
-// Move / resize / rotate layers directly on the canvas.
+// Move / resize / rotate layers directly on the canvas. A selected arrow gets handles for its two
+// ends and one in the middle of its curve instead of the box handles.
 
 import { apply, invert, layerAxes, layerCorners, layerMatrix } from '../core/geometry.js';
-import { findLayer, isBoxLayer, topLayerAt, updateLayer } from '../core/model.js';
+import { arrowEndPoints, findLayer, isBoxLayer, placeArrow, topLayerAt, updateLayer } from '../core/model.js';
 import { getEffect } from '../gl/effects.js';
+import { arrowCurve, arrowEnds } from '../raster/shapes.js';
 import { measureText } from '../raster/text.js';
 import { svg } from '../view/Stage.js';
+import { snapAngle } from './ArrowTool.js';
 
 const HANDLES = [
   [-1, -1], [0, -1], [1, -1],
@@ -73,7 +76,28 @@ export class SelectTool {
   handleLayer() {
     const layer = this.app.store.selectedLayer;
 
-    return this.active && layer && isBoxLayer(layer) && !layer.locked && layer.visible ? layer : null;
+    return this.active && layer && isBoxLayer(layer) && layer.type !== 'arrow' && !layer.locked && layer.visible ? layer : null;
+  }
+
+  /** The single selected arrow, when its ends and curve can be dragged. */
+  arrowLayer() {
+    const layer = this.app.store.selectedLayer;
+
+    return this.active && layer?.type === 'arrow' && !layer.locked && layer.visible ? layer : null;
+  }
+
+  /** Screen positions of an arrow's tail, head and the middle of its curve. */
+  arrowHandles(layer) {
+    const [a, b] = arrowEnds(layer);
+    const middle = arrowCurve(a, b, layer.bend || 0).at(0.5);
+    const matrix = layerMatrix(layer);
+    const screen = (point) => {
+      const doc = apply(matrix, point.x / layer.w, point.y / layer.h);
+
+      return this.app.stage.toScreen(doc.x, doc.y);
+    };
+
+    return { arrowTail: screen(a), arrowHead: screen(b), arrowBend: screen(middle) };
   }
 
   /** Selected effect whose centre can be dragged, and where that centre is on screen. */
@@ -119,8 +143,10 @@ export class SelectTool {
 
     this.drawPiece();
 
+    const arrow = this.arrowLayer();
+
     for (const layer of store.selectedLayers) {
-      if (!isBoxLayer(layer) || !layer.visible) {
+      if (!isBoxLayer(layer) || !layer.visible || layer === arrow) {
         continue;
       }
 
@@ -141,6 +167,16 @@ export class SelectTool {
       this.group.append(svg('circle', { cx: x, cy: y, r: 9, class: 'centre-handle-back' }));
       this.group.append(svg('circle', { cx: x, cy: y, r: 9, class: 'centre-handle' }));
       this.group.append(svg('path', { d: `M${x - 14} ${y}H${x + 14}M${x} ${y - 14}V${y + 14}`, class: 'centre-handle-cross' }));
+    }
+
+    if (arrow) {
+      const { arrowTail, arrowHead, arrowBend } = this.arrowHandles(arrow);
+
+      this.group.append(
+        svg('circle', { cx: arrowTail.x, cy: arrowTail.y, r: 6, class: 'selection-handle' }),
+        svg('circle', { cx: arrowHead.x, cy: arrowHead.y, r: 7, class: 'selection-handle' }),
+        svg('circle', { cx: arrowBend.x, cy: arrowBend.y, r: 6, class: 'selection-handle selection-handle--rotate' })
+      );
     }
 
     const layer = this.handleLayer();
@@ -165,6 +201,15 @@ export class SelectTool {
 
     if (centre && Math.hypot(event.sx - centre.x, event.sy - centre.y) <= reach + 4) {
       return { kind: 'centre', layer: centre.layer };
+    }
+
+    const arrow = this.arrowLayer();
+
+    if (arrow) {
+      const handles = this.arrowHandles(arrow);
+      const kind = ['arrowHead', 'arrowTail', 'arrowBend'].find((key) => Math.hypot(event.sx - handles[key].x, event.sy - handles[key].y) <= reach);
+
+      return kind ? { kind, layer: arrow } : null;
     }
 
     const layer = this.handleLayer();
@@ -256,7 +301,39 @@ export class SelectTool {
       return;
     }
 
+    if (drag.kind.startsWith('arrow')) {
+      store.set(updateLayer(store.gestureBase.doc, drag.start.id, this.arrowPatch(drag, event)));
+      return;
+    }
+
     store.set(updateLayer(store.gestureBase.doc, drag.start.id, drag.kind === 'rotate' ? this.rotatePatch(drag, event) : this.resizePatch(drag, event)));
+  }
+
+  /** Moves one end of an arrow (Shift: in steps of 15°) or bends it through the middle handle. */
+  arrowPatch(drag, event) {
+    const start = drag.start;
+    const [tail, head] = arrowEndPoints(start);
+    const point = { x: event.x, y: event.y };
+
+    if (drag.kind === 'arrowTail') {
+      return placeArrow(start, event.shift ? snapAngle(head, point) : point, head);
+    }
+
+    if (drag.kind === 'arrowHead') {
+      return placeArrow(start, tail, event.shift ? snapAngle(tail, point) : point);
+    }
+
+    // The middle of the curve sits half the bend away from the middle of the line.
+    const local = apply(invert(layerAxes(start)), event.x - start.x, event.y - start.y);
+    const [a, b] = arrowEnds(start);
+    const curve = arrowCurve(a, b, 0);
+    const middle = curve.at(0.5);
+    let bend = (2 * ((local.x - middle.x) * curve.normal.x + (local.y - middle.y) * curve.normal.y)) / curve.length;
+
+    // Shift (or nearly straight) makes it straight.
+    bend = event.shift || Math.abs(bend) < 0.02 ? 0 : Math.max(-1, Math.min(1, bend));
+
+    return placeArrow({ ...start, bend }, tail, head);
   }
 
   rotatePatch(drag, event) {
@@ -309,7 +386,7 @@ export class SelectTool {
     this.drag = null;
 
     if (drag?.moved) {
-      this.app.store.end({ move: 'Move', rotate: 'Rotate', centre: 'Move centre' }[drag.kind] ?? 'Resize');
+      this.app.store.end({ move: 'Move', rotate: 'Rotate', centre: 'Move centre', arrowTail: 'Move arrow end', arrowHead: 'Move arrow end', arrowBend: 'Curve arrow' }[drag.kind] ?? 'Resize');
     }
   }
 
@@ -322,7 +399,7 @@ export class SelectTool {
     const handle = this.hitHandle(event);
     let cursor = 'default';
 
-    if (handle?.kind === 'centre') {
+    if (handle?.kind === 'centre' || handle?.kind?.startsWith('arrow')) {
       cursor = 'move';
     } else if (handle?.kind === 'rotate') {
       cursor = 'crosshair';

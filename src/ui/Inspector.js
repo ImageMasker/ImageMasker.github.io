@@ -1,7 +1,7 @@
 // Properties panel: options for the active tool and for the selected layer(s). The controls are
 // rebuilt only when the kind of thing being edited changes; otherwise their values are synced.
 
-import { emojiLayerName, fitText, updateLayer, zoomFactor } from '../core/model.js';
+import { emojiLayerName, fitText, placeArrow, SHAPE_NAMES, updateLayer, zoomFactor } from '../core/model.js';
 import { EFFECT_CATEGORIES, EFFECTS, getEffect, defaultParams, hasIntensity, INTENSITY_LEVELS, intensityParams } from '../gl/effects.js';
 import { BLEND_MODES } from '../gl/glsl.js';
 import { getPattern } from '../gl/patterns.js';
@@ -11,6 +11,7 @@ import { BRUSH_TYPES } from '../raster/strokes.js';
 import { PAINT_AMOUNT } from '../tools/BrushTool.js';
 import { STAMP_DRAG_MODES } from '../tools/StampTool.js';
 import { EMOJI_STYLES, emojiGlyph } from '../raster/emojiArt.js';
+import { ARROW_HEADS, CURVE_TO_BEND, MARK_STYLES, pxToWidth, SHAPE_FILLS, SHAPE_KINDS, widthToPx } from '../raster/shapes.js';
 import { FONTS } from '../raster/text.js';
 import { el } from '../utils/dom.js';
 import { EmojiPicker } from './EmojiPicker.js';
@@ -390,6 +391,10 @@ export class Inspector {
         return this.cropSection();
       case 'stamp':
         return this.stampSection();
+      case 'shape':
+        return this.shapeToolSection();
+      case 'arrow':
+        return this.arrowToolSection();
       case 'lasso':
         return section('Separate one item', [
           el('p', { className: 'panel-intro-copy', textContent: 'Draw a loop around the item on the picture. Only what is inside goes through the background removal, so the other things in the picture stay where they are. A rough outline is fine; leave a little room around the item.' }),
@@ -514,6 +519,43 @@ export class Inspector {
     ], { className: 'tool-section--primary' });
   }
 
+  /** Colour, line width, opacity and hand-drawn/clean: shared by the Shapes and Arrow tools. */
+  markToolControls(state) {
+    const write = (key) => (value) => {
+      state[key] = value;
+    };
+
+    return [
+      select({ label: 'Style', options: MARK_STYLES, value: state.style, onChange: this.toolChange(write('style')) }).element,
+      color({ label: 'Colour', value: state.color, onInput: this.toolChange(write('color')) }).element,
+      this.toolSlider({ label: 'Line width', min: 1, max: 50 }, () => state.width, write('width')),
+      this.toolSlider({ label: 'Opacity', min: 1, max: 100, format: percent }, () => state.opacity, write('opacity')),
+    ];
+  }
+
+  shapeToolSection() {
+    const state = this.app.toolState.shape;
+
+    return section('Shapes', [
+      select({ label: 'Shape', options: SHAPE_KINDS, value: state.kind, onChange: this.toolChange((value) => { state.kind = value; }) }).element,
+      select({ label: 'Fill', options: SHAPE_FILLS, value: state.fill, onChange: this.toolChange((value) => { state.fill = value; }) }).element,
+      ...this.markToolControls(state),
+      el('p', { className: 'panel-intro-copy', textContent: 'Drag on the picture to draw the shape (Shift keeps it round or square), or click to drop one.' }),
+    ], { className: 'tool-section--primary' });
+  }
+
+  arrowToolSection() {
+    const state = this.app.toolState.arrow;
+
+    return section('Arrow', [
+      select({ label: 'Head', options: ARROW_HEADS, value: state.head, onChange: this.toolChange((value) => { state.head = value; }) }).element,
+      toggle({ label: 'Heads at both ends', value: state.bothEnds, onChange: this.toolChange((value) => { state.bothEnds = value; }) }).element,
+      this.toolSlider({ label: 'Curve', min: -100, max: 100 }, () => state.bend, (value) => { state.bend = value; }),
+      ...this.markToolControls(state),
+      el('p', { className: 'panel-intro-copy', textContent: 'Drag from where the arrow starts to what it points at (Shift keeps it straight), or click where it should point. Then drag its ends or the round handle in the middle to bend it.' }),
+    ], { className: 'tool-section--primary' });
+  }
+
   cropSection() {
     const app = this.app;
     const tool = app.tools.crop;
@@ -569,6 +611,10 @@ export class Inspector {
             ...this.commonControls(layer),
           ]),
         ];
+      case 'shape':
+        return this.shapeSections(layer);
+      case 'arrow':
+        return this.arrowSections(layer);
       case 'drawing':
         return [
           section('Drawing', [
@@ -590,6 +636,71 @@ export class Inspector {
       default:
         return [];
     }
+  }
+
+  /** Style, colour, line width and "Draw again", shared by shape and arrow layers. */
+  markControls(layer, refit = (entry) => entry) {
+    const doc = () => this.app.store.doc;
+
+    return [
+      this.layerSelect(layer.id, 'Style', MARK_STYLES, (entry) => entry.style, (value, entry) => refit({ ...entry, style: value })),
+      this.layerColor(layer.id, 'Colour', (entry) => entry.color, (value) => ({ color: value })),
+      this.layerSlider(layer.id, { label: 'Line width', min: 1, max: 50 },
+        (entry) => Math.round(pxToWidth(doc(), entry.width)),
+        (value, entry) => refit({ ...entry, width: widthToPx(doc(), value) }), 'Change line width'),
+    ];
+  }
+
+  redrawButton(layer, label) {
+    return button('Draw again', {
+      iconName: 'reset',
+      title: 'A new hand-drawn look',
+      onClick: () => this.app.store.apply(label, (doc) => updateLayer(doc, layer.id, { seed: Math.random() })),
+    });
+  }
+
+  shapeSections(layer) {
+    return [
+      section(SHAPE_NAMES[layer.kind] ?? 'Shape', [
+        this.layerSelect(layer.id, 'Shape', SHAPE_KINDS, (entry) => entry.kind, (value, entry) => ({
+          kind: value,
+          // Keep a name the user gave it; otherwise follow the shape.
+          name: Object.values(SHAPE_NAMES).includes(entry.name) ? SHAPE_NAMES[value] : entry.name,
+        })),
+        this.layerSelect(layer.id, 'Fill', SHAPE_FILLS, (entry) => entry.fill, (value) => ({ fill: value })),
+        ...this.markControls(layer),
+        ...this.commonControls(layer),
+        row([this.redrawButton(layer, 'Draw shape again')], 'button-row--fill'),
+      ]),
+    ];
+  }
+
+  arrowSections(layer) {
+    const refit = (entry) => placeArrow(entry);
+
+    return [
+      section('Arrow', [
+        this.layerSelect(layer.id, 'Head', ARROW_HEADS, (entry) => entry.head, (value, entry) => refit({ ...entry, head: value })),
+        this.layerToggle(layer.id, 'Heads at both ends', (entry) => Boolean(entry.bothEnds), (value, entry) => refit({ ...entry, bothEnds: value })),
+        this.layerSlider(layer.id, { label: 'Curve', min: -100, max: 100 },
+          (entry) => Math.round((entry.bend || 0) / CURVE_TO_BEND),
+          (value, entry) => refit({ ...entry, bend: value * CURVE_TO_BEND }), 'Curve arrow'),
+        ...this.markControls(layer, refit),
+        ...this.commonControls(layer),
+        row([
+          this.redrawButton(layer, 'Draw arrow again'),
+          button('Flip', {
+            iconName: 'swap',
+            title: 'Point the other way',
+            onClick: () => this.app.store.apply('Flip arrow', (doc) => updateLayer(doc, layer.id, (entry) => {
+              const [ax, ay, bx, by] = entry.points;
+
+              return { points: [bx, by, ax, ay], bend: -(entry.bend || 0) };
+            })),
+          }),
+        ], 'button-row--fill'),
+      ]),
+    ];
   }
 
   /** "Clear erased area", shown while the layer has been erased with "Erase selected layer". */

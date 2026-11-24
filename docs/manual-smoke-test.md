@@ -36,7 +36,9 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 2. Eraser in *Erase selected layer* mode: select an overlay mask in the Layers list and erase part of it; only that mask disappears there. Try 50% strength, undo, and *Clear erased area*.
 2. Eraser in *Reveal original* mode over a few stacked masks, then *Restore masks*. Add another mask afterwards: the revealed area must stay clear.
 3. Region tool with rectangle, ellipse and freehand.
-4. Rectangle and text. Double-click the text and edit it in place; try multiline, font, alignment, bold, italic, outline and shadow.
+4. Shapes: drag a circle (hand-drawn outline by default), then try each shape, Filled and Clean. Arrow: drag from
+   a start point to a target, drag both ends and the middle handle, try each head, both ends, Flip and Draw again.
+   Text. Double-click the text and edit it in place; try multiline, font, alignment, bold, italic, outline and shadow.
 5. Select, move, resize, rotate, duplicate and delete each layer type. Shift+click several layers and move them together.
 6. Crop inward, then extend the canvas past one edge. Undo/redo both. The export must match what is shown.
 

@@ -7,8 +7,9 @@ import { getPattern } from '../gl/patterns.js';
 import { EMOJI_MASK } from '../masks/emojiData.js';
 import { DEVICE_STYLE, isCustomEmoji } from '../raster/emojiArt.js';
 import { normalizeRepeat } from '../raster/repeat.js';
+import { arrowBounds, arrowEnds, distanceToArrow, headLength } from '../raster/shapes.js';
 import { measureText, TEXT_DEFAULTS } from '../raster/text.js';
-import { apply, invert, layerBounds, layerMatrix, pointInPolygon } from './geometry.js';
+import { apply, invert, layerAxes, layerBounds, layerMatrix, pointInPolygon } from './geometry.js';
 
 let counter = 0;
 
@@ -175,6 +176,105 @@ export function rectLayer(doc, { color = '#000000' } = {}) {
   };
 }
 
+export const SHAPE_NAMES = { ellipse: 'Circle', rect: 'Rectangle', triangle: 'Triangle', star: 'Star', heart: 'Heart' };
+
+/**
+ * A drawn shape (Shapes tool): `kind` ellipse | rect | triangle | star | heart, `fill` outline | fill,
+ * `style` organic (hand-drawn) | clean, `width` the line width in document pixels, `seed` for the
+ * hand-drawn look (raster/shapes.js).
+ */
+export function shapeLayer(doc, rect, { kind = 'ellipse', fill = 'outline', style = 'organic', color = '#e0262b', width = 8 } = {}) {
+  return {
+    ...baseLayer('shape', SHAPE_NAMES[kind] ?? 'Shape'),
+    kind,
+    fill,
+    style,
+    color,
+    width,
+    seed: Math.random(),
+    x: rect.x + rect.width / 2,
+    y: rect.y + rect.height / 2,
+    w: Math.max(1, rect.width),
+    h: Math.max(1, rect.height),
+  };
+}
+
+/**
+ * An arrow from `tail` to `head` (document pixels). Its box is fitted around the curve; `points`
+ * are the two ends inside the box (-0.5..0.5) and `bend` pushes the middle sideways.
+ */
+export function arrowLayer(doc, tail, head, { color = '#e0262b', width = 8, bend = 0.2, head: tip = 'open', bothEnds = false, style = 'organic' } = {}) {
+  return placeArrow(
+    { ...baseLayer('arrow', 'Arrow'), color, width, bend, head: tip, bothEnds, style, seed: Math.random(), x: tail.x, y: tail.y, w: 1, h: 1, points: [0, 0, 0, 0] },
+    tail,
+    head
+  );
+}
+
+/** The arrow's two ends in document pixels. */
+export function arrowEndPoints(layer) {
+  const matrix = layerMatrix(layer);
+  const [ax, ay, bx, by] = layer.points;
+
+  return [apply(matrix, ax, ay), apply(matrix, bx, by)];
+}
+
+/**
+ * Puts the arrow's ends at `tail` and `head` (document pixels) and fits its box around the curve,
+ * keeping its rotation. Also used after anything that changes how much room it needs (width, bend).
+ */
+export function placeArrow(layer, tail = arrowEndPoints(layer)[0], head = arrowEndPoints(layer)[1]) {
+  const axes = layerAxes(layer);
+  const back = invert(axes);
+  const a = apply(back, tail.x - layer.x, tail.y - layer.y);
+  const b = apply(back, head.x - layer.x, head.y - layer.y);
+  const box = arrowBounds(layer, a, b);
+  const w = Math.max(1, box.maxX - box.minX);
+  const h = Math.max(1, box.maxY - box.minY);
+  const centre = { x: (box.minX + box.maxX) / 2, y: (box.minY + box.maxY) / 2 };
+  const shift = apply(axes, centre.x, centre.y);
+
+  return {
+    ...layer,
+    x: layer.x + shift.x,
+    y: layer.y + shift.y,
+    w,
+    h,
+    points: [(a.x - centre.x) / w, (a.y - centre.y) / h, (b.x - centre.x) / w, (b.y - centre.y) / h],
+  };
+}
+
+/** A saved shape or arrow made safe to draw, or null when it cannot be. */
+export function normalizeMark(layer) {
+  const finite = (value, fallback) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+  const pick = (value, values, fallback) => (values.includes(value) ? value : fallback);
+  const next = {
+    ...layer,
+    color: typeof layer.color === 'string' && /^#[0-9a-f]{6}$/i.test(layer.color) ? layer.color : '#e0262b',
+    width: Math.max(0.5, finite(layer.width, 8)),
+    style: pick(layer.style, ['organic', 'clean'], 'organic'),
+    seed: finite(layer.seed, 0.5),
+    w: Math.max(1, finite(layer.w, 100)),
+    h: Math.max(1, finite(layer.h, 100)),
+  };
+
+  if (layer.type === 'shape') {
+    return { ...next, kind: pick(layer.kind, Object.keys(SHAPE_NAMES), 'ellipse'), fill: pick(layer.fill, ['outline', 'fill'], 'outline') };
+  }
+
+  const points = Array.isArray(layer.points) && layer.points.length === 4 && layer.points.every((value) => Number.isFinite(Number(value)))
+    ? layer.points.map(Number)
+    : null;
+
+  return points && {
+    ...next,
+    points,
+    bend: Math.max(-1, Math.min(1, finite(layer.bend, 0))),
+    head: pick(layer.head, ['open', 'filled', 'none'], 'open'),
+    bothEnds: layer.bothEnds === true,
+  };
+}
+
 export function fitText(layer) {
   const size = measureText(layer);
 
@@ -273,6 +373,14 @@ export function hitLayer(layer, x, y) {
 
   if (layer.type === 'effect' && layer.coverage === 'polygon' && layer.points?.length >= 6) {
     return pointInPolygon(local.x, local.y, layer.points);
+  }
+
+  if (layer.type === 'arrow') {
+    // Only near the line itself, so the empty part of its box does not hide what is under it.
+    const [a, b] = arrowEnds(layer);
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+
+    return distanceToArrow(layer, local.x * layer.w, local.y * layer.h) <= (layer.width || 1) * 0.75 + headLength(layer.width || 1, length) * 0.4 + length * 0.03;
   }
 
   return true;
@@ -439,6 +547,10 @@ export function describeLayer(layer) {
       return 'Text';
     case 'rect':
       return 'Rectangle';
+    case 'shape':
+      return SHAPE_NAMES[layer.kind] ?? 'Shape';
+    case 'arrow':
+      return 'Arrow';
     default:
       return 'Layer';
   }
@@ -486,6 +598,7 @@ export function rebaseDoc(doc, asset) {
         w: layer.w * scale,
         h: layer.h * scale,
         corner: layer.corner ? layer.corner * scale : layer.corner,
+        ...(layer.type === 'shape' || layer.type === 'arrow' ? { width: (layer.width || 1) * scale } : {}),
       });
     }
   }

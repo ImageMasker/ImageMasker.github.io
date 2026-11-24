@@ -9,6 +9,7 @@ import { PAINT_AMOUNT } from '../tools/BrushTool.js';
 import { STAMP_DRAG_MODES } from '../tools/StampTool.js';
 import { splitEmojis } from '../masks/emojiData.js';
 import { EMOJI_STYLES } from '../raster/emojiArt.js';
+import { ARROW_HEADS, MARK_STYLES, SHAPE_FILLS, SHAPE_KINDS } from '../raster/shapes.js';
 import { ERASER_MODES, REGION_SHAPES } from '../ui/Inspector.js';
 
 export function defaultToolState() {
@@ -18,6 +19,8 @@ export function defaultToolState() {
     paint: { effectId: 'cutGlass', amounts: { blur: 14, pixelate: 1.6 } },
     region: { shape: 'rect', effectId: 'blur' },
     stamp: { emoji: '😀', size: 40, opacity: 100, angle: 0, spin: 0, style: 0, drag: 'trail', recent: [] },
+    shape: { kind: 'ellipse', fill: 'outline', style: 'organic', color: '#e0262b', width: 8, opacity: 100 },
+    arrow: { head: 'open', bothEnds: false, bend: 30, style: 'organic', color: '#e0262b', width: 8, opacity: 100 },
     text: {},
   };
 }
@@ -30,7 +33,7 @@ const effect = (value, fallback) => (typeof value === 'string' && hasEffect(valu
 
 export function restoreToolState(stored) {
   const state = defaultToolState();
-  const { brush = {}, eraser = {}, paint = {}, region = {}, stamp = {}, text = {} } = stored && typeof stored === 'object' ? stored : {};
+  const { brush = {}, eraser = {}, paint = {}, region = {}, stamp = {}, shape = {}, arrow = {}, text = {} } = stored && typeof stored === 'object' ? stored : {};
 
   state.brush = {
     size: number(brush.size, 1, 100, state.brush.size),
@@ -59,6 +62,25 @@ export function restoreToolState(stored) {
     style: EMOJI_STYLES.some((entry) => entry.value === stamp.style) ? stamp.style : 0,
     drag: oneOf(stamp.drag, STAMP_DRAG_MODES.map((mode) => mode.value), state.stamp.drag),
     recent: Array.isArray(stamp.recent) ? stamp.recent.map(oneEmoji).filter(Boolean).slice(0, 12) : [],
+  };
+
+  state.shape = {
+    kind: oneOf(shape.kind, SHAPE_KINDS.map((entry) => entry.value), state.shape.kind),
+    fill: oneOf(shape.fill, SHAPE_FILLS.map((entry) => entry.value), state.shape.fill),
+    style: oneOf(shape.style, MARK_STYLES.map((entry) => entry.value), state.shape.style),
+    color: colour(shape.color, state.shape.color),
+    width: number(shape.width, 1, 50, state.shape.width),
+    opacity: number(shape.opacity, 1, 100, state.shape.opacity),
+  };
+
+  state.arrow = {
+    head: oneOf(arrow.head, ARROW_HEADS.map((entry) => entry.value), state.arrow.head),
+    bothEnds: arrow.bothEnds === true,
+    bend: number(arrow.bend, -100, 100, state.arrow.bend),
+    style: oneOf(arrow.style, MARK_STYLES.map((entry) => entry.value), state.arrow.style),
+    color: colour(arrow.color, state.arrow.color),
+    width: number(arrow.width, 1, 50, state.arrow.width),
+    opacity: number(arrow.opacity, 1, 100, state.arrow.opacity),
   };
 
   for (const [key, value] of Object.entries(text && typeof text === 'object' ? text : {})) {

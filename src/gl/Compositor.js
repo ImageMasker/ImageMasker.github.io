@@ -7,6 +7,7 @@ import { apply, invert, layerMatrix, toMat3 } from '../core/geometry.js';
 import { emojiSignature, renderEmojiTile } from '../raster/emoji.js';
 import { renderRepeatTile, repeatSignature } from '../raster/repeat.js';
 import { drawEmoji, emojiArtState } from '../raster/emojiArt.js';
+import { markRatio, markSignature, renderMark } from '../raster/shapes.js';
 import { measureText, renderText, textSignature } from '../raster/text.js';
 import { effectShader, getEffect, hexToVec3, paramUniforms } from './effects.js';
 import {
@@ -146,6 +147,20 @@ export class Compositor {
 
     if (item.sig !== sig) {
       this.upload(item, renderText(layer, ratio));
+      item.sig = sig;
+    }
+
+    return item.entry;
+  }
+
+  /** A shape or arrow, drawn at about the size it is shown (raster/shapes.js). */
+  markTexture(ctx, layer) {
+    const ratio = markRatio(layer, ctx.sx);
+    const sig = `${markSignature(layer)}@${ratio.toFixed(3)}`;
+    const item = this.cached(`${layer.id}:mark`);
+
+    if (item.sig !== sig) {
+      this.upload(item, renderMark(layer, ratio));
       item.sig = sig;
     }
 
@@ -543,6 +558,12 @@ export class Compositor {
         return {
           program: this.textureProgram(),
           uniforms: { uSrc: this.textTexture(ctx, layer), uWrap: 0, uInv, uBoxPx: boxPx, uFx: [0, 0, 0, 1], uWarp: NONE },
+        };
+      case 'shape':
+      case 'arrow':
+        return {
+          program: this.textureProgram(),
+          uniforms: { uSrc: this.markTexture(ctx, layer), uWrap: 0, uInv, uBoxPx: boxPx, uFx: [0, 0, 0, 1], uWarp: NONE },
         };
       case 'drawing': {
         if (!layer.strokes?.length) {

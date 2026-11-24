@@ -17,7 +17,6 @@ import {
   moveLayer,
   patternLayer,
   rebaseDoc,
-  rectLayer,
   removeLayers,
   textLayer,
   topLayerAt,
@@ -41,6 +40,8 @@ import { LassoTool } from '../tools/LassoTool.js';
 import { StampTool } from '../tools/StampTool.js';
 import { onEmojiArt } from '../raster/emojiArt.js';
 import { RegionTool } from '../tools/RegionTool.js';
+import { ShapeTool } from '../tools/ShapeTool.js';
+import { ArrowTool } from '../tools/ArrowTool.js';
 import { RisCropTool } from '../tools/RisCropTool.js';
 import { SelectTool } from '../tools/SelectTool.js';
 import { TextEditor } from '../tools/TextEditor.js';
@@ -80,7 +81,8 @@ const TOOL_BUTTONS = [
   { id: 'pixelBrush', icon: 'pixel', label: 'Pixel brush', short: 'Pixel', command: 'pixelBrush' },
   { id: 'paint', icon: 'paint', label: 'Effect brush', short: 'Fx brush', command: 'effectBrush' },
   { id: 'region', icon: 'region', label: 'Add region', short: 'Region', command: 'addRegion' },
-  { id: 'rect', icon: 'rect', label: 'Add rectangle', short: 'Rect', command: 'addRectangle', action: 'addRectangle' },
+  { id: 'shape', icon: 'shapes', label: 'Shapes', short: 'Shapes', command: 'addRectangle' },
+  { id: 'arrow', icon: 'arrow', label: 'Arrow', short: 'Arrow', command: 'arrow' },
   { id: 'text', icon: 'text', label: 'Add text', short: 'Text', command: 'addText', action: 'addText' },
   { id: 'crop', icon: 'crop', label: 'Crop / Resize', short: 'Crop', command: 'crop' },
   { id: 'stamp', icon: 'stamp', label: 'Stamp emojis', short: 'Stamp', command: 'stamp' },
@@ -150,6 +152,8 @@ export class App {
       pixelBrush: new BrushTool(this, 'paint', { effectId: 'pixelate' }),
       paint: new BrushTool(this, 'paint'),
       region: new RegionTool(this),
+      shape: new ShapeTool(this),
+      arrow: new ArrowTool(this),
       crop: new CropTool(this),
       stamp: new StampTool(this),
       risCrop: new RisCropTool(this),
@@ -500,7 +504,9 @@ export class App {
         revealEraser: () => this.setEraserMode('reveal'),
         crop: () => this.setTool('crop'),
         stamp: () => this.setTool('stamp'),
-        addRectangle: () => this.addRectangle(),
+        // The id is older than the Shapes tool; keeping it keeps people's own key for it.
+        addRectangle: () => this.setTool('shape'),
+        arrow: () => this.setTool('arrow'),
         addText: () => this.addText(),
         addRegion: () => this.setTool('region'),
         brushSizeUp: () => this.adjustBrushSize(5),
@@ -529,7 +535,7 @@ export class App {
           }
         },
         deselect: () => {
-          if (this.toolName === 'crop' || this.toolName === 'region' || this.toolName === 'risCrop' || this.toolName === 'lasso') {
+          if (['crop', 'region', 'shape', 'arrow', 'risCrop', 'lasso'].includes(this.toolName)) {
             this.setTool('select');
           } else {
             this.store.select([]);
@@ -1091,18 +1097,6 @@ export class App {
   }
 
   // ── shapes and text ───────────────────────────────────────────────────────
-
-  addRectangle() {
-    if (!this.requireImage()) {
-      return;
-    }
-
-    const layer = { ...rectLayer(this.store.doc, { color: this.toolState.brush.color }), opacity: this.toolState.brush.opacity / 100 };
-
-    this.store.apply('Add rectangle', (doc) => insertLayer(doc, layer));
-    this.store.select([layer.id]);
-    this.setTool('select');
-  }
 
   addText() {
     if (!this.requireImage()) {

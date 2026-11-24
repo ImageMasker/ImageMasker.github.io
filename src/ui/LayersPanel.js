@@ -4,7 +4,7 @@ import { describeLayer, moveLayer, updateLayer } from '../core/model.js';
 import { el } from '../utils/dom.js';
 import { icon, iconButton } from './kit.js';
 
-const TYPE_ICON = { image: 'image', mask: 'grid', effect: 'sparkle', drawing: 'pencil', text: 'text', rect: 'rect' };
+const TYPE_ICON = { image: 'image', mask: 'grid', effect: 'sparkle', drawing: 'pencil', text: 'text', rect: 'rect', shape: 'shapes', arrow: 'arrow' };
 
 export class LayersPanel {
   constructor(app) {

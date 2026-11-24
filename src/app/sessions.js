@@ -1,7 +1,7 @@
 // Saving and restoring work. Sessions live in IndexedDB so local images survive a reload;
 // picture data is stored once per session and only rewritten when it changes.
 
-import { createDoc, fitText } from '../core/model.js';
+import { createDoc, fitText, normalizeMark } from '../core/model.js';
 import { getEffect, hasEffect, normalizeParams } from '../gl/effects.js';
 import { getPattern, hasPattern } from '../gl/patterns.js';
 import { EMOJI_MASK } from '../masks/emojiData.js';
@@ -237,6 +237,12 @@ export function normalizeDoc(raw, hasAsset) {
       layer.strokes = Array.isArray(layer.strokes) ? layer.strokes : [];
     } else if (layer.type === 'text') {
       layer = fitText({ ...layer, text: String(layer.text ?? '') });
+    } else if (layer.type === 'shape' || layer.type === 'arrow') {
+      layer = normalizeMark(layer);
+
+      if (!layer) {
+        continue;
+      }
     } else if (!['image', 'mask', 'rect'].includes(layer.type)) {
       continue;
     }

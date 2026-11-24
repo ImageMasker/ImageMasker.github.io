@@ -24,13 +24,15 @@ src/gl/glsl.js               shared GLSL, blend modes, system shaders
 src/gl/effects.js            effect masks (one fragment shader each)
 src/gl/patterns.js           procedural overlay patterns
 src/gl/StrokeRenderer.js     brush, eraser and stamp strokes drawn on the GPU at any scale
-src/raster/                  stroke and stamp geometry (strokes.js), Canvas 2D rasterisers for text, emoji mask
+src/raster/                  stroke and stamp geometry (strokes.js), Canvas 2D rasterisers for text, shapes and arrows
+                             (shapes.js), emoji mask
                              tiles and repeated image masks, and the emoji artwork they draw (emojiArt.js:
                              Twemoji, Google blobs, server)
 src/masks/                   classic, flag and emoji mask data (emojiData.js, pictureEmojis.js, emojiEmbeddings.json), the
                              PictureGame Discord server's emojis (discordEmojis.js, images/discord-emojis/)
 src/view/Stage.js            canvas, zoom/pan, render loop, pointer input
-src/tools/                   select, brush/eraser/effect brush, region, crop, emoji stamp, crop-RIS box, text editor
+src/tools/                   select, brush/eraser/effect brush, region, shapes, arrow, crop, emoji stamp, crop-RIS box,
+                             text editor
 src/ui/                      panels (library, layers, properties, share, ...), the emoji picker, Rounds and Collage
                              dialogs (Modal.js), header ▾ menus (Dropdown.js)
 src/integrations/, storage/  image hosts, RIS, Reddit, background removal model, localStorage wrappers,
@@ -52,7 +54,15 @@ Any layer can have `erased` strokes (document pixels, drawn by the eraser's *Era
 the compositor takes the layer back out wherever they cover it (`Compositor.eraseFrom`). They stay in
 place when the layer moves, shift with a crop and are dropped when the base picture is replaced.
 
-Layer types: `image`, `mask` (`source: 'asset' | 'pattern' | 'emoji'`), `effect`, `drawing`, `text`, `rect`.
+Layer types: `image`, `mask` (`source: 'asset' | 'pattern' | 'emoji'`), `effect`, `drawing`, `text`, `shape`,
+`arrow`, and `rect` (filled rectangles from before the Shapes tool, still drawn).
+Shapes (`kind`: ellipse, rect, triangle, star, heart; `fill`: outline | fill) and arrows are drawn with Canvas 2D
+by `raster/shapes.js` into a texture the size the layer is shown, like text. `style: 'organic'` (hand-drawn, the
+default) draws one tapering marker stroke that wobbles and overshoots its start, from the layer's `seed`. `width`
+is the line width in document pixels. An arrow keeps its ends inside its box (`points`, -0.5..0.5) and a `bend`
+(how far the middle of the curve is pushed sideways, as a fraction of the distance between the ends);
+`placeArrow()` refits the box around the curve whenever the ends, bend, head or width change, and the Move tool
+shows handles for both ends and the curve instead of the box handles. Arrows are hit only near their line.
 An effect layer's `coverage` is `full`, `rect`, `ellipse`, `polygon` or `paint`. The hidden effect id
 `original` (used by the eraser's reveal mode) shows the base picture instead of running a shader;
 `insertMask()` keeps such layers on top when masks are added.

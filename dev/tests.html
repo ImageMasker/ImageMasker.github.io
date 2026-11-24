@@ -21,8 +21,13 @@
 <script type="module">
 import { apply, invert, layerMatrix, multiply, pointInPolygon } from '../src/core/geometry.js';
 import {
+  arrowEndPoints,
+  arrowLayer,
   cloneLayer,
   createDoc,
+  hitLayer,
+  placeArrow,
+  shapeLayer,
   drawingLayer,
   effectLayer,
   emojiLayer,
@@ -48,6 +53,7 @@ import { normalizeRepeat } from '../src/raster/repeat.js';
 import { emojiArtUrl, twemojiCode } from '../src/raster/emojiArt.js';
 import { smoothedPath, STAMP_SPACING, strokeGeometry } from '../src/raster/strokes.js';
 import { restoreToolState } from '../src/app/toolState.js';
+import { arrowParts, shapePath, SHAPE_KINDS } from '../src/raster/shapes.js';
 import { Compositor } from '../src/gl/Compositor.js';
 
 const tests = [];
@@ -252,6 +258,69 @@ test('emoji masks and stamps: Twemoji names, used emojis, stamps restored', () =
   const restored = normalizeDoc(JSON.parse(JSON.stringify(full)), () => true).doc;
 
   equal(restored.layers[1].strokes[0].emoji, '🦜');
+});
+
+test('an arrow keeps its ends where they were put, also when rotated or bent', () => {
+  const doc = pictureDoc(400, 300);
+  const tail = { x: 50, y: 250 };
+  const head = { x: 300, y: 60 };
+  const close = (a, b) => near(a.x, b.x, 1e-6) && near(a.y, b.y, 1e-6);
+  let arrow = arrowLayer(doc, tail, head, { width: 6, bend: 0.3 });
+  let [a, b] = arrowEndPoints(arrow);
+
+  assert(close(a, tail) && close(b, head), 'ends placed');
+  arrow = placeArrow({ ...arrow, rotation: 0.7, skewX: 0.1 }, tail, head);
+  [a, b] = arrowEndPoints(arrow);
+  assert(close(a, tail) && close(b, head), 'ends kept through a rotated, skewed box');
+  arrow = placeArrow({ ...arrow, bend: -0.8, width: 30 });
+  [a, b] = arrowEndPoints(arrow);
+  assert(close(a, tail) && close(b, head), 'ends kept when it needs more room');
+  assert(arrow.points.every((value) => Math.abs(value) < 0.5), 'ends inside the box');
+});
+
+test('arrows are hit near the line only; shapes and heads stay inside their box', () => {
+  const doc = pictureDoc(400, 300);
+  const arrow = arrowLayer(doc, { x: 40, y: 260 }, { x: 360, y: 40 }, { width: 6, bend: 0.5 });
+
+  assert(hitLayer(arrow, 360, 40), 'at the head');
+  assert(!hitLayer(arrow, arrow.x + arrow.w * 0.45, arrow.y - arrow.h * 0.45) || !hitLayer(arrow, arrow.x - arrow.w * 0.45, arrow.y + arrow.h * 0.45), 'a corner of its box is empty');
+
+  for (const kind of SHAPE_KINDS.map((entry) => entry.value)) {
+    for (const style of ['organic', 'clean']) {
+      const layer = shapeLayer(doc, { x: 0, y: 0, width: 120, height: 80 }, { kind, style, width: 10 });
+      const { points, width } = shapePath(layer);
+
+      assert(points.every(([x, y]) => Math.abs(x) + width / 2 <= 60.001 && Math.abs(y) + width / 2 <= 40.001), `${style} ${kind} stays inside`);
+    }
+  }
+
+  const { shaft, heads } = arrowParts({ ...arrow, bothEnds: true, head: 'filled' });
+  const inside = ([x, y]) => Math.abs(x) <= arrow.w / 2 && Math.abs(y) <= arrow.h / 2;
+
+  assert(shaft.length >= 2 && shaft.every(inside), 'shaft inside its box');
+  equal(heads.length, 2);
+});
+
+test('shapes and arrows survive a session round trip and a new picture', () => {
+  let doc = pictureDoc(400, 300);
+
+  doc = insertLayer(doc, shapeLayer(doc, { x: 10, y: 10, width: 100, height: 80 }, { kind: 'star', fill: 'fill' }));
+  doc = insertLayer(doc, arrowLayer(doc, { x: 20, y: 200 }, { x: 200, y: 50 }, { head: 'filled', bothEnds: true, width: 5 }));
+  doc.layers.push({ ...doc.layers[2], id: 'broken', points: 'nope' }, { ...doc.layers[1], id: 'odd', kind: 'blob', color: 'red', style: 'x' });
+
+  const restored = normalizeDoc(JSON.parse(JSON.stringify(doc)), () => true).doc.layers;
+
+  equal(restored.map((layer) => layer.type), ['image', 'shape', 'arrow', 'shape']);
+  equal([restored[1].kind, restored[1].fill, restored[2].head, restored[2].bothEnds], ['star', 'fill', 'filled', true]);
+  equal([restored[3].kind, restored[3].color, restored[3].style], ['ellipse', '#e0262b', 'organic']);
+  equal(rebaseDoc(doc, asset(800, 600)).layers[2].width, 10);
+});
+
+test('shape and arrow tool options are restored and checked', () => {
+  const state = restoreToolState({ shape: { kind: 'blob', fill: 'fill', width: 900 }, arrow: { bend: -500, head: 'filled', bothEnds: 'yes', style: 'clean' } });
+
+  equal([state.shape.kind, state.shape.fill, state.shape.style, state.shape.width], ['ellipse', 'fill', 'organic', 50]);
+  equal([state.arrow.bend, state.arrow.head, state.arrow.bothEnds, state.arrow.style], [-100, 'filled', false, 'clean']);
 });
 
 test('stamp tool options are restored and checked', () => {

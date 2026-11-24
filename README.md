@@ -36,7 +36,7 @@ The little bar on each effect tile is a rough guide to how hard it scrambles the
 
 ### Tools
 
-Move/select (resize and rotate with the handles, Shift+click for multi-select), brush (smooth, marker, dotted, spray), eraser, blur brush, pixel brush, effect brush (any effect), effect region, rectangle, text (double-click to edit in place; font, alignment, bold/italic, outline, shadow), crop/resize canvas (drag the frame past the edge to add space) and emoji stamp (pick any emoji or server emoji, click to stamp it at the chosen size and angle, drag for a trail).
+Move/select (resize and rotate with the handles, Shift+click for multi-select), brush (smooth, marker, dotted, spray), eraser, blur brush, pixel brush, effect brush (any effect), effect region, shapes (circle, rectangle, triangle, star, heart; outline or filled, hand-drawn or clean), arrows (drag from start to target, then drag the ends or the middle handle to bend it; open, filled or no head, hand-drawn or clean), text (double-click to edit in place; font, alignment, bold/italic, outline, shadow), crop/resize canvas (drag the frame past the edge to add space) and emoji stamp (pick any emoji or server emoji, click to stamp it at the chosen size and angle, drag for a trail).
 
 The eraser has four modes: **Erase drawings**, **Erase selected layer** (erases only the layer selected in the Layers list – a mask, an image, text, an effect – at the eraser's strength; *Clear erased area* in its properties undoes it all), **Reveal original** (brushes through every mask and effect to show the untouched picture, e.g. to give a hint or keep one detail clear) and **Restore masks** (paints the masks back). Masks you add later stay underneath the revealed area.
 
@@ -65,7 +65,7 @@ Tool options (brush size, colour, type and opacity, eraser mode, blur / pixel am
 ### Keyboard shortcuts (defaults, all remappable)
 
 * CTRL+Z / CTRL+Y: undo / redo
-* V, B, E: move, brush, eraser. Shift+E: eraser in reveal-original mode. G / X: blur brush / pixel brush. Shift+G: effect brush. A: region. R: rectangle. T: text. C: crop. M: stamp
+* V, B, E: move, brush, eraser. Shift+E: eraser in reveal-original mode. G / X: blur brush / pixel brush. Shift+G: effect brush. A: region. R: shapes. Q: arrow. T: text. C: crop. M: stamp
 * D: duplicate. Delete: delete selection
 * W / S: brush size up / down
 * Up / down: opacity of the selection (or of the top layer)
