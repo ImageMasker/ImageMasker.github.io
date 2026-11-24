@@ -1062,16 +1062,22 @@ export class App {
     }
   }
 
-  /** A mask image kept in this browser (Custom tab). */
+  /** A mask image kept in this browser (Custom tab). Repeated patterns stay straight, like flags. */
   addBlobMask(blob, name, options = {}) {
-    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name, repeat: options.repeat ? { seed: Math.random() * 100 } : null }, options);
+    const repeat = Boolean(options.repeat);
+
+    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name, deform: !repeat, repeat: repeat ? { seed: Math.random() * 100 } : null }, options);
   }
 
   /** A mask from the community list on media.picturega.me; the moderator chose image or pattern. */
   addCommunityMask(mask, options = {}) {
     const repeat = options.repeat ?? mask.use === 'pattern';
 
-    return this.addAssetMask(() => this.assets.fromUrl(mask.publicUrl, { name: mask.name }), { name: mask.name, repeat: repeat ? { seed: Math.random() * 100 } : null }, options);
+    return this.addAssetMask(
+      () => this.assets.fromUrl(mask.publicUrl, { name: mask.name }),
+      { name: mask.name, deform: !repeat, repeat: repeat ? { seed: Math.random() * 100 } : null },
+      options
+    );
   }
 
   retiltMask(layerId) {
