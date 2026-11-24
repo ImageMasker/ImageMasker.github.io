@@ -2,64 +2,64 @@ export const PRESET_MASKS = [
 {
   id: 1,
   name: "Weave",
-  thumb: "images/1_thumb.png",
-  full: "images/1.png",
+  thumb: "images/1_thumb.avif",
+  full: "images/1.avif",
   defaultAlpha: 75
 },
 {
   id: 2,
   name: "Bendy weave",
-  thumb: "images/2_thumb.png",
-  full: "images/2.png",
+  thumb: "images/2_thumb.avif",
+  full: "images/2.avif",
   defaultAlpha: 75
 },
 {
   id: 3,
   name: "The wobbler",
-  thumb: "images/3_thumb.png",
-  full: "images/3.png",
+  thumb: "images/3_thumb.avif",
+  full: "images/3.avif",
   defaultAlpha: 75
 },
 {
   id: 4,
   name: "Circles",
-  thumb: "images/4_thumb.png",
-  full: "images/4.png",
+  thumb: "images/4_thumb.avif",
+  full: "images/4.avif",
   defaultAlpha: 65
 },
 {
   id: 5,
   name: "Diamonds",
-  thumb: "images/5_thumb.png",
-  full: "images/5.png",
+  thumb: "images/5_thumb.avif",
+  full: "images/5.avif",
   defaultAlpha: 65
 },
 {
   id: 6,
   name: "Patches",
-  thumb: "images/6_thumb.png",
-  full: "images/6.png",
+  thumb: "images/6_thumb.avif",
+  full: "images/6.avif",
   defaultAlpha: 60
 },
 {
   id: 7,
   name: "Leaves",
-  thumb: "images/7_thumb.png",
-  full: "images/7.png",
+  thumb: "images/7_thumb.avif",
+  full: "images/7.avif",
   defaultAlpha: 60
 },
 {
   id: 8,
   name: "Fruit salad",
-  thumb: "images/8_thumb.png",
-  full: "images/8.png",
+  thumb: "images/8_thumb.avif",
+  full: "images/8.avif",
   defaultAlpha: 65
 },
 {
   id: 9,
   name: "Red waves",
-  thumb: "images/9_thumb.png",
-  full: "images/9.png",
+  thumb: "images/9_thumb.avif",
+  full: "images/9.avif",
   defaultAlpha: 75
 }
 ];

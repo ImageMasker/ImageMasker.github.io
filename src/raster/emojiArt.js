@@ -38,7 +38,7 @@ const SETS = {
   },
 };
 
-const CUSTOM = new Map(DISCORD_EMOJIS.map((emoji) => [`:${emoji.name}:`, new URL(`../../images/discord-emojis/${emoji.id}.png`, import.meta.url).href]));
+const CUSTOM = new Map(DISCORD_EMOJIS.map((emoji) => [`:${emoji.name}:`, new URL(`../../images/discord-emojis/${emoji.id}.avif`, import.meta.url).href]));
 
 /** True for a PictureGame server emoji (`:name:`). */
 export function isCustomEmoji(emoji) {

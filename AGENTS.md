@@ -46,6 +46,9 @@ There is no test runner or linter.
 * The PictureGame Discord server's emojis (`:name:`, `src/masks/discordEmojis.js` + `images/discord-emojis/`)
   come from `scripts/fetch-discord-emojis.mjs`, run on picturegame-vm with the bot's config
   (`node fetch-discord-emojis.mjs /opt/pg/discord/config.json /tmp/out`; the token stays there), then copied back.
+* The app loads mask images as AVIF (quality 60, about a fifth of the PNG size): classic masks and their
+  thumbnails, flag motifs and full flags, and the server emojis. After adding or changing one of those PNGs,
+  run `python scripts/to-avif.py` (Pillow 11.3+). The PNGs stay for `old/v2` and for sessions saved earlier.
 * Check that nothing leaves the screen at 320 px wide as well as on desktop: grids and stacks need
   `minmax(0, 1fr)` columns and inputs `min-width: 0`, or one wide control pushes a whole panel past the edge.
 

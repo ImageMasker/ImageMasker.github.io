@@ -12,14 +12,14 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/eu.png",
+        "src": "images/flag-masks/motifs/eu.avif",
         "width": 209,
         "height": 177,
         "anchorX": 104.5,
         "anchorY": 88.5
       },
       "full": {
-        "src": "images/flag-masks/full/eu.png",
+        "src": "images/flag-masks/full/eu.avif",
         "width": 3840,
         "height": 2128
       }
@@ -34,14 +34,14 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/republic-of-gay.png",
+        "src": "images/flag-masks/motifs/republic-of-gay.avif",
         "width": 198,
         "height": 168,
         "anchorX": 99.0,
         "anchorY": 84.0
       },
       "full": {
-        "src": "images/flag-masks/full/republic-of-gay.png",
+        "src": "images/flag-masks/full/republic-of-gay.avif",
         "width": 3840,
         "height": 2128
       }
@@ -56,14 +56,14 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/transnistria.png",
+        "src": "images/flag-masks/motifs/transnistria.avif",
         "width": 174,
         "height": 148,
         "anchorX": 87.0,
         "anchorY": 74.0
       },
       "full": {
-        "src": "images/flag-masks/full/transnistria.png",
+        "src": "images/flag-masks/full/transnistria.avif",
         "width": 3840,
         "height": 2128
       }
@@ -78,7 +78,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/afghanistan.png",
+        "src": "images/flag-masks/motifs/afghanistan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -398,7 +398,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/africa.png",
+        "src": "images/flag-masks/motifs/africa.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -718,7 +718,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/albania.png",
+        "src": "images/flag-masks/motifs/albania.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -1038,7 +1038,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/algeria.png",
+        "src": "images/flag-masks/motifs/algeria.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -1358,7 +1358,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/andorra.png",
+        "src": "images/flag-masks/motifs/andorra.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -1678,14 +1678,14 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/angola.png",
+        "src": "images/flag-masks/motifs/angola.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
         "anchorY": 72.0
       },
       "full": {
-        "src": "images/flag-masks/full/angola.png",
+        "src": "images/flag-masks/full/angola.avif",
         "width": 3840,
         "height": 2128
       }
@@ -1700,7 +1700,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/antigua-barbuda.png",
+        "src": "images/flag-masks/motifs/antigua-barbuda.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -2020,7 +2020,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/argentina.png",
+        "src": "images/flag-masks/motifs/argentina.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -2340,7 +2340,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/armenia.png",
+        "src": "images/flag-masks/motifs/armenia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -2660,7 +2660,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/australia.png",
+        "src": "images/flag-masks/motifs/australia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -2980,7 +2980,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/austria.png",
+        "src": "images/flag-masks/motifs/austria.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -3300,7 +3300,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/azerbaijan.png",
+        "src": "images/flag-masks/motifs/azerbaijan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -3620,7 +3620,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/bahamas.png",
+        "src": "images/flag-masks/motifs/bahamas.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -3940,7 +3940,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/bahrain.png",
+        "src": "images/flag-masks/motifs/bahrain.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -4260,7 +4260,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/bangladesh.png",
+        "src": "images/flag-masks/motifs/bangladesh.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -4580,7 +4580,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/barbados.png",
+        "src": "images/flag-masks/motifs/barbados.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -4900,7 +4900,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/belarus.png",
+        "src": "images/flag-masks/motifs/belarus.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -5220,7 +5220,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/belgium.png",
+        "src": "images/flag-masks/motifs/belgium.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -5540,7 +5540,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/belize.png",
+        "src": "images/flag-masks/motifs/belize.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -5860,7 +5860,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/benin.png",
+        "src": "images/flag-masks/motifs/benin.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -6180,7 +6180,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/bhutan.png",
+        "src": "images/flag-masks/motifs/bhutan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -6500,7 +6500,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/bolivia.png",
+        "src": "images/flag-masks/motifs/bolivia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -6820,7 +6820,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/bosnia-herzegovina.png",
+        "src": "images/flag-masks/motifs/bosnia-herzegovina.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -7140,7 +7140,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/botswana.png",
+        "src": "images/flag-masks/motifs/botswana.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -7460,7 +7460,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/brazil.png",
+        "src": "images/flag-masks/motifs/brazil.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -7780,7 +7780,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/brunei.png",
+        "src": "images/flag-masks/motifs/brunei.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -8100,7 +8100,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/bulgaria.png",
+        "src": "images/flag-masks/motifs/bulgaria.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -8420,7 +8420,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/burkina-faso.png",
+        "src": "images/flag-masks/motifs/burkina-faso.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -8740,7 +8740,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/burundi.png",
+        "src": "images/flag-masks/motifs/burundi.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -9060,7 +9060,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/cambodia.png",
+        "src": "images/flag-masks/motifs/cambodia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -9380,7 +9380,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/cameroon.png",
+        "src": "images/flag-masks/motifs/cameroon.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -9700,7 +9700,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/canada.png",
+        "src": "images/flag-masks/motifs/canada.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -10020,7 +10020,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/cape-verde.png",
+        "src": "images/flag-masks/motifs/cape-verde.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -10340,14 +10340,14 @@
         "height": 3000
       },
       "motif": {
-        "src": "images/flag-masks/motifs/catalonia.png",
+        "src": "images/flag-masks/motifs/catalonia.avif",
         "width": 155,
         "height": 133,
         "anchorX": 77.5,
         "anchorY": 66.5
       },
       "full": {
-        "src": "images/flag-masks/full/catalonia.png",
+        "src": "images/flag-masks/full/catalonia.avif",
         "width": 4000,
         "height": 3000
       }
@@ -10362,14 +10362,14 @@
         "height": 3000
       },
       "motif": {
-        "src": "images/flag-masks/motifs/catalonia-big.png",
+        "src": "images/flag-masks/motifs/catalonia-big.avif",
         "width": 400,
         "height": 340,
         "anchorX": 200.0,
         "anchorY": 170.0
       },
       "full": {
-        "src": "images/flag-masks/full/catalonia-big.png",
+        "src": "images/flag-masks/full/catalonia-big.avif",
         "width": 4000,
         "height": 3000
       }
@@ -10384,7 +10384,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/central-african-republic.png",
+        "src": "images/flag-masks/motifs/central-african-republic.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -10704,7 +10704,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/chad.png",
+        "src": "images/flag-masks/motifs/chad.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -11024,7 +11024,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/chile.png",
+        "src": "images/flag-masks/motifs/chile.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -11344,7 +11344,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/china.png",
+        "src": "images/flag-masks/motifs/china.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -11664,7 +11664,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/colombia.png",
+        "src": "images/flag-masks/motifs/colombia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -11984,7 +11984,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/comoros.png",
+        "src": "images/flag-masks/motifs/comoros.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -12304,7 +12304,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/congo-democratic.png",
+        "src": "images/flag-masks/motifs/congo-democratic.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -12624,7 +12624,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/congo-republican.png",
+        "src": "images/flag-masks/motifs/congo-republican.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -12944,7 +12944,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/costa-rica.png",
+        "src": "images/flag-masks/motifs/costa-rica.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -13264,7 +13264,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/cote-divoire.png",
+        "src": "images/flag-masks/motifs/cote-divoire.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -13584,7 +13584,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/croatia.png",
+        "src": "images/flag-masks/motifs/croatia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -13904,7 +13904,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/cuba.png",
+        "src": "images/flag-masks/motifs/cuba.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -14224,7 +14224,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/cyprus.png",
+        "src": "images/flag-masks/motifs/cyprus.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -14544,7 +14544,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/czech-republic.png",
+        "src": "images/flag-masks/motifs/czech-republic.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -14864,7 +14864,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/denmark.png",
+        "src": "images/flag-masks/motifs/denmark.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -15184,7 +15184,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/djibouti.png",
+        "src": "images/flag-masks/motifs/djibouti.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -15504,7 +15504,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/dominica.png",
+        "src": "images/flag-masks/motifs/dominica.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -15824,7 +15824,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/dominican-republic.png",
+        "src": "images/flag-masks/motifs/dominican-republic.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -16144,14 +16144,14 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/dreamland.png",
+        "src": "images/flag-masks/motifs/dreamland.avif",
         "width": 132,
         "height": 132,
         "anchorX": 66.0,
         "anchorY": 66.0
       },
       "full": {
-        "src": "images/flag-masks/full/dreamland.png",
+        "src": "images/flag-masks/full/dreamland.avif",
         "width": 3840,
         "height": 2128
       }
@@ -16166,7 +16166,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/east-timor.png",
+        "src": "images/flag-masks/motifs/east-timor.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -16486,7 +16486,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/ecuador.png",
+        "src": "images/flag-masks/motifs/ecuador.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -16806,7 +16806,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/egypt.png",
+        "src": "images/flag-masks/motifs/egypt.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -17126,7 +17126,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/el-salvador.png",
+        "src": "images/flag-masks/motifs/el-salvador.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -17446,7 +17446,7 @@
         "height": 2570
       },
       "motif": {
-        "src": "images/flag-masks/motifs/england.png",
+        "src": "images/flag-masks/motifs/england.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -17747,7 +17747,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/equatorial-guinea.png",
+        "src": "images/flag-masks/motifs/equatorial-guinea.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -18067,7 +18067,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/eritrea.png",
+        "src": "images/flag-masks/motifs/eritrea.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -18387,7 +18387,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/estonia.png",
+        "src": "images/flag-masks/motifs/estonia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -18707,7 +18707,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/ethiopia.png",
+        "src": "images/flag-masks/motifs/ethiopia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -19027,7 +19027,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/fiji.png",
+        "src": "images/flag-masks/motifs/fiji.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -19347,7 +19347,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/finland.png",
+        "src": "images/flag-masks/motifs/finland.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -19667,7 +19667,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/france.png",
+        "src": "images/flag-masks/motifs/france.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -19987,14 +19987,14 @@
         "height": 1414
       },
       "motif": {
-        "src": "images/flag-masks/motifs/funwaa.png",
+        "src": "images/flag-masks/motifs/funwaa.avif",
         "width": 390,
         "height": 288,
         "anchorX": 195.0,
         "anchorY": 144.0
       },
       "full": {
-        "src": "images/flag-masks/full/funwaa.png",
+        "src": "images/flag-masks/full/funwaa.avif",
         "width": 2000,
         "height": 1414
       }
@@ -20009,7 +20009,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/gabon.png",
+        "src": "images/flag-masks/motifs/gabon.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -20329,7 +20329,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/gambia.png",
+        "src": "images/flag-masks/motifs/gambia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -20649,7 +20649,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/georgia.png",
+        "src": "images/flag-masks/motifs/georgia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -20969,7 +20969,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/germany.png",
+        "src": "images/flag-masks/motifs/germany.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -21289,7 +21289,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/ghana.png",
+        "src": "images/flag-masks/motifs/ghana.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -21609,7 +21609,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/greece.png",
+        "src": "images/flag-masks/motifs/greece.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -21929,7 +21929,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/greenland.png",
+        "src": "images/flag-masks/motifs/greenland.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -22249,7 +22249,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/grenada.png",
+        "src": "images/flag-masks/motifs/grenada.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -22569,7 +22569,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/guatemala.png",
+        "src": "images/flag-masks/motifs/guatemala.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -22889,7 +22889,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/guinea-bissau.png",
+        "src": "images/flag-masks/motifs/guinea-bissau.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -23209,7 +23209,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/guinea.png",
+        "src": "images/flag-masks/motifs/guinea.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -23529,7 +23529,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/guyana.png",
+        "src": "images/flag-masks/motifs/guyana.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -23849,7 +23849,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/haiti.png",
+        "src": "images/flag-masks/motifs/haiti.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -24169,7 +24169,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/honduras.png",
+        "src": "images/flag-masks/motifs/honduras.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -24489,7 +24489,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/hong-kong.png",
+        "src": "images/flag-masks/motifs/hong-kong.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -24809,7 +24809,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/hungary.png",
+        "src": "images/flag-masks/motifs/hungary.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -25129,7 +25129,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/iceland.png",
+        "src": "images/flag-masks/motifs/iceland.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -25449,7 +25449,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/india.png",
+        "src": "images/flag-masks/motifs/india.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -25769,7 +25769,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/indonesia.png",
+        "src": "images/flag-masks/motifs/indonesia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -26089,7 +26089,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/iran.png",
+        "src": "images/flag-masks/motifs/iran.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -26409,7 +26409,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/iraq.png",
+        "src": "images/flag-masks/motifs/iraq.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -26729,7 +26729,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/ireland.png",
+        "src": "images/flag-masks/motifs/ireland.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -27049,7 +27049,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/israel.png",
+        "src": "images/flag-masks/motifs/israel.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -27369,7 +27369,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/italy.png",
+        "src": "images/flag-masks/motifs/italy.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -27689,7 +27689,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/jamaica.png",
+        "src": "images/flag-masks/motifs/jamaica.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -28009,7 +28009,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/japan.png",
+        "src": "images/flag-masks/motifs/japan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -28329,7 +28329,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/jordan.png",
+        "src": "images/flag-masks/motifs/jordan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -28649,7 +28649,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/kazakhstan.png",
+        "src": "images/flag-masks/motifs/kazakhstan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -28969,7 +28969,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/kenya.png",
+        "src": "images/flag-masks/motifs/kenya.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -29289,7 +29289,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/kiribati.png",
+        "src": "images/flag-masks/motifs/kiribati.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -29609,7 +29609,7 @@
         "height": 2028
       },
       "motif": {
-        "src": "images/flag-masks/motifs/kosovo.png",
+        "src": "images/flag-masks/motifs/kosovo.avif",
         "width": 160,
         "height": 136,
         "anchorX": 80.0,
@@ -29922,7 +29922,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/kuwait.png",
+        "src": "images/flag-masks/motifs/kuwait.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -30242,7 +30242,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/kyrgyzstan.png",
+        "src": "images/flag-masks/motifs/kyrgyzstan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -30562,7 +30562,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/laos.png",
+        "src": "images/flag-masks/motifs/laos.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -30882,7 +30882,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/latvia.png",
+        "src": "images/flag-masks/motifs/latvia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -31202,7 +31202,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/lebanon.png",
+        "src": "images/flag-masks/motifs/lebanon.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -31522,7 +31522,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/lesotho.png",
+        "src": "images/flag-masks/motifs/lesotho.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -31842,7 +31842,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/liberia.png",
+        "src": "images/flag-masks/motifs/liberia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -32162,7 +32162,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/libya.png",
+        "src": "images/flag-masks/motifs/libya.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -32482,7 +32482,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/liechtenstein.png",
+        "src": "images/flag-masks/motifs/liechtenstein.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -32802,7 +32802,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/lithuania.png",
+        "src": "images/flag-masks/motifs/lithuania.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -33122,7 +33122,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/luxembourg.png",
+        "src": "images/flag-masks/motifs/luxembourg.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -33442,7 +33442,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/macedonia.png",
+        "src": "images/flag-masks/motifs/macedonia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -33762,7 +33762,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/madagascar.png",
+        "src": "images/flag-masks/motifs/madagascar.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -34082,7 +34082,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/malawi.png",
+        "src": "images/flag-masks/motifs/malawi.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -34402,7 +34402,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/malaysia.png",
+        "src": "images/flag-masks/motifs/malaysia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -34722,7 +34722,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/maldives.png",
+        "src": "images/flag-masks/motifs/maldives.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -35042,7 +35042,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/mali.png",
+        "src": "images/flag-masks/motifs/mali.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -35362,7 +35362,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/malta.png",
+        "src": "images/flag-masks/motifs/malta.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -35682,7 +35682,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/marshall-islands.png",
+        "src": "images/flag-masks/motifs/marshall-islands.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -36002,7 +36002,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/mauritania.png",
+        "src": "images/flag-masks/motifs/mauritania.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -36322,7 +36322,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/mauritius.png",
+        "src": "images/flag-masks/motifs/mauritius.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -36642,7 +36642,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/mexico.png",
+        "src": "images/flag-masks/motifs/mexico.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -36962,7 +36962,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/micronesia.png",
+        "src": "images/flag-masks/motifs/micronesia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -37282,7 +37282,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/moldova.png",
+        "src": "images/flag-masks/motifs/moldova.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -37602,7 +37602,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/monaco.png",
+        "src": "images/flag-masks/motifs/monaco.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -37922,7 +37922,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/mongolia.png",
+        "src": "images/flag-masks/motifs/mongolia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -38242,7 +38242,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/montenegro.png",
+        "src": "images/flag-masks/motifs/montenegro.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -38562,7 +38562,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/morocco.png",
+        "src": "images/flag-masks/motifs/morocco.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -38882,7 +38882,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/mozambique.png",
+        "src": "images/flag-masks/motifs/mozambique.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -39202,7 +39202,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/myanmar.png",
+        "src": "images/flag-masks/motifs/myanmar.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -39522,7 +39522,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/namibia.png",
+        "src": "images/flag-masks/motifs/namibia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -39842,7 +39842,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/nauru.png",
+        "src": "images/flag-masks/motifs/nauru.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -40162,7 +40162,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/nepal.png",
+        "src": "images/flag-masks/motifs/nepal.avif",
         "width": 159,
         "height": 114,
         "anchorX": 79.5,
@@ -40560,7 +40560,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/netherlands.png",
+        "src": "images/flag-masks/motifs/netherlands.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -40880,7 +40880,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/new-zealand.png",
+        "src": "images/flag-masks/motifs/new-zealand.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -41200,7 +41200,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/new-zealand-better.png",
+        "src": "images/flag-masks/motifs/new-zealand-better.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -41520,7 +41520,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/nicaragua.png",
+        "src": "images/flag-masks/motifs/nicaragua.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -41840,7 +41840,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/niger.png",
+        "src": "images/flag-masks/motifs/niger.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -42160,7 +42160,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/nigeria.png",
+        "src": "images/flag-masks/motifs/nigeria.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -42480,7 +42480,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/north-korea.png",
+        "src": "images/flag-masks/motifs/north-korea.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -42800,7 +42800,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/ireland.png",
+        "src": "images/flag-masks/motifs/ireland.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -43120,7 +43120,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/norway.png",
+        "src": "images/flag-masks/motifs/norway.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -43440,14 +43440,14 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/ohio.png",
+        "src": "images/flag-masks/motifs/ohio.avif",
         "width": 207,
         "height": 138,
         "anchorX": 103.5,
         "anchorY": 69.0
       },
       "full": {
-        "src": "images/flag-masks/full/ohio.png",
+        "src": "images/flag-masks/full/ohio.avif",
         "width": 3840,
         "height": 2128
       }
@@ -43462,7 +43462,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/oman.png",
+        "src": "images/flag-masks/motifs/oman.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -43782,7 +43782,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/pakistan.png",
+        "src": "images/flag-masks/motifs/pakistan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -44102,7 +44102,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/palau.png",
+        "src": "images/flag-masks/motifs/palau.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -44422,7 +44422,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/palestine.png",
+        "src": "images/flag-masks/motifs/palestine.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -44742,7 +44742,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/panama.png",
+        "src": "images/flag-masks/motifs/panama.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -45062,7 +45062,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/papua-new-guinea.png",
+        "src": "images/flag-masks/motifs/papua-new-guinea.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -45382,7 +45382,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/paraguay.png",
+        "src": "images/flag-masks/motifs/paraguay.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -45702,7 +45702,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/peru.png",
+        "src": "images/flag-masks/motifs/peru.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -46022,14 +46022,14 @@
         "height": 1710
       },
       "motif": {
-        "src": "images/flag-masks/motifs/picturegame.png",
+        "src": "images/flag-masks/motifs/picturegame.avif",
         "width": 169,
         "height": 177,
         "anchorX": 84.5,
         "anchorY": 88.5
       },
       "full": {
-        "src": "images/flag-masks/full/picturegame.png",
+        "src": "images/flag-masks/full/picturegame.avif",
         "width": 2122,
         "height": 1710
       }
@@ -46044,7 +46044,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/philippines.png",
+        "src": "images/flag-masks/motifs/philippines.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -46364,7 +46364,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/poland.png",
+        "src": "images/flag-masks/motifs/poland.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -46684,7 +46684,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/portugal.png",
+        "src": "images/flag-masks/motifs/portugal.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -47004,7 +47004,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/puerto-rico.png",
+        "src": "images/flag-masks/motifs/puerto-rico.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -47324,7 +47324,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/qatar.png",
+        "src": "images/flag-masks/motifs/qatar.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -47644,7 +47644,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/romania.png",
+        "src": "images/flag-masks/motifs/romania.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -47964,7 +47964,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/russia.png",
+        "src": "images/flag-masks/motifs/russia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -48284,7 +48284,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/rwanda.png",
+        "src": "images/flag-masks/motifs/rwanda.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -48604,7 +48604,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/st-kitts-nevis.png",
+        "src": "images/flag-masks/motifs/st-kitts-nevis.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -48924,7 +48924,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/st-lucia.png",
+        "src": "images/flag-masks/motifs/st-lucia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -49244,7 +49244,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/st-vincent-grenadines.png",
+        "src": "images/flag-masks/motifs/st-vincent-grenadines.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -49564,7 +49564,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/samoa.png",
+        "src": "images/flag-masks/motifs/samoa.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -49884,7 +49884,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/san-marino.png",
+        "src": "images/flag-masks/motifs/san-marino.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -50204,7 +50204,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/sao-tome-principe.png",
+        "src": "images/flag-masks/motifs/sao-tome-principe.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -50524,7 +50524,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/saudi-arabia.png",
+        "src": "images/flag-masks/motifs/saudi-arabia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -50844,14 +50844,14 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/scotland.png",
+        "src": "images/flag-masks/motifs/scotland.avif",
         "width": 169,
         "height": 129,
         "anchorX": 84.5,
         "anchorY": 64.5
       },
       "full": {
-        "src": "images/flag-masks/full/scotland.png",
+        "src": "images/flag-masks/full/scotland.avif",
         "width": 3840,
         "height": 2128
       }
@@ -50866,7 +50866,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/senegal.png",
+        "src": "images/flag-masks/motifs/senegal.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -51186,7 +51186,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/serbia.png",
+        "src": "images/flag-masks/motifs/serbia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -51506,7 +51506,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/seychelles.png",
+        "src": "images/flag-masks/motifs/seychelles.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -51826,7 +51826,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/sierra-leone.png",
+        "src": "images/flag-masks/motifs/sierra-leone.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -52146,7 +52146,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/singapore.png",
+        "src": "images/flag-masks/motifs/singapore.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -52466,7 +52466,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/slovakia.png",
+        "src": "images/flag-masks/motifs/slovakia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -52786,7 +52786,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/slovenia.png",
+        "src": "images/flag-masks/motifs/slovenia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -53106,7 +53106,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/solomon-islands.png",
+        "src": "images/flag-masks/motifs/solomon-islands.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -53426,7 +53426,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/somalia.png",
+        "src": "images/flag-masks/motifs/somalia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -53746,7 +53746,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/south-africa.png",
+        "src": "images/flag-masks/motifs/south-africa.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -54066,7 +54066,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/south-korea.png",
+        "src": "images/flag-masks/motifs/south-korea.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -54386,7 +54386,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/south-sudan.png",
+        "src": "images/flag-masks/motifs/south-sudan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -54706,7 +54706,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/spain.png",
+        "src": "images/flag-masks/motifs/spain.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -55026,7 +55026,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/sri-lanka.png",
+        "src": "images/flag-masks/motifs/sri-lanka.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -55346,7 +55346,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/sudan.png",
+        "src": "images/flag-masks/motifs/sudan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -55666,7 +55666,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/suriname.png",
+        "src": "images/flag-masks/motifs/suriname.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -55986,7 +55986,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/swaziland.png",
+        "src": "images/flag-masks/motifs/swaziland.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -56306,7 +56306,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/sweden.png",
+        "src": "images/flag-masks/motifs/sweden.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -56626,7 +56626,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/switzerland.png",
+        "src": "images/flag-masks/motifs/switzerland.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -56946,7 +56946,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/syria.png",
+        "src": "images/flag-masks/motifs/syria.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -57266,7 +57266,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/taiwan.png",
+        "src": "images/flag-masks/motifs/taiwan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -57586,7 +57586,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/tajikistan.png",
+        "src": "images/flag-masks/motifs/tajikistan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -57906,7 +57906,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/tanzania.png",
+        "src": "images/flag-masks/motifs/tanzania.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -58226,7 +58226,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/thailand.png",
+        "src": "images/flag-masks/motifs/thailand.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -58546,7 +58546,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/togo.png",
+        "src": "images/flag-masks/motifs/togo.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -58866,7 +58866,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/tonga.png",
+        "src": "images/flag-masks/motifs/tonga.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -59186,7 +59186,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/trinidad-tobago.png",
+        "src": "images/flag-masks/motifs/trinidad-tobago.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -59506,7 +59506,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/tunisia.png",
+        "src": "images/flag-masks/motifs/tunisia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -59826,7 +59826,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/turkey.png",
+        "src": "images/flag-masks/motifs/turkey.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -60146,7 +60146,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/turkmenistan.png",
+        "src": "images/flag-masks/motifs/turkmenistan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -60466,7 +60466,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/tuvalu.png",
+        "src": "images/flag-masks/motifs/tuvalu.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -60786,7 +60786,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/uganda.png",
+        "src": "images/flag-masks/motifs/uganda.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -61106,7 +61106,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/ukraine.png",
+        "src": "images/flag-masks/motifs/ukraine.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -61426,7 +61426,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/united-arab-emirates.png",
+        "src": "images/flag-masks/motifs/united-arab-emirates.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -61746,7 +61746,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/united-kingdom.png",
+        "src": "images/flag-masks/motifs/united-kingdom.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -62066,7 +62066,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/united-states.png",
+        "src": "images/flag-masks/motifs/united-states.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -62386,7 +62386,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/uruguay.png",
+        "src": "images/flag-masks/motifs/uruguay.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -62706,7 +62706,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/uzbekistan.png",
+        "src": "images/flag-masks/motifs/uzbekistan.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -63026,7 +63026,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/vanuatu.png",
+        "src": "images/flag-masks/motifs/vanuatu.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -63346,7 +63346,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/vatican-city.png",
+        "src": "images/flag-masks/motifs/vatican-city.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -63666,7 +63666,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/venezuela.png",
+        "src": "images/flag-masks/motifs/venezuela.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -63986,7 +63986,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/vietnam.png",
+        "src": "images/flag-masks/motifs/vietnam.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -64306,14 +64306,14 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/wales.png",
+        "src": "images/flag-masks/motifs/wales.avif",
         "width": 168,
         "height": 129,
         "anchorX": 84.0,
         "anchorY": 64.5
       },
       "full": {
-        "src": "images/flag-masks/full/wales.png",
+        "src": "images/flag-masks/full/wales.avif",
         "width": 3840,
         "height": 2128
       }
@@ -64328,7 +64328,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/yemen.png",
+        "src": "images/flag-masks/motifs/yemen.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -64648,7 +64648,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/zambia.png",
+        "src": "images/flag-masks/motifs/zambia.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
@@ -64968,7 +64968,7 @@
         "height": 2128
       },
       "motif": {
-        "src": "images/flag-masks/motifs/zimbabwe.png",
+        "src": "images/flag-masks/motifs/zimbabwe.avif",
         "width": 168,
         "height": 144,
         "anchorX": 84.0,
