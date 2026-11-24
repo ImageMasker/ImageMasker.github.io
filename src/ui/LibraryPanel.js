@@ -26,6 +26,8 @@ const TABS = [
 const THUMB_WIDTH = 176;
 // Milliseconds of thumbnail rendering per frame, so scrolling and typing stay smooth.
 const THUMB_BUDGET = 6;
+// A transparent pixel for previews that are not drawn yet.
+const BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const STRENGTH_LABEL = ['', 'Light scramble', 'Medium scramble', 'Heavy scramble'];
 
 export class LibraryPanel {
@@ -294,14 +296,29 @@ export class LibraryPanel {
   /** "From the picture", "Random" and the ready-made emoji sets. */
   emojiTiles() {
     const app = this.app;
-    // Drawn with the system font straight away, then again once the artwork is in.
+    // Previews wait for the emoji artwork and are drawn one per frame: drawing emojis with the
+    // device's font is slow the first time (tens of milliseconds a tile), the artwork is not. If
+    // the artwork cannot load, loadEmojiArt gives up after a while and the font is used after all.
+    const waiting = [];
+    let frame = 0;
+    const drawNext = () => {
+      frame = 0;
+      waiting.shift()?.();
+
+      if (waiting.length) {
+        frame = requestAnimationFrame(drawNext);
+      }
+    };
     const preview = (emojis, seed, style = 0) => {
       void loadEmojiArt(emojis.map((emoji) => [emoji, style])).then(() => {
-        const image = tiles.get(seed)?.querySelector('.mask-tile-preview');
+        waiting.push(() => {
+          const image = tiles.get(seed)?.querySelector('.mask-tile-preview');
 
-        if (image) image.src = emojiPreview(emojis, { seed, style }).toDataURL();
+          if (image) image.src = emojiPreview(emojis, { seed, style }).toDataURL();
+        });
+        frame ||= requestAnimationFrame(drawNext);
       });
-      return emojiPreview(emojis, { seed, style }).toDataURL();
+      return BLANK_IMAGE;
     };
     const tiles = new Map();
     const fromPicture = this.tile({

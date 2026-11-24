@@ -177,15 +177,9 @@ export const EMOJI_SETS = [
   ...(SERVER_EMOJIS.length ? [{ id: 'picturegame', name: 'PictureGame', emojis: null, preview: SERVER_EMOJIS.slice(0, 6), random: randomServerEmojis }] : []),
   { id: 'faces', name: 'Faces', emojis: ['😀', '😂', '😎', '🤔', '😱', '🥳'] },
   { id: 'animals', name: 'Animals', emojis: ['🐶', '🐱', '🦊', '🐼', '🐸', '🦁'] },
-  { id: 'food', name: 'Food', emojis: ['🍕', '🍔', '🍟', '🌮', '🍩', '🍣'] },
   { id: 'fruit', name: 'Fruit', emojis: ['🍎', '🍌', '🍇', '🍓', '🍉', '🍍'] },
   { id: 'nature', name: 'Nature', emojis: ['🌸', '🌻', '🌳', '🍁', '🌵', '🍄'] },
-  { id: 'space', name: 'Space', emojis: ['🚀', '🌙', '⭐', '🪐', '🛸', '☄️'] },
-  { id: 'hearts', name: 'Hearts', emojis: ['❤️', '🧡', '💛', '💚', '💙', '💜'] },
   { id: 'sports', name: 'Sports', emojis: ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐'] },
-  { id: 'party', name: 'Party', emojis: ['🎉', '🎈', '🎁', '🎂', '✨', '🥳'] },
-  { id: 'spooky', name: 'Spooky', emojis: ['👻', '💀', '🎃', '🕷️', '🦇', '🧟'] },
-  { id: 'shapes', name: 'Shapes', emojis: ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣'] },
   { id: 'blobs', name: 'Google blobs', emojis: ['😀', '😂', '😍', '🤔', '😎', '🥳'], style: 2 },
 ];
 
