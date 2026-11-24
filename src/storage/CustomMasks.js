@@ -79,6 +79,50 @@ export function maskNameFromFile(file) {
   return String(file?.name ?? '').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim().slice(0, 60) || 'Mask';
 }
 
+/** "https://example.com/img/my_leaves.png?w=200" → "my_leaves.png" (maskNameFromFile makes it "my leaves") */
+function fileNameFromUrl(url) {
+  try {
+    return decodeURIComponent(new URL(url).pathname.split('/').filter(Boolean).pop() ?? '') || 'Mask';
+  } catch {
+    return 'Mask';
+  }
+}
+
+// Hosts that do not allow cross-origin reads are fetched through wsrv.nl, an image-only proxy and
+// CDN that sends CORS headers and passes PNG transparency through.
+const imageProxy = (url) => `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+
+/**
+ * Downloads an image link so it can be kept like a file the user picked. The link itself is not
+ * kept: links break (Discord's expire), the image does not.
+ */
+export async function fetchMaskImage(url) {
+  const errors = [];
+
+  for (const candidate of [url, imageProxy(url)]) {
+    try {
+      const response = await fetch(candidate, { mode: 'cors', cache: 'no-store' });
+
+      if (!response.ok) {
+        throw new Error(`error ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const type = blob.type.split(';')[0].trim().toLowerCase();
+
+      if (/^(text|application\/json)/.test(type)) {
+        throw new Error('not an image');
+      }
+
+      return new File([blob], fileNameFromUrl(url), { type: type.startsWith('image/') ? type : '' });
+    } catch (error) {
+      errors.push(error?.message || 'failed');
+    }
+  }
+
+  throw new Error(`That link could not be loaded (${[...new Set(errors)].join(', ')}). Use a link that opens the image itself.`);
+}
+
 export class CustomMasks {
   constructor(sessionStore) {
     this.sessionStore = sessionStore;

@@ -26,7 +26,9 @@ The **Masks** library on the left has four tabs: Effects, Overlays, Other and Cu
 * **Custom** – your own masks and the community's:
   * **Add image files…** keeps masks in this browser (no image host needed). Turn on *Private copy online* to store them on PictureGame's media server (media.picturega.me) too; they are tied to a random *mask key* (Settings → Masks), not an account, so paste that key on another device to get the same masks there. Only you can see private masks.
   * **Share a mask…** picks an image and submits it to the community list in one go. A mask's **⋯** menu (or right-click) can also rename, download, keep a private copy online, share or delete it. Hover a community mask and click the **★** on its picture to star it: starred masks stay at the top (stars are kept in this browser). Shared masks are reviewed first (the PictureGame Discord bot sends each one to the reviewer by DM with Approve / Reject buttons, where the reviewer can also rename it and choose whether clicking it adds one image or a repeated pattern); once approved they appear under **Community masks** for everyone. Settings → Masks also has the review queue for whoever holds the moderator token.
-  * Mask URLs saved earlier are still listed, and *Mask from a URL* adds new ones.
+  * *Mask from a link* downloads the image and keeps it like a picked file (private copy and
+    sharing included); the link itself is not kept. Mask URLs saved earlier are still listed and
+    can be turned into kept masks the same way.
 
 Overlay masks are slightly rotated and skewed when added so they are harder to subtract, and have opacity, zoom, angle, blend mode, hue, invert, blur, noise and warp controls. Image masks (classic, custom and community) can also be switched to **Repeat as a pattern**: the image is drawn small in staggered rows across the whole picture, like the flag masks, with sliders for the number of rows, its size in each cell and the row offset. Custom and community masks offer *Add as a repeated pattern* in their ⋯ menu.
 

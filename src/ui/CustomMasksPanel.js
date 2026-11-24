@@ -3,10 +3,12 @@
 // * Your masks are image files kept in this browser (IndexedDB). Each can also get a private copy
 //   on media.picturega.me, which follows your mask key to other devices, and that copy can be
 //   submitted to the community list. A moderator approves submissions before anyone sees them.
-// * Mask URLs saved by the previous version (localStorage 'masks') are still listed.
+// * An image link is downloaded and kept like a picked file (so it gets the same private copy and
+//   can be shared); the link itself is not kept. Mask URLs saved by the previous version
+//   (localStorage 'masks') are still listed, and can be turned into kept masks the same way.
 // * Community masks are loaded from media.picturega.me when the tab is first opened.
 
-import { maskNameFromFile, prepareMaskImage } from '../storage/CustomMasks.js';
+import { fetchMaskImage, maskNameFromFile, prepareMaskImage } from '../storage/CustomMasks.js';
 import { el } from '../utils/dom.js';
 import { button, message, row, section, toggle } from './kit.js';
 import { promptDialog } from './PromptDialog.js';
@@ -101,7 +103,7 @@ export class CustomMasksPanel {
     this.syncRow = row([this.syncButton], 'button-row--fill hidden');
 
     this.urlInput = el('input', { type: 'url', placeholder: 'https://… image URL', 'aria-label': 'Mask image URL' });
-    this.urlInput.addEventListener('keydown', (event) => event.key === 'Enter' && this.saveUrl());
+    this.urlInput.addEventListener('keydown', (event) => event.key === 'Enter' && this.importUrl());
 
     this.communityGrid = el('div', { className: 'mask-grid' });
     this.communityStatus = el('div', { className: 'panel-empty-state', textContent: 'Loading community masks…' });
@@ -127,8 +129,15 @@ export class CustomMasksPanel {
           ], 'button-row--fill'),
           this.syncRow,
           this.notice.element,
-          section('Mask from a URL', [
-            el('div', { className: 'input-row' }, [this.urlInput, button('Save', { onClick: () => this.saveUrl() })]),
+          section('Mask from a link', [
+            el('div', { className: 'input-row' }, [this.urlInput, button('Add', { onClick: () => this.importUrl() })]),
+            row([
+              button('Share it with the community…', {
+                iconName: 'grid',
+                title: 'Adds the image to your masks, then submits it. A moderator checks it first.',
+                onClick: () => this.importUrl({ share: true }),
+              }),
+            ], 'button-row--fill'),
           ], { open: false }),
         ]),
       ]),
@@ -212,6 +221,9 @@ export class CustomMasksPanel {
             { label: 'Add as a new layer', icon: 'plus', action: () => this.app.addCustomMask(url, { stack: true }) },
             { label: 'Copy the link', icon: 'clipboard', action: () => this.app.copyText(url, 'Mask link copied.') },
             'separator',
+            { label: 'Keep the image (not just the link)', icon: 'download', action: () => this.importLegacy(url) },
+            { label: 'Share with the community…', icon: 'grid', action: () => this.importLegacy(url, { share: true }) },
+            'separator',
             {
               label: 'Remove',
               icon: 'trash',
@@ -261,6 +273,11 @@ export class CustomMasksPanel {
       return;
     }
 
+    return this.addImages(images);
+  }
+
+  /** Keeps images as masks (and their private copies, if that is on); the last one is returned. */
+  async addImages(images, { place = true } = {}) {
     const cloud = preference(CLOUD_COPY_KEY);
     let added = 0;
     let last = null;
@@ -294,7 +311,7 @@ export class CustomMasksPanel {
     }
 
     // A single new mask is also put on the picture straight away.
-    if (images.length === 1 && last && this.app.store.hasImage) {
+    if (place && images.length === 1 && last && this.app.store.hasImage) {
       await this.app.addBlobMask(last.blob, last.name, { stack: false });
     }
 
@@ -434,19 +451,51 @@ export class CustomMasksPanel {
     }
   }
 
-  saveUrl() {
+  /** "Mask from a link": downloads the image and keeps it like a picked file (never just the link). */
+  async importUrl({ share = false } = {}) {
     const url = this.urlInput.value.trim();
 
     if (!/^https?:\/\/\S+$/i.test(url)) {
-      this.notice.set('Enter a full image URL starting with https://.', 'warning');
+      this.notice.set('Enter a full image link starting with https://.', 'warning');
       this.urlInput.focus();
       return;
     }
 
-    this.app.maskStorage.addMask(url);
-    this.urlInput.value = '';
-    this.renderMine();
-    this.notice.set('Mask link saved.', 'success');
+    if (await this.addFromUrl(url, { share })) {
+      this.urlInput.value = '';
+    }
+  }
+
+  /** Turns a link saved by the previous version into a kept mask, then forgets the link. */
+  async importLegacy(url, { share = false } = {}) {
+    if (await this.addFromUrl(url, { share, place: false })) {
+      this.app.maskStorage.removeMask(url);
+      this.renderMine();
+    }
+  }
+
+  async addFromUrl(url, { share = false, place = !share } = {}) {
+    if (this.urlBusy) {
+      return null;
+    }
+
+    this.urlBusy = true;
+    this.notice.set('Downloading the image…', 'info');
+
+    try {
+      const mask = await this.addImages([await fetchMaskImage(url)], { place });
+
+      if (mask && share) {
+        await this.share((await this.app.customMasks.get(mask.id)) ?? mask);
+      }
+
+      return mask;
+    } catch (error) {
+      this.notice.set(error.message, 'error');
+      return null;
+    } finally {
+      this.urlBusy = false;
+    }
   }
 
   /** Updates review statuses and finds masks this key has on the server but this browser lacks. */
