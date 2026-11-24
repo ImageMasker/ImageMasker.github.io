@@ -1,9 +1,3 @@
-@import './components.css';
-@import './layout.css';
-@import './panels.css';
-@import './dialogs.css';
-@import './mobile.css';
-
 :root {
   --tools-column-width: 312px;
   --masks-column-width: 300px;

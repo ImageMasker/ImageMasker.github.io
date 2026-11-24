@@ -16,6 +16,13 @@ can stall under many parallel requests from an automated browser; `http-server` 
 There is no test runner or linter.
 
 * `node --check <file>` catches syntax errors in a changed module.
+* Adding, removing or moving a module (or a static import between modules) means running
+  `node scripts/update-preloads.mjs`: `index.html` lists every module loaded up front as
+  `<link rel="modulepreload">` so a first visit fetches them all at once instead of one import level at a
+  time. `dev/tests.html` fails while the list is out of date. Lazy `import()` modules stay out of it.
+* Keep startup light: the library only renders effect/pattern thumbnails for tiles on screen, and the
+  Other tab builds its emoji tiles the first time it opens. The style sheets are `<link>`ed from
+  `index.html` (not `@import`ed), so add a new one there.
 * `dev/effect-sheet.html` compiles and renders every effect and pattern; shader errors are printed on
   the page and exposed as `window.__sheet.errors`. Check it after editing `src/gl/effects.js`,
   `src/gl/patterns.js` or `src/gl/glsl.js`.

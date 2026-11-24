@@ -222,7 +222,7 @@ export class App {
 
     const header = el('header', { className: 'app-header' }, [
       el('div', { className: 'brand' }, [
-        el('img', { src: 'images/favicon.png', alt: '', width: '26', height: '26' }),
+        el('img', { src: 'images/logo-64.png', alt: '', width: '26', height: '26' }),
         el('span', { className: 'brand-name', textContent: 'Image Masker' }),
       ]),
       el('div', { className: 'header-group' }, [refs.startOver]),

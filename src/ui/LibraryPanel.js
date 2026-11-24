@@ -1,6 +1,10 @@
 // The mask library: effect masks, overlay masks (procedural + classic images), emoji masks and
 // flags ("Other"), and the user's own and community masks (CustomMasksPanel). Effect and pattern
 // thumbnails are rendered live from the loaded picture.
+//
+// To keep the first load light, a thumbnail is only rendered once its tile is on screen (each
+// needs its own shader compiled), a few milliseconds' worth per frame, and the "Other" tab's
+// emoji tiles (and their artwork downloads) are only made the first time that tab is opened.
 
 import { EFFECT_CATEGORIES, EFFECTS, defaultParams } from '../gl/effects.js';
 import { PATTERNS } from '../gl/patterns.js';
@@ -20,6 +24,8 @@ const TABS = [
   { id: 'custom', label: 'Custom' },
 ];
 const THUMB_WIDTH = 176;
+// Milliseconds of thumbnail rendering per frame, so scrolling and typing stay smooth.
+const THUMB_BUDGET = 6;
 const STRENGTH_LABEL = ['', 'Light scramble', 'Medium scramble', 'Heavy scramble'];
 
 export class LibraryPanel {
@@ -28,7 +34,13 @@ export class LibraryPanel {
     this.tab = 'effects';
     this.thumbs = [];
     this.thumbTimer = 0;
-    this.thumbJob = 0;
+    this.thumbFrame = 0;
+    this.thumbSourceTarget = null;
+    this.thumbByCanvas = new WeakMap();
+    this.thumbObserver = 'IntersectionObserver' in window
+      ? new IntersectionObserver((entries) => this.thumbsSeen(entries), { rootMargin: '200px' })
+      : null;
+    this.emojiBuilt = false;
     this.flagsLoaded = false;
     this.panels = {};
     this.tabButtons = {};
@@ -36,6 +48,10 @@ export class LibraryPanel {
     this.setTab('effects');
 
     app.bus.on('image-changed', () => this.scheduleThumbs(250));
+    app.stage.glx.onRestore(() => {
+      this.thumbSourceTarget = null;
+      this.refreshThumbs();
+    });
 
     const syncTarget = () => this.syncCollageBar();
 
@@ -116,6 +132,11 @@ export class LibraryPanel {
     }
 
     if (id === 'other') {
+      if (!this.emojiBuilt) {
+        this.emojiBuilt = true;
+        this.emojiGrid.replaceChildren(...this.emojiTiles());
+      }
+
       this.loadFlags();
     }
 
@@ -181,7 +202,11 @@ export class LibraryPanel {
     });
 
     if (render) {
-      this.thumbs.push({ canvas: preview, render });
+      const thumb = { canvas: preview, render, dirty: true, seen: !this.thumbObserver };
+
+      this.thumbs.push(thumb);
+      this.thumbByCanvas.set(preview, thumb);
+      this.thumbObserver?.observe(preview);
     }
 
     return tileButton;
@@ -255,7 +280,7 @@ export class LibraryPanel {
     return el('div', { className: 'library-tab hidden' }, [
       el('section', { className: 'library-group' }, [
         el('h3', { className: 'library-group-title', textContent: 'Emoji' }),
-        el('div', { className: 'mask-grid' }, this.emojiTiles()),
+        (this.emojiGrid = el('div', { className: 'mask-grid' })),
       ]),
       el('section', { className: 'library-group' }, [
         el('h3', { className: 'library-group-title', textContent: 'Flags' }),
@@ -377,49 +402,85 @@ Pick your own emojis, density and size in the mask's properties.` : 'Different e
     return compositor.targetFromSource(sample, sample.width, sample.height);
   }
 
+  /** The picture changed: every thumbnail is out of date, and the ones on screen are redrawn. */
   refreshThumbs() {
-    const job = (this.thumbJob += 1);
+    if (this.thumbSourceTarget) {
+      this.app.stage.glx.release(this.thumbSourceTarget);
+      this.thumbSourceTarget = null;
+    }
+
+    for (const thumb of this.thumbs) {
+      thumb.dirty = true;
+    }
+
+    this.queueThumbs();
+  }
+
+  thumbsSeen(entries) {
+    for (const entry of entries) {
+      const thumb = this.thumbByCanvas.get(entry.target);
+
+      if (thumb) {
+        thumb.seen = entry.isIntersecting;
+      }
+    }
+
+    this.queueThumbs();
+  }
+
+  queueThumbs() {
+    if (!this.thumbFrame && this.thumbs.some((thumb) => thumb.dirty && thumb.seen)) {
+      this.thumbFrame = requestAnimationFrame(() => this.drawThumbs());
+    }
+  }
+
+  /** Draws out-of-date thumbnails that are on screen, for a few milliseconds, then waits a frame. */
+  drawThumbs() {
     const { stage } = this.app;
-    let source;
+    const started = performance.now();
+
+    this.thumbFrame = 0;
+
+    if (stage.glx.lost) {
+      return;
+    }
 
     try {
-      source = this.thumbSource();
+      this.thumbSourceTarget ??= this.thumbSource();
     } catch (error) {
       console.error(error);
       return;
     }
 
-    let index = 0;
-    const step = () => {
-      if (job !== this.thumbJob || stage.glx.lost) {
-        stage.glx.release(source);
-        return;
+    let drew = false;
+
+    for (const thumb of this.thumbs) {
+      if (!thumb.dirty || !thumb.seen) {
+        continue;
       }
 
-      const end = Math.min(this.thumbs.length, index + 8);
-
-      for (; index < end; index += 1) {
-        const thumb = this.thumbs[index];
-
-        try {
-          const image = thumb.render(source);
-
-          thumb.canvas.width = image.width;
-          thumb.canvas.height = image.height;
-          thumb.canvas.getContext('2d').putImageData(image, 0, 0);
-        } catch (error) {
-          console.error(error);
-        }
+      if (drew && performance.now() - started > THUMB_BUDGET) {
+        break;
       }
 
-      if (index < this.thumbs.length) {
-        requestAnimationFrame(step);
-      } else {
-        stage.glx.release(source);
-        stage.afterOffscreenRender();
-      }
-    };
+      thumb.dirty = false;
+      drew = true;
 
-    step();
+      try {
+        const image = thumb.render(this.thumbSourceTarget);
+
+        thumb.canvas.width = image.width;
+        thumb.canvas.height = image.height;
+        thumb.canvas.getContext('2d').putImageData(image, 0, 0);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    if (drew) {
+      stage.afterOffscreenRender();
+    }
+
+    this.queueThumbs();
   }
 }
