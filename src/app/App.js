@@ -16,6 +16,7 @@ import {
   maskLayer,
   moveLayer,
   patternLayer,
+  presetPatternLayer,
   rebaseDoc,
   removeLayers,
   textLayer,
@@ -1050,6 +1051,14 @@ export class App {
   }
 
   addPresetMask(preset, options) {
+    if (preset.pattern) {
+      // Weave and The wobbler: drawn live from Ed Harvey's weave, not a picture.
+      if (this.requireImage('Load an image before adding a mask.')) {
+        this.placeMask(presetPatternLayer(this.store.doc, preset), options);
+      }
+      return;
+    }
+
     return this.addAssetMask(() => this.assets.fromPath(preset.full, { name: preset.name }), { name: preset.name }, options);
   }
 

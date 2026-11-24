@@ -126,6 +126,14 @@ export function patternLayer(doc, patternId, { opacity = 0.75, params = null, de
   };
 }
 
+/**
+ * A classic overlay mask that is drawn as a pattern (`preset.pattern`: { id, params }, see
+ * masks/maskData.js), named after the preset.
+ */
+export function presetPatternLayer(doc, preset, { opacity = (preset.defaultAlpha ?? 75) / 100 } = {}) {
+  return { ...patternLayer(doc, preset.pattern.id, { opacity, params: preset.pattern.params }), name: preset.name };
+}
+
 /** An overlay mask of emojis, tiled across the picture (raster/emoji.js draws it). */
 export function emojiLayer(doc, emojis, { opacity = 0.9, params = null, deform = true, name = '' } = {}) {
   const side = Math.max(doc.width, doc.height);

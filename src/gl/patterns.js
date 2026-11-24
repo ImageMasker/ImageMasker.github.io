@@ -16,6 +16,143 @@ const B = (value = '#f4efe6') => C('b', 'Background', value);
 const BG = (value = 0) => R('bg', 'Background opacity', 0, 100, value);
 const DENSITY = (value) => R('density', 'Density', 2, 120, value);
 
+// ── woven patterns ────────────────────────────────────────────────────────
+//
+// Ed Harvey's Weave effect for paint.net (2008), which made the classic Weave mask, with his Wobble
+// warp on top, which made The wobbler (Bendy weave took more steps than that and stays a picture).
+// Rebuilt from his code:
+// strips one unit wide with gaps of `gap` % of that; each strip shows over a run of cells and
+// spans the gaps at both ends, black at its ends and clear in the middle (his gradient blend
+// 0, .9, 1, 1, .9, 0 at 0, .17, .4, .6, .83, 1, stretched over the whole run); solid where two
+// gaps cross. Plain is his weave (over one, under one); Twill, Herringbone and Basket change which
+// strip is on top in each cell. Wobble moves each point sideways along `wobangle` by a sine of its
+// position across it; a second pass can go on top. Shading, Shine and Stretch are extras.
+// `weave` itself is reached through the classic presets (masks/maskData.js); the others are listed.
+
+const WEAVE_STYLES = ['Plain', 'Twill', 'Herringbone', 'Basket'];
+
+const WEAVE_FRAG = `
+bool weaveOver(vec2 c) {
+  if (p_style < 0.5) return mod(c.x + c.y, 2.0) < 0.5;
+  if (p_style < 1.5) return mod(c.x + c.y, 4.0) < 1.5;
+  if (p_style < 2.5) {
+    float k = mod(floor(c.x / 4.0), 2.0) < 0.5 ? c.x + c.y : c.y - c.x;
+    return mod(k, 4.0) < 1.5;
+  }
+  return mod(floor(c.x / 2.0) + floor(c.y / 2.0), 2.0) < 0.5;
+}
+// Where along its run (0..1) the vertical strip of column cx that shows in row cy is at v.
+float weaveRunV(float v, float cx, float cy, float h, float g) {
+  float r0 = cy;
+  float r1 = cy;
+  for (int k = 0; k < 4; k++) { if (!weaveOver(vec2(cx, r0 - 1.0))) break; r0 -= 1.0; }
+  for (int k = 0; k < 4; k++) { if (!weaveOver(vec2(cx, r1 + 1.0))) break; r1 += 1.0; }
+  return (v - (r0 * h - g)) / ((r1 - r0 + 1.0) * h + 2.0 * g);
+}
+float weaveRunH(float u, float cx, float cy, float h, float g) {
+  float r0 = cx;
+  float r1 = cx;
+  for (int k = 0; k < 4; k++) { if (weaveOver(vec2(r0 - 1.0, cy))) break; r0 -= 1.0; }
+  for (int k = 0; k < 4; k++) { if (weaveOver(vec2(r1 + 1.0, cy))) break; r1 += 1.0; }
+  return (u - (r0 * h - g)) / ((r1 - r0 + 1.0) * h + 2.0 * g);
+}
+// Ed's gradient: how clear the strip is at t (0 at its ends, 1 in the middle).
+float weaveClear(float t) {
+  float f = t < 0.17 ? 0.9 * t / 0.17
+    : t < 0.4 ? 0.9 + 0.1 * (t - 0.17) / 0.23
+    : t < 0.6 ? 1.0
+    : t < 0.83 ? 1.0 - 0.1 * (t - 0.6) / 0.23
+    : 0.9 * (1.0 - t) / 0.17;
+  return clamp(f, 0.0, 1.0);
+}
+// q in strip widths: x = how dark, y = how clear the strip is there (for Shine; 0 in gaps).
+vec2 weaveAt(vec2 q, float g) {
+  float h = 1.0 + 2.0 * g;
+  vec2 c = floor((q + g) / h);
+  vec2 f = q + g - c * h;
+  bool gx = f.x < 2.0 * g;
+  bool gy = f.y < 2.0 * g;
+  float t;
+
+  if (gx && gy) return vec2(1.0, 0.0);
+  if (gy) {
+    if (weaveOver(c)) t = weaveRunV(q.y, c.x, c.y, h, g);
+    else if (weaveOver(c - vec2(0.0, 1.0))) t = weaveRunV(q.y, c.x, c.y - 1.0, h, g);
+    else return vec2(1.0, 0.0);
+  } else if (gx) {
+    if (!weaveOver(c)) t = weaveRunH(q.x, c.x, c.y, h, g);
+    else if (!weaveOver(c - vec2(1.0, 0.0))) t = weaveRunH(q.x, c.x - 1.0, c.y, h, g);
+    else return vec2(1.0, 0.0);
+  } else {
+    t = weaveOver(c) ? weaveRunV(q.y, c.x, c.y, h, g) : weaveRunH(q.x, c.x, c.y, h, g);
+  }
+
+  float clearness = weaveClear(t);
+  return vec2((1.0 - clearness) * p_shade * 0.01, clearness);
+}
+// One pass of Ed's Wobble, undone: where the point came from.
+vec2 unwobble(vec2 s, float amount, float len, float deg, float phase) {
+  float a = radians(deg);
+  float d = amount * 0.01 * sin(dot(s, vec2(sin(a), cos(a))) * TAU / max(len, 0.01) + radians(phase));
+  return s + d * vec2(cos(a), -sin(a));
+}
+vec4 pattern(vec2 p) {
+  // Ed's maths is in picture pixels, y going down.
+  p.y = -p.y;
+  float g = p_gap * 0.01;
+  // One repeat of the plain weave is two cells each way.
+  float repeat = 2.0 + 4.0 * g;
+  mat2 turn = rot(radians(p_angle));
+  vec2 stretch = vec2(100.0 / max(p_stretch, 1.0), 1.0);
+  vec2 sum = vec2(0.0);
+  for (int i = 0; i < 4; i++) {
+    vec2 s = p + (vec2(float(i & 1), float(i >> 1)) - 0.5) * 0.5 * uAA;
+    s = unwobble(s, p_wobble2, p_wavelen2, p_wobangle2, p_phase2);
+    s = unwobble(s, p_wobble, p_wavelen, p_wobangle, p_phase);
+    // Row-vector product: turns the picture by -angle into the weave (Ed's brush rotation).
+    sum += weaveAt(s * turn * repeat * stretch, g);
+  }
+  sum *= 0.25;
+  float dark = sum.x;
+  float light = sum.y * p_shine * 0.01 * (1.0 - dark);
+  vec4 back = vec4(p_b, 1.0) * p_bg * 0.01;
+  vec4 under = vec4(vec3(light), light) + back * (1.0 - light);
+  return vec4(p_a, 1.0) * dark + under * (1.0 - dark);
+}`;
+
+/** A woven pattern: the weave shader with its own name and default settings. */
+function weavePattern({ id, name, hidden = false, values = {} }) {
+  const params = [
+    DENSITY(15),
+    O('style', 'Weave', WEAVE_STYLES, 0),
+    R('gap', 'Gap', 0, 60, 15),
+    R('angle', 'Angle', -90, 90, 45),
+    R('shade', 'Shading', 0, 100, 100),
+    R('shine', 'Shine', 0, 100, 0),
+    R('stretch', 'Stretch', 40, 250, 100),
+    R('wobble', 'Wobble', 0, 200, 0),
+    R('wavelen', 'Wobble length', 0.25, 25, 1, 0.05),
+    R('wobangle', 'Wobble direction', -90, 90, 0),
+    R('phase', 'Wobble phase', 0, 360, 0),
+    R('wobble2', 'Second wobble', 0, 200, 0),
+    R('wavelen2', 'Second wobble length', 0.25, 25, 4, 0.05),
+    R('wobangle2', 'Second wobble direction', -90, 90, 90),
+    R('phase2', 'Second wobble phase', 0, 360, 0),
+    A('#000000'),
+    B(),
+    BG(0),
+  ].map((param) => (param.key in values ? { ...param, value: values[param.key] } : param));
+
+  return {
+    id,
+    name,
+    hidden,
+    main: ['density', 'style', 'gap', 'angle', 'shade', 'shine', 'wobble', 'wavelen', 'wobangle', 'a'],
+    params,
+    frag: WEAVE_FRAG,
+  };
+}
+
 export const PATTERNS = [
   {
     id: 'lattice',
@@ -43,6 +180,12 @@ vec4 pattern(vec2 p) {
   return bands + back * (1.0 - bands.a);
 }`,
   },
+  weavePattern({ id: 'weave', name: 'Weave', hidden: true }),
+  weavePattern({ id: 'twill', name: 'Twill', values: { style: 1, angle: 0, density: 16 } }),
+  weavePattern({ id: 'herringbone', name: 'Herringbone', values: { style: 2, angle: 0, density: 16 } }),
+  weavePattern({ id: 'basket', name: 'Basket weave', values: { style: 3, angle: 0, density: 9, gap: 10, shine: 35 } }),
+  weavePattern({ id: 'rippledWeave', name: 'Rippled weave', values: { density: 13, wobble: 35, wavelen: 3, wobble2: 35, wavelen2: 3, wobangle2: 90 } }),
+  weavePattern({ id: 'wavyTwill', name: 'Wavy twill', values: { style: 1, angle: 0, density: 16, wobble: 60, wavelen: 6, wobangle: 90 } }),
   {
     id: 'mesh',
     fixed: ['width'],

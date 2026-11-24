@@ -4,7 +4,9 @@ export const PRESET_MASKS = [
   name: "Weave",
   thumb: "images/1_thumb.avif",
   full: "images/1.avif",
-  defaultAlpha: 75
+  defaultAlpha: 75,
+  // Drawn live with Ed Harvey's weave (gl/patterns.js); `full` stays for sessions saved before.
+  pattern: { id: "weave", params: { density: 15 } }
 },
 {
   id: 2,
@@ -18,7 +20,8 @@ export const PRESET_MASKS = [
   name: "The wobbler",
   thumb: "images/3_thumb.avif",
   full: "images/3.avif",
-  defaultAlpha: 75
+  defaultAlpha: 75,
+  pattern: { id: "weave", params: { density: 14, wobble: 13, wavelen: 1, wobangle: 0 } }
 },
 {
   id: 4,

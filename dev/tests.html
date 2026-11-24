@@ -27,6 +27,7 @@ import {
   createDoc,
   hitLayer,
   placeArrow,
+  presetPatternLayer,
   shapeLayer,
   drawingLayer,
   effectLayer,
@@ -53,6 +54,8 @@ import { normalizeRepeat } from '../src/raster/repeat.js';
 import { emojiArtUrl, twemojiCode } from '../src/raster/emojiArt.js';
 import { smoothedPath, STAMP_SPACING, strokeGeometry } from '../src/raster/strokes.js';
 import { restoreToolState } from '../src/app/toolState.js';
+import { PATTERNS } from '../src/gl/patterns.js';
+import { PRESET_MASKS } from '../src/masks/maskData.js';
 import { arrowCurve, arrowParts, curveThrough, fitCurve, shapePath, SHAPE_KINDS } from '../src/raster/shapes.js';
 import { Compositor } from '../src/gl/Compositor.js';
 
@@ -340,6 +343,24 @@ test('shapes and arrows survive a session round trip and a new picture', () => {
   equal([restored[1].kind, restored[1].fill, restored[2].head, restored[2].bothEnds], ['star', 'fill', 'filled', true]);
   equal([restored[3].kind, restored[3].color, restored[3].style], ['ellipse', '#e0262b', 'organic']);
   equal(rebaseDoc(doc, asset(800, 600)).layers[2].width, 10);
+});
+
+test('the classic Weave and The wobbler are weave patterns, kept through a session', () => {
+  const doc = pictureDoc(400, 300);
+  const weaves = PRESET_MASKS.filter((preset) => preset.pattern);
+
+  equal(weaves.map((preset) => preset.name), ['Weave', 'The wobbler']);
+
+  for (const preset of weaves) {
+    const layer = presetPatternLayer(doc, preset, { opacity: 0.5 });
+    const restored = normalizeDoc(JSON.parse(JSON.stringify(insertMask(doc, layer))), () => true).doc.layers[1];
+
+    equal([restored.source, restored.patternId, restored.name, restored.opacity], ['pattern', 'weave', preset.name, 0.5]);
+    equal(restored.params.density, preset.pattern.params.density);
+    equal(restored.params.wobble, preset.pattern.params.wobble ?? 0);
+  }
+
+  assert(!PATTERNS.some((pattern) => pattern.id === 'weave' && !pattern.hidden), 'not listed twice');
 });
 
 test('shape and arrow tool options are restored and checked', () => {

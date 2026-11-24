@@ -261,7 +261,7 @@ export class LibraryPanel {
         el(
           'div',
           { className: 'mask-grid' },
-          PATTERNS.map((pattern) =>
+          PATTERNS.filter((pattern) => !pattern.hidden).map((pattern) =>
             this.tile({
               label: pattern.name,
               render: (source) => this.app.stage.compositor.patternPreview(pattern, defaultParams(pattern), 12.5, source),

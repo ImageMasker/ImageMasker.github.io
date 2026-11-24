@@ -934,7 +934,13 @@ export class Inspector {
 
     if (layer.source === 'pattern') {
       const definition = getPattern(layer.patternId);
-      const controls = this.paramControls(id, definition);
+      // Patterns with many settings name their main ones; the rest go under "More settings".
+      const main = definition.main ? new Set(definition.main) : null;
+      const controls = this.paramControls(id, definition, (param) => !main || main.has(param.key));
+
+      if (main) {
+        controls.push(section('More settings', this.paramControls(id, definition, (param) => !main.has(param.key)), { open: false, className: 'tool-section--nested' }));
+      }
 
       if (definition.seeded) {
         controls.push(row([button('Shuffle', { iconName: 'shuffle', onClick: () => app.store.apply('Shuffle', (doc) => updateLayer(doc, id, { seed: Math.random() * 100 })) })]));

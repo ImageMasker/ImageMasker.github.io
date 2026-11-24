@@ -4,8 +4,11 @@
 
 import { EFFECT_CATEGORIES, EFFECTS, intensityParams } from '../gl/effects.js';
 import { PATTERNS } from '../gl/patterns.js';
-import { effectLayer, maskLayer, patternLayer } from '../core/model.js';
+import { effectLayer, maskLayer, patternLayer, presetPatternLayer } from '../core/model.js';
 import { PRESET_MASKS } from '../masks/maskData.js';
+
+// Patterns listed in the library (the weave is reached through its classic presets).
+const LISTED_PATTERNS = PATTERNS.filter((pattern) => !pattern.hidden);
 
 export const RANDOM_LEVELS = [
   { id: 'light', label: 'Light', note: 'Easy to recognise, still beats a plain search' },
@@ -144,7 +147,7 @@ function planOverlay(range) {
 
   return {
     effects: [],
-    overlay: Math.random() < 0.6 ? { kind: 'pattern', pattern: pick(PATTERNS), opacity } : { kind: 'preset', preset: pick(PRESET_MASKS), opacity },
+    overlay: Math.random() < 0.6 ? { kind: 'pattern', pattern: pick(LISTED_PATTERNS), opacity } : { kind: 'preset', preset: pick(PRESET_MASKS), opacity },
   };
 }
 
@@ -201,7 +204,9 @@ async function buildLayers(doc, plan, loadPreset, region) {
   const overlay =
     kind === 'pattern'
       ? patternLayer(doc, plan.overlay.pattern.id, { opacity })
-      : maskLayer(doc, await loadPreset(plan.overlay.preset), { name: plan.overlay.preset.name, opacity });
+      : plan.overlay.preset.pattern
+        ? presetPatternLayer(doc, plan.overlay.preset, { opacity })
+        : maskLayer(doc, await loadPreset(plan.overlay.preset), { name: plan.overlay.preset.name, opacity });
   const overlayName = `${kind === 'pattern' ? plan.overlay.pattern.name : plan.overlay.preset.name} overlay`;
   const warpsOverlay = plan.effects.some(([definition]) => WARPS_OVERLAY.has(definition.cat));
 
