@@ -42,6 +42,7 @@ import { onEmojiArt } from '../raster/emojiArt.js';
 import { RegionTool } from '../tools/RegionTool.js';
 import { ShapeTool } from '../tools/ShapeTool.js';
 import { ArrowTool } from '../tools/ArrowTool.js';
+import { TextTool } from '../tools/TextTool.js';
 import { RisCropTool } from '../tools/RisCropTool.js';
 import { SelectTool } from '../tools/SelectTool.js';
 import { TextEditor } from '../tools/TextEditor.js';
@@ -83,7 +84,7 @@ const TOOL_BUTTONS = [
   { id: 'region', icon: 'region', label: 'Add region', short: 'Region', command: 'addRegion' },
   { id: 'shape', icon: 'shapes', label: 'Shapes', short: 'Shapes', command: 'addRectangle' },
   { id: 'arrow', icon: 'arrow', label: 'Arrow', short: 'Arrow', command: 'arrow' },
-  { id: 'text', icon: 'text', label: 'Add text', short: 'Text', command: 'addText', action: 'addText' },
+  { id: 'text', icon: 'text', label: 'Text', short: 'Text', command: 'addText' },
   { id: 'crop', icon: 'crop', label: 'Crop / Resize', short: 'Crop', command: 'crop' },
   { id: 'stamp', icon: 'stamp', label: 'Stamp emojis', short: 'Stamp', command: 'stamp' },
 ];
@@ -154,6 +155,7 @@ export class App {
       region: new RegionTool(this),
       shape: new ShapeTool(this),
       arrow: new ArrowTool(this),
+      text: new TextTool(this),
       crop: new CropTool(this),
       stamp: new StampTool(this),
       risCrop: new RisCropTool(this),
@@ -507,7 +509,7 @@ export class App {
         // The id is older than the Shapes tool; keeping it keeps people's own key for it.
         addRectangle: () => this.setTool('shape'),
         arrow: () => this.setTool('arrow'),
-        addText: () => this.addText(),
+        addText: () => this.setTool('text'),
         addRegion: () => this.setTool('region'),
         brushSizeUp: () => this.adjustBrushSize(5),
         brushSizeDown: () => this.adjustBrushSize(-5),
@@ -535,7 +537,7 @@ export class App {
           }
         },
         deselect: () => {
-          if (['crop', 'region', 'shape', 'arrow', 'risCrop', 'lasso'].includes(this.toolName)) {
+          if (['crop', 'region', 'shape', 'arrow', 'text', 'risCrop', 'lasso'].includes(this.toolName)) {
             this.setTool('select');
           } else {
             this.store.select([]);
@@ -1098,15 +1100,15 @@ export class App {
 
   // ── shapes and text ───────────────────────────────────────────────────────
 
-  addText() {
+  /** A new text centred on (x, y), with the last text style, opened for typing (Text tool). */
+  addTextAt(x, y) {
     if (!this.requireImage()) {
       return;
     }
 
     const { size, text, ...style } = this.toolState.text;
-    const layer = textLayer(this.store.doc, style);
+    const layer = { ...textLayer(this.store.doc, style), x, y };
 
-    this.setTool('select');
     this.store.begin();
     this.store.set(insertLayer(this.store.doc, layer));
     this.store.select([layer.id]);

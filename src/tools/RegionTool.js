@@ -1,19 +1,16 @@
-// Drag out a rectangle, ellipse or freehand shape; it becomes an effect region.
+// Drag out a rectangle, ellipse or freehand shape; it becomes an effect region. The tool stays
+// selected, and the region just added keeps its handles (PlacingTool).
 
 import { effectLayer, insertMask } from '../core/model.js';
 import { svg } from '../view/Stage.js';
+import { PlacingTool } from './PlacingTool.js';
 
-export class RegionTool {
+export class RegionTool extends PlacingTool {
   constructor(app) {
-    this.app = app;
-    this.cursor = 'crosshair';
-    this.drag = null;
+    super(app);
+    this.region = null;
     this.group = svg('g', { class: 'region-preview' });
     app.stage.overlay.append(this.group);
-  }
-
-  deactivate() {
-    this.onCancel();
   }
 
   rectFor(drag, event) {
@@ -35,12 +32,12 @@ export class RegionTool {
     };
   }
 
-  onDown(event) {
-    this.drag = { x: event.x, y: event.y, shape: this.app.toolState.region.shape, points: [event.x, event.y] };
+  begin(event) {
+    this.region = { x: event.x, y: event.y, shape: this.app.toolState.region.shape, points: [event.x, event.y] };
   }
 
-  onMove(event) {
-    const drag = this.drag;
+  drag(event) {
+    const drag = this.region;
 
     if (!drag) {
       return;
@@ -79,10 +76,10 @@ export class RegionTool {
     );
   }
 
-  onUp(event) {
-    const drag = this.drag;
+  finish(event) {
+    const drag = this.region;
 
-    this.onCancel();
+    this.cancel();
 
     if (!drag) {
       return;
@@ -127,11 +124,10 @@ export class RegionTool {
 
     store.apply('Add region', (current) => insertMask(current, layer));
     store.select([layer.id]);
-    this.app.setTool('select');
   }
 
-  onCancel() {
-    this.drag = null;
+  cancel() {
+    this.region = null;
     this.group.replaceChildren();
   }
 }

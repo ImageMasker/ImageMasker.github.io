@@ -60,9 +60,16 @@ Shapes (`kind`: ellipse, rect, triangle, star, heart; `fill`: outline | fill) an
 by `raster/shapes.js` into a texture the size the layer is shown, like text. `style: 'organic'` (hand-drawn, the
 default) draws one tapering marker stroke that wobbles and overshoots its start, from the layer's `seed`. `width`
 is the line width in document pixels. An arrow keeps its ends inside its box (`points`, -0.5..0.5) and a `bend`
-(how far the middle of the curve is pushed sideways, as a fraction of the distance between the ends);
-`placeArrow()` refits the box around the curve whenever the ends, bend, head or width change, and the Move tool
-shows handles for both ends and the curve instead of the box handles. Arrows are hit only near their line.
+(how far the curve's control point is pushed sideways, as a fraction of the distance between the ends) and
+a `lean` (how far it is pushed along the arrow), so the middle handle can be dragged anywhere and the curve passes
+through it (`curveThrough`). A drawn arrow fits bend and lean to the dragged path (`fitCurve`); a mostly straight
+drag gives a straight arrow. `placeArrow()` refits the box around the curve whenever the ends, bend, head or width
+change, and the Move tool shows handles for both ends and the curve instead of the box handles. Arrows are hit only
+near their line.
+
+The Shapes, Arrow, Region and Text tools stay selected after placing something (`tools/PlacingTool.js`), and
+lend the Move tool's handles to the layer just placed: a drag that starts on a handle edits it instead.
+
 An effect layer's `coverage` is `full`, `rect`, `ellipse`, `polygon` or `paint`. The hidden effect id
 `original` (used by the eraser's reveal mode) shows the base picture instead of running a shader;
 `insertMask()` keeps such layers on top when masks are added.

@@ -393,6 +393,10 @@ export class Inspector {
         return this.stampSection();
       case 'shape':
         return this.shapeToolSection();
+      case 'text':
+        return section('Text', [
+          el('p', { className: 'panel-intro-copy', textContent: 'Click on the picture to type there, or click a text to change it. Font, colour and outline are under the text\u2019s own settings below.' }),
+        ], { className: 'tool-section--primary' });
       case 'arrow':
         return this.arrowToolSection();
       case 'lasso':
@@ -550,9 +554,8 @@ export class Inspector {
     return section('Arrow', [
       select({ label: 'Head', options: ARROW_HEADS, value: state.head, onChange: this.toolChange((value) => { state.head = value; }) }).element,
       toggle({ label: 'Heads at both ends', value: state.bothEnds, onChange: this.toolChange((value) => { state.bothEnds = value; }) }).element,
-      this.toolSlider({ label: 'Curve', min: -100, max: 100 }, () => state.bend, (value) => { state.bend = value; }),
       ...this.markToolControls(state),
-      el('p', { className: 'panel-intro-copy', textContent: 'Drag from where the arrow starts to what it points at (Shift keeps it straight), or click where it should point. Then drag its ends or the round handle in the middle to bend it.' }),
+      el('p', { className: 'panel-intro-copy', textContent: 'Drag from where the arrow starts to what it points at: it curves the way you drag (Shift keeps it straight). Or click where it should point. Drag its ends, or the round handle in the middle anywhere, to reshape it.' }),
     ], { className: 'tool-section--primary' });
   }
 
@@ -695,7 +698,7 @@ export class Inspector {
             onClick: () => this.app.store.apply('Flip arrow', (doc) => updateLayer(doc, layer.id, (entry) => {
               const [ax, ay, bx, by] = entry.points;
 
-              return { points: [bx, by, ax, ay], bend: -(entry.bend || 0) };
+              return { points: [bx, by, ax, ay], bend: -(entry.bend || 0), lean: -(entry.lean || 0) };
             })),
           }),
         ], 'button-row--fill'),

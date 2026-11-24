@@ -53,7 +53,7 @@ import { normalizeRepeat } from '../src/raster/repeat.js';
 import { emojiArtUrl, twemojiCode } from '../src/raster/emojiArt.js';
 import { smoothedPath, STAMP_SPACING, strokeGeometry } from '../src/raster/strokes.js';
 import { restoreToolState } from '../src/app/toolState.js';
-import { arrowParts, shapePath, SHAPE_KINDS } from '../src/raster/shapes.js';
+import { arrowCurve, arrowParts, curveThrough, fitCurve, shapePath, SHAPE_KINDS } from '../src/raster/shapes.js';
 import { Compositor } from '../src/gl/Compositor.js';
 
 const tests = [];
@@ -299,6 +299,32 @@ test('arrows are hit near the line only; shapes and heads stay inside their box'
 
   assert(shaft.length >= 2 && shaft.every(inside), 'shaft inside its box');
   equal(heads.length, 2);
+});
+
+test('a drawn arrow follows the drag: straight stays straight, an arc keeps its bend and lean', () => {
+  const a = { x: 0, y: 0 };
+  const b = { x: 200, y: 0 };
+  const along = (fn) => Array.from({ length: 41 }, (_, index) => fn(index / 40));
+  // A shaky but straight drag, drawn unevenly fast.
+  const shaky = along((t) => ({ x: 200 * t * t, y: Math.sin(t * 40) * 3 }));
+
+  equal(fitCurve(a, b, shaky), { bend: 0, lean: 0 });
+
+  for (const [bend, lean] of [[0.4, 0], [-0.3, 0.25], [0.5, -0.3]]) {
+    const curve = arrowCurve(a, b, bend, lean);
+    const fitted = fitCurve(a, b, along((t) => curve.at(t)));
+
+    assert(Math.sign(fitted.bend) === Math.sign(bend) && Math.abs(fitted.bend - bend) < 0.12, `bend ${bend} → ${fitted.bend}`);
+    assert(lean === 0 ? Math.abs(fitted.lean) < 0.08 : Math.sign(fitted.lean) === Math.sign(lean), `lean ${lean} → ${fitted.lean}`);
+  }
+
+  // The middle handle can go anywhere, and the curve then passes through it.
+  for (const point of [{ x: 40, y: -60 }, { x: 170, y: 35 }, { x: 100, y: 0 }]) {
+    const { bend, lean } = curveThrough(a, b, point);
+    const middle = arrowCurve(a, b, bend, lean).at(0.5);
+
+    assert(near(middle.x, point.x) && near(middle.y, point.y), `through ${JSON.stringify(point)}`);
+  }
 });
 
 test('shapes and arrows survive a session round trip and a new picture', () => {

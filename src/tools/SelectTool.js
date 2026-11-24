@@ -4,7 +4,7 @@
 import { apply, invert, layerAxes, layerCorners, layerMatrix } from '../core/geometry.js';
 import { arrowEndPoints, findLayer, isBoxLayer, placeArrow, topLayerAt, updateLayer } from '../core/model.js';
 import { getEffect } from '../gl/effects.js';
-import { arrowCurve, arrowEnds } from '../raster/shapes.js';
+import { arrowCurve, arrowEnds, curveThrough } from '../raster/shapes.js';
 import { measureText } from '../raster/text.js';
 import { svg } from '../view/Stage.js';
 import { snapAngle } from './ArrowTool.js';
@@ -89,7 +89,7 @@ export class SelectTool {
   /** Screen positions of an arrow's tail, head and the middle of its curve. */
   arrowHandles(layer) {
     const [a, b] = arrowEnds(layer);
-    const middle = arrowCurve(a, b, layer.bend || 0).at(0.5);
+    const middle = arrowCurve(a, b, layer.bend || 0, layer.lean || 0).at(0.5);
     const matrix = layerMatrix(layer);
     const screen = (point) => {
       const doc = apply(matrix, point.x / layer.w, point.y / layer.h);
@@ -323,17 +323,18 @@ export class SelectTool {
       return placeArrow(start, tail, event.shift ? snapAngle(tail, point) : point);
     }
 
-    // The middle of the curve sits half the bend away from the middle of the line.
+    // The middle handle goes wherever it is dragged, and the curve passes through it.
     const local = apply(invert(layerAxes(start)), event.x - start.x, event.y - start.y);
     const [a, b] = arrowEnds(start);
-    const curve = arrowCurve(a, b, 0);
-    const middle = curve.at(0.5);
-    let bend = (2 * ((local.x - middle.x) * curve.normal.x + (local.y - middle.y) * curve.normal.y)) / curve.length;
+    let { bend, lean } = curveThrough(a, b, local);
 
-    // Shift (or nearly straight) makes it straight.
-    bend = event.shift || Math.abs(bend) < 0.02 ? 0 : Math.max(-1, Math.min(1, bend));
+    // Shift (or nearly on the line) makes it straight.
+    if (event.shift || (Math.abs(bend) < 0.02 && Math.abs(lean) < 0.02)) {
+      bend = 0;
+      lean = 0;
+    }
 
-    return placeArrow({ ...start, bend }, tail, head);
+    return placeArrow({ ...start, bend: Math.max(-1, Math.min(1, bend)), lean: Math.max(-1, Math.min(1, lean)) }, tail, head);
   }
 
   rotatePatch(drag, event) {
@@ -395,22 +396,30 @@ export class SelectTool {
     this.app.store.cancel();
   }
 
-  onHover(event) {
+  /** The cursor for the handle under the pointer, or null when there is none (also used by PlacingTool). */
+  handleCursor(event) {
     const handle = this.hitHandle(event);
-    let cursor = 'default';
 
-    if (handle?.kind === 'centre' || handle?.kind?.startsWith('arrow')) {
-      cursor = 'move';
-    } else if (handle?.kind === 'rotate') {
-      cursor = 'crosshair';
-    } else if (handle) {
-      const direction = apply(layerAxes(handle.layer), handle.hx, handle.hy);
-      const angle = (Math.atan2(direction.y, direction.x) * 180) / Math.PI;
-
-      cursor = RESIZE_CURSORS[((Math.round(angle / 45) % 4) + 4) % 4];
-    } else if (topLayerAt(this.app.store.doc, event.x, event.y)) {
-      cursor = 'move';
+    if (!handle) {
+      return null;
     }
+
+    if (handle.kind === 'centre' || handle.kind.startsWith('arrow')) {
+      return 'move';
+    }
+
+    if (handle.kind === 'rotate') {
+      return 'crosshair';
+    }
+
+    const direction = apply(layerAxes(handle.layer), handle.hx, handle.hy);
+    const angle = (Math.atan2(direction.y, direction.x) * 180) / Math.PI;
+
+    return RESIZE_CURSORS[((Math.round(angle / 45) % 4) + 4) % 4];
+  }
+
+  onHover(event) {
+    const cursor = this.handleCursor(event) ?? (topLayerAt(this.app.store.doc, event.x, event.y) ? 'move' : 'default');
 
     this.app.stage.updateCursor(cursor);
   }

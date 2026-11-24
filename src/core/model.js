@@ -203,9 +203,9 @@ export function shapeLayer(doc, rect, { kind = 'ellipse', fill = 'outline', styl
  * An arrow from `tail` to `head` (document pixels). Its box is fitted around the curve; `points`
  * are the two ends inside the box (-0.5..0.5) and `bend` pushes the middle sideways.
  */
-export function arrowLayer(doc, tail, head, { color = '#e0262b', width = 8, bend = 0.2, head: tip = 'open', bothEnds = false, style = 'organic' } = {}) {
+export function arrowLayer(doc, tail, head, { color = '#e0262b', width = 8, bend = 0.2, lean = 0, head: tip = 'open', bothEnds = false, style = 'organic' } = {}) {
   return placeArrow(
-    { ...baseLayer('arrow', 'Arrow'), color, width, bend, head: tip, bothEnds, style, seed: Math.random(), x: tail.x, y: tail.y, w: 1, h: 1, points: [0, 0, 0, 0] },
+    { ...baseLayer('arrow', 'Arrow'), color, width, bend, lean, head: tip, bothEnds, style, seed: Math.random(), x: tail.x, y: tail.y, w: 1, h: 1, points: [0, 0, 0, 0] },
     tail,
     head
   );
@@ -270,6 +270,7 @@ export function normalizeMark(layer) {
     ...next,
     points,
     bend: Math.max(-1, Math.min(1, finite(layer.bend, 0))),
+    lean: Math.max(-1, Math.min(1, finite(layer.lean, 0))),
     head: pick(layer.head, ['open', 'filled', 'none'], 'open'),
     bothEnds: layer.bothEnds === true,
   };

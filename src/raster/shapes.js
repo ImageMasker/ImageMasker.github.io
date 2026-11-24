@@ -7,8 +7,10 @@
 // at both ends and has a few dry streaks. The randomness comes from the layer's `seed`, so the
 // same layer always looks the same; "Draw again" picks a new seed.
 //
-// An arrow keeps its two ends in its box (`points`: tail x, y, head x, y in -0.5..0.5) and a `bend`:
-// how far the middle of the curve is pushed sideways, as a fraction of the distance between the ends.
+// An arrow keeps its two ends in its box (`points`: tail x, y, head x, y in -0.5..0.5), a `bend`
+// (how far the curve's control point is pushed sideways, as a fraction of the distance between the
+// ends) and a `lean` (how far it is pushed along the arrow, towards the head when positive), so the
+// middle of the curve can be dragged anywhere.
 
 export const SHAPE_KINDS = [
   { value: 'ellipse', label: 'Circle' },
@@ -209,21 +211,22 @@ export function headLength(width, length) {
 }
 
 /** The arrow's curve in box pixels: ends, control point, and a point at any t. */
-export function arrowCurve(a, b, bend) {
+export function arrowCurve(a, b, bend, lean = 0) {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const length = Math.hypot(dx, dy) || 1;
   const normal = { x: -dy / length, y: dx / length };
+  const along = { x: dx / length, y: dy / length };
   const control = {
-    x: (a.x + b.x) / 2 + normal.x * bend * length,
-    y: (a.y + b.y) / 2 + normal.y * bend * length,
+    x: (a.x + b.x) / 2 + (normal.x * bend + along.x * lean) * length,
+    y: (a.y + b.y) / 2 + (normal.y * bend + along.y * lean) * length,
   };
   const at = (t) => ({
     x: (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * control.x + t * t * b.x,
     y: (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * control.y + t * t * b.y,
   });
 
-  return { a, b, control, length, normal, at };
+  return { a, b, control, length, normal, along, at };
 }
 
 /** How far around the curve the drawing can reach: head, line width and the hand-drawn wobble. */
@@ -240,7 +243,7 @@ export function arrowEnds(layer) {
 
 /** The arrow's own box around its curve, in the pixels the ends are given in. */
 export function arrowBounds(layer, a, b) {
-  const curve = arrowCurve(a, b, Number(layer.bend) || 0);
+  const curve = arrowCurve(a, b, Number(layer.bend) || 0, Number(layer.lean) || 0);
   const pad = arrowPadding(layer, curve.length);
   let minX = Infinity;
   let minY = Infinity;
@@ -262,7 +265,7 @@ export function arrowBounds(layer, a, b) {
 /** Distance from a box-pixel point to the arrow's curve. */
 export function distanceToArrow(layer, x, y) {
   const [a, b] = arrowEnds(layer);
-  const curve = arrowCurve(a, b, Number(layer.bend) || 0);
+  const curve = arrowCurve(a, b, Number(layer.bend) || 0, Number(layer.lean) || 0);
   let best = Infinity;
   let previous = curve.at(0);
 
@@ -284,7 +287,7 @@ export function arrowParts(layer) {
   const width = Math.max(0.5, Number(layer.width) || 1);
   const organic = layer.style !== 'clean';
   const [a, b] = arrowEnds(layer);
-  const curve = arrowCurve(a, b, Number(layer.bend) || 0);
+  const curve = arrowCurve(a, b, Number(layer.bend) || 0, Number(layer.lean) || 0);
   const head = layer.head === 'filled' || layer.head === 'none' ? layer.head : 'open';
   const size = headLength(width, curve.length);
   const random = seeded(layer.seed);
@@ -485,7 +488,7 @@ function drawArrow(context, layer, ratio) {
 /** Everything that changes how the layer looks (its size included: it is drawn in its own box). */
 export function markSignature(layer) {
   return [
-    layer.type, layer.kind, layer.fill, layer.style, layer.color, layer.width, layer.seed, layer.head, layer.bothEnds, layer.bend,
+    layer.type, layer.kind, layer.fill, layer.style, layer.color, layer.width, layer.seed, layer.head, layer.bothEnds, layer.bend, layer.lean,
     (layer.points ?? []).join(','), layer.w.toFixed(1), layer.h.toFixed(1),
   ].join('|');
 }
@@ -531,3 +534,93 @@ export function pxToWidth(doc, px) {
 
 /** The Curve setting (-100..100) as an arrow's `bend`. */
 export const CURVE_TO_BEND = 0.006;
+
+// ── fitting an arrow to a dragged path ────────────────────────────────────
+
+/** `count` points spread evenly along a polyline, so slow parts of a drag do not count more. */
+function resample(path, count) {
+  const lengths = [0];
+
+  for (let index = 1; index < path.length; index += 1) {
+    lengths.push(lengths[index - 1] + Math.hypot(path[index].x - path[index - 1].x, path[index].y - path[index - 1].y));
+  }
+
+  const total = lengths[lengths.length - 1];
+  const points = [];
+  let segment = 1;
+
+  for (let step = 0; step <= count; step += 1) {
+    const at = (step / count) * total;
+
+    while (segment < path.length - 1 && lengths[segment] < at) {
+      segment += 1;
+    }
+
+    const span = lengths[segment] - lengths[segment - 1] || 1;
+    const t = Math.max(0, Math.min(1, (at - lengths[segment - 1]) / span));
+
+    points.push({
+      x: path[segment - 1].x + (path[segment].x - path[segment - 1].x) * t,
+      y: path[segment - 1].y + (path[segment].y - path[segment - 1].y) * t,
+    });
+  }
+
+  return points;
+}
+
+/** Below this the dragged path counts as straight and the arrow is drawn straight. */
+export const STRAIGHT_BEND = 0.07;
+
+/** `bend` and `lean` that put the middle of the curve (t = 0.5) at `point`, all in the same pixels. */
+export function curveThrough(a, b, point) {
+  const curve = arrowCurve(a, b, 0, 0);
+  const middle = curve.at(0.5);
+  // B(0.5) is halfway between the middle of the line and the control point.
+  const x = 2 * (point.x - middle.x);
+  const y = 2 * (point.y - middle.y);
+
+  return { bend: (x * curve.normal.x + y * curve.normal.y) / curve.length, lean: (x * curve.along.x + y * curve.along.y) / curve.length };
+}
+
+/**
+ * The `bend` and `lean` of the arch that best follows a dragged path from `a` to `b`: the control
+ * point is fitted by least squares, with each point placed along the curve by how far along the
+ * drag it was. A path that is mostly straight gives a straight arrow.
+ */
+export function fitCurve(a, b, path) {
+  const length = Math.hypot(b.x - a.x, b.y - a.y);
+
+  if (length < 1e-6 || path.length < 3) {
+    return { bend: 0, lean: 0 };
+  }
+
+  const points = resample(path, 32);
+  let sx = 0;
+  let sy = 0;
+  let den = 0;
+
+  points.forEach((point, index) => {
+    const t = index / (points.length - 1);
+    const g = 2 * t * (1 - t);
+
+    // What is left of the point once the ends' share is taken off is g times the control point.
+    sx += (point.x - (1 - t) * (1 - t) * a.x - t * t * b.x) * g;
+    sy += (point.y - (1 - t) * (1 - t) * a.y - t * t * b.y) * g;
+    den += g * g;
+  });
+
+  if (den < 1e-9) {
+    return { bend: 0, lean: 0 };
+  }
+
+  const curve = arrowCurve(a, b, 0, 0);
+  const control = { x: sx / den - (a.x + b.x) / 2, y: sy / den - (a.y + b.y) / 2 };
+  const bend = (control.x * curve.normal.x + control.y * curve.normal.y) / length;
+  const lean = (control.x * curve.along.x + control.y * curve.along.y) / length;
+
+  if (Math.abs(bend) < STRAIGHT_BEND) {
+    return { bend: 0, lean: 0 };
+  }
+
+  return { bend: Math.max(-1, Math.min(1, bend)), lean: Math.max(-0.45, Math.min(0.45, lean)) };
+}

@@ -1,26 +1,23 @@
 // Shapes tool: drag out a circle, rectangle, triangle, star or heart (outline or filled, hand-drawn
-// or clean). A plain click drops a default-sized one where the pointer is.
+// or clean). A plain click drops a default-sized one where the pointer is. The tool stays selected,
+// and the shape just drawn keeps its handles (PlacingTool).
 
 import { insertLayer, shapeLayer } from '../core/model.js';
 import { shapeOutline, widthToPx } from '../raster/shapes.js';
 import { svg } from '../view/Stage.js';
+import { PlacingTool } from './PlacingTool.js';
 
-export class ShapeTool {
+export class ShapeTool extends PlacingTool {
   constructor(app) {
-    this.app = app;
-    this.cursor = 'crosshair';
-    this.drag = null;
+    super(app);
+    this.start = null;
     this.group = svg('g', { class: 'region-preview' });
     app.stage.overlay.append(this.group);
   }
 
-  deactivate() {
-    this.onCancel();
-  }
-
-  rectFor(drag, event) {
-    let width = event.x - drag.x;
-    let height = event.y - drag.y;
+  rectFor(start, event) {
+    let width = event.x - start.x;
+    let height = event.y - start.y;
 
     if (event.shift) {
       const side = Math.max(Math.abs(width), Math.abs(height));
@@ -29,19 +26,19 @@ export class ShapeTool {
       height = Math.sign(height || 1) * side;
     }
 
-    return { x: Math.min(drag.x, drag.x + width), y: Math.min(drag.y, drag.y + height), width: Math.abs(width), height: Math.abs(height) };
+    return { x: Math.min(start.x, start.x + width), y: Math.min(start.y, start.y + height), width: Math.abs(width), height: Math.abs(height) };
   }
 
-  onDown(event) {
-    this.drag = { x: event.x, y: event.y };
+  begin(event) {
+    this.start = { x: event.x, y: event.y };
   }
 
-  onMove(event) {
-    if (!this.drag) {
+  drag(event) {
+    if (!this.start) {
       return;
     }
 
-    const rect = this.rectFor(this.drag, event);
+    const rect = this.rectFor(this.start, event);
     const stage = this.app.stage;
     const points = shapeOutline(this.app.toolState.shape.kind)
       .filter((_, index) => index % 2 === 0)
@@ -51,19 +48,19 @@ export class ShapeTool {
     this.group.replaceChildren(svg('polygon', { points: points.join(' '), class: 'region-preview-shape' }));
   }
 
-  onUp(event) {
-    const drag = this.drag;
+  finish(event) {
+    const start = this.start;
 
-    this.onCancel();
+    this.cancel();
 
-    if (!drag) {
+    if (!start) {
       return;
     }
 
     const { store, stage, toolState } = this.app;
     const state = toolState.shape;
     const doc = store.doc;
-    let rect = this.rectFor(drag, event);
+    let rect = this.rectFor(start, event);
 
     if (rect.width < 8 / stage.view.zoom || rect.height < 8 / stage.view.zoom) {
       // A plain click: a default-sized shape centred on the pointer.
@@ -71,7 +68,7 @@ export class ShapeTool {
       const width = state.kind === 'rect' ? side * 1.3 : side;
       const height = state.kind === 'rect' ? side * 0.9 : side;
 
-      rect = { x: drag.x - width / 2, y: drag.y - height / 2, width, height };
+      rect = { x: start.x - width / 2, y: start.y - height / 2, width, height };
     }
 
     const layer = {
@@ -81,11 +78,10 @@ export class ShapeTool {
 
     store.apply(`Add ${layer.name.toLowerCase()}`, (current) => insertLayer(current, layer));
     store.select([layer.id]);
-    this.app.setTool('select');
   }
 
-  onCancel() {
-    this.drag = null;
+  cancel() {
+    this.start = null;
     this.group.replaceChildren();
   }
 }

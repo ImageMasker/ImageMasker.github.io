@@ -13,7 +13,7 @@ export const SHORTCUT_COMMANDS = [
   { id: 'stamp', label: 'Stamp emojis', category: 'Tools', defaultBinding: 'M' },
   { id: 'addRectangle', label: 'Shapes', category: 'Tools', defaultBinding: 'R' },
   { id: 'arrow', label: 'Arrow', category: 'Tools', defaultBinding: 'Q' },
-  { id: 'addText', label: 'Add text', category: 'Insert', defaultBinding: 'T' },
+  { id: 'addText', label: 'Text', category: 'Tools', defaultBinding: 'T' },
   { id: 'addRegion', label: 'Add region', category: 'Insert', defaultBinding: 'A' },
   { id: 'brushSizeUp', label: 'Increase brush size', category: 'Canvas', defaultBinding: 'W' },
   { id: 'brushSizeDown', label: 'Decrease brush size', category: 'Canvas', defaultBinding: 'S' },
