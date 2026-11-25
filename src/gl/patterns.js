@@ -444,7 +444,7 @@ vec4 pattern(vec2 p) {
     seeded: true,
     params: [DENSITY(9), R('variety', 'Tone variety', 0, 100, 60), A('#3d5a80'), B('#e0fbfc'), BG(0)],
     frag: `
-vec4 pattern(vec2 p) {
+vec4 triangle(vec2 p) {
   vec2 i = floor(p + (p.x + p.y) * 0.366025404);
   vec2 a = p - i + (i.x + i.y) * 0.211324865;
   float up = step(a.y, a.x);
@@ -452,6 +452,11 @@ vec4 pattern(vec2 p) {
   vec4 col = two(up);
   col.rgb *= 1.0 - (h - 0.5) * p_variety * 0.008 * col.a;
   return col;
+}
+// Every triangle has its own shade, so the edges are smoothed by averaging four samples per pixel.
+vec4 pattern(vec2 p) {
+  return 0.25 * (triangle(p + vec2(0.125, 0.375) * uAA) + triangle(p + vec2(-0.375, 0.125) * uAA)
+    + triangle(p + vec2(-0.125, -0.375) * uAA) + triangle(p + vec2(0.375, -0.125) * uAA));
 }`,
   },
   {

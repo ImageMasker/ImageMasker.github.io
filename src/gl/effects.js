@@ -8,6 +8,8 @@
 //   uCenter   centre of the effect region in units, uExtent = half of its short side
 //   uSeed     per-layer random seed, SEEDV the same as a vec2 offset
 //   p_<key>   one uniform per parameter (float, or vec3 for colours)
+//   seam(d)   effects that cut the picture into pieces (panes, tiles, strips) report the distance in
+//             units from q to the nearest cut; pixels on a cut are then supersampled so it is smooth
 
 import { HEAD, LIB, CELLS } from './glsl.js';
 
@@ -68,6 +70,7 @@ vec4 fx(vec2 q) {
   p *= 1.0 + (h.x - 0.5) * p_zoom * 0.012;
   vec2 off = (hash22(v.id + SEEDV + 9.7) - 0.5) * cs * p_shift * 0.016;
   float e = v.edge * cs;
+  seam(e);
   float bev = 1.0 - smoothstep(0.0, cs * 0.22, e);
   // Each pane is tilted a little, has a bevelled rim and the uneven surface of hand-made glass.
   vec2 tilt = (hash22(v.id + SEEDV + 5.3) - 0.5) * 0.6;
@@ -120,6 +123,7 @@ vec4 fx(vec2 q) {
   vec3 tintc = hsv2rgb(vec3(h.x, 0.6, 1.0));
   col.rgb = mix(col.rgb, col.rgb * tintc * 1.3 + tintc * 0.06 * col.a, p_tint * 0.01);
   float e = v.edge * cs;
+  seam(e);
   col.rgb *= mix(1.0, 0.7 + 0.45 * smoothstep(0.0, cs * 0.35, e), p_glow * 0.01);
   vec2 lt = glassLight(grain + (h.yz - 0.5) * 0.5, 40.0);
   float gl = p_gloss * 0.01;
@@ -155,6 +159,7 @@ vec4 fx(vec2 q) {
   float w = p_width * 0.01;
   float i = floor(p.x / w);
   float f = fract(p.x / w) - 0.5;
+  seam((0.5 - abs(f)) * w);
   float k = mix(1.0, -3.2, p_strength * 0.01);
   float bend = f * (1.0 + 2.0 * f * f) * k;
   // Drawn glass is never perfectly straight: every flute wanders a little along its length.
@@ -207,6 +212,7 @@ vec4 fx(vec2 q) {
   col.rgb *= 1.0 + lt.x * 0.4 * gl;
   col.rgb += col.a * lt.y * 0.4 * gl;
   float e = 0.5 - max(abs(f.x), abs(f.y));
+  seam(e * cs);
   float mw = p_mortar * 0.0012;
   float aa = uPx / cs * 1.5;
   float line = (1.0 - smoothstep(mw - aa, mw + aa, e)) * step(0.5, p_mortar);
@@ -460,6 +466,7 @@ vec4 fx(vec2 q) {
 vec4 fx(vec2 q) {
   float cs = p_size * 0.01;
   Vor v = voronoi(q / cs, 1.0);
+  seam(v.edge * cs);
   vec2 h = hash22(v.id + SEEDV);
   float a = h.x * TAU;
   vec2 dir = vec2(cos(a), sin(a));
@@ -488,6 +495,7 @@ vec4 fx(vec2 q) {
 vec4 fx(vec2 q) {
   float cs = p_size * 0.01;
   Vor v = voronoi(q / cs, 1.0);
+  seam(v.edge * cs);
   vec4 col = S(v.center * cs);
   float a = hash21(v.id + SEEDV) * TAU;
   col.rgb *= 1.0 + dot(q / cs - v.center, vec2(cos(a), sin(a))) * p_facet * 0.012;
@@ -540,6 +548,7 @@ vec4 fx(vec2 q) {
   vec2 g = q / cs;
   float d0, dx, dy;
   vec2 pid = jig(g, d0);
+  seam(d0 * cs);
   jig(g + vec2(0.012, 0.0), dx);
   jig(g + vec2(0.0, 0.012), dy);
   vec3 h = hash32(pid + SEEDV + 1.9);
@@ -582,6 +591,7 @@ vec4 fx(vec2 q) {
   vec2 off = (hash22(id + SEEDV + 5.5) - 0.5) * p_shift * 0.02;
   vec4 col = S((id + 0.5 + p + off) * cs);
   float e = 0.5 - max(abs(f.x), abs(f.y));
+  seam(e * cs);
   float gw = p_gap * 0.001;
   float aa = uPx / cs * 1.5;
   float line = (1.0 - smoothstep(gw - aa, gw + aa, e)) * step(0.5, p_gap);
@@ -615,6 +625,7 @@ vec4 fx(vec2 q) {
   if (h.y < p_turn * 0.01) p = rot((floor(h.z * 5.0) + 1.0) * PI / 3.0) * p;
   vec4 col = S((q / cs - f + p) * cs);
   float e = hexEdge(f);
+  seam(e * cs);
   float gw = p_gap * 0.0006;
   float aa = uPx / cs * 1.5;
   col.rgb *= 1.0 + (1.0 - smoothstep(gw, gw + 0.08, e)) * step(0.5, p_gap) * (f.x + f.y < 0.0 ? 0.18 : -0.22);
@@ -653,6 +664,7 @@ vec4 fx(vec2 q) {
   vec4 col = S(uCenter + rot((h.z - 0.5) * p_shift * 0.004) * v + off);
   col.rgb *= 1.0 + (h.y - 0.5) * 0.2;
   float d = min(min(sf, 1.0 - sf) * (TAU / n) * r, min(rf, 1.0 - rf) / rk);
+  seam(d);
   float lw = p_crack * 0.00004;
   float aa = uPx * 1.2;
   col.rgb += col.a * (1.0 - smoothstep(lw, lw * 5.0 + 0.004, d)) * (h.x - 0.35) * 0.4 * step(0.5, p_crack);
@@ -679,6 +691,7 @@ vec4 fx(vec2 q) {
   vec2 g = q / w;
   vec2 id = floor(g);
   vec2 f = fract(g);
+  seam(min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y)) * w);
   bool hTop = mod(id.x + id.y, 2.0) < 0.5;
   float offH = (hash11(id.y * 1.31 + uSeed) - 0.5) * p_shift * 0.004;
   float offV = (hash11(id.x * 1.73 + uSeed + 50.0) - 0.5) * p_shift * 0.004;
@@ -716,6 +729,7 @@ vec4 fx(vec2 q) {
   float w = p_width * 0.01;
   float i = floor(p.y / w);
   float f = fract(p.y / w);
+  seam(min(f, 1.0 - f) * w);
   p.x += (hash11(i * 1.37 + uSeed) - 0.5) * p_shift * 0.006;
   if (p_mirror > 0.5 && mod(i, 2.0) > 0.5) p.y = (i + 1.0 - f) * w;
   vec4 col = S(transpose(m) * p + uCenter);
@@ -744,6 +758,7 @@ vec4 fx(vec2 q) {
   float a = (hash11(floor(r) * 2.17 + uSeed) - 0.5) * 2.0 * radians(p_twist);
   vec4 col = S(uCenter + rot(a) * v);
   float f = fract(r);
+  seam(min(f, 1.0 - f) * w);
   col.rgb *= 1.0 - p_edge * 0.007 * (1.0 - smoothstep(0.0, 0.1, min(f, 1.0 - f)));
   return clamp(col, 0.0, 1.0);
 }`,
@@ -767,6 +782,7 @@ vec4 fx(vec2 q) {
   float w = p_width * 0.01;
   float i = floor(p.x / w);
   float f = fract(p.x / w);
+  seam(min(f, 1.0 - f) * w);
   float sgn = mod(i, 2.0) < 0.5 ? 1.0 : -1.0;
   float d = p_depth * 0.01;
   p.y += sgn * (f - 0.5) * w * d * 0.9;
@@ -803,6 +819,7 @@ vec4 fx(vec2 q) {
   col.rgb *= 1.0 + (hash21(i * 2.0 + o + SEEDV) - 0.5) * 0.18;
   float area = cross2(c1 - c0, c2 - c0);
   vec3 b = vec3(cross2(c1 - c0, p - c0), cross2(c2 - c1, p - c1), cross2(c0 - c2, p - c2)) / area;
+  seam(min(b.x, min(b.y, b.z)) * 0.7 * cs);
   col.rgb *= 1.0 - p_edge * 0.006 * (1.0 - smoothstep(0.0, 0.07, min(b.x, min(b.y, b.z))));
   return clamp(col, 0.0, 1.0);
 }`,
@@ -1073,6 +1090,9 @@ float htLayer(vec2 q, float ang, float cs, int ch) {
   float v = ch == 0 ? cmy.x : ch == 1 ? cmy.y : ch == 2 ? cmy.z : ch == 3 ? k : 1.0 - luma(c);
   float r = sqrt(clamp(v, 0.0, 1.0)) * 0.58;
   float aa = uPx / cs * 1.2;
+  // Big dots run into the next cell, where they are cut off.
+  vec2 e = 0.5 - abs(p - id);
+  if (r + aa > 0.5) seam(min(e.x, e.y) * cs);
   return 1.0 - smoothstep(r - aa, r + aa, length(p - id));
 }
 vec4 fx(vec2 q) {
@@ -1272,6 +1292,7 @@ vec4 fx(vec2 q) {
   vec2 id = floor(g);
   vec2 f = fract(g) - 0.5;
   vec4 s = S((id + 0.5) * cs);
+  seam((0.5 - max(abs(f.x), abs(f.y))) * cs);
   float r = length(f);
   float aa = uPx / cs * 1.5;
   float stud = 1.0 - smoothstep(0.3 - aa, 0.3 + aa, r);
@@ -1302,6 +1323,7 @@ vec4 fx(vec2 q) {
   vec2 id = floor(g);
   vec2 f = fract(g) - 0.5;
   vec4 s = S((id + 0.5) * cs);
+  seam((0.5 - max(abs(f.x), abs(f.y))) * cs);
   vec3 c = straight(s, vec3(1.0));
   float d1 = abs(f.x - f.y) * 0.7071, d2 = abs(f.x + f.y) * 0.7071;
   float w = 0.25;
@@ -1390,6 +1412,7 @@ vec4 fx(vec2 q) {
   float a = radians(p_angle);
   vec2 dir = vec2(cos(a), sin(a));
   float lane = dot(q, vec2(-dir.y, dir.x)) / (p_width * 0.01);
+  seam(min(fract(lane), 1.0 - fract(lane)) * p_width * 0.01);
   float len = p_amount * 0.006 * pow(hash11(floor(lane) * 1.37 + uSeed), 2.5) * (0.4 + vnoise(vec2(lane * 0.15, 3.3) + SEEDV));
   vec4 best = S(q);
   float bl = luma(best.rgb);
@@ -1729,6 +1752,22 @@ export function paramUniforms(definition, params) {
   return uniforms;
 }
 
+// Pixels within a pixel of a cut get four more samples (a rotated grid) and the average of all five.
+const SEAM_MAIN = `
+const vec2 SUB[5] = vec2[5](vec2(0.0), vec2(0.125, 0.375), vec2(-0.375, 0.125), vec2(-0.125, -0.375), vec2(0.375, -0.125));
+void main() {
+  vec2 q = vUv * uAsp;
+  fxSeam = 1e9;
+  vec4 acc = vec4(0.0);
+  float n = 0.0;
+  for (int i = 0; i < 5; i++) {
+    acc += fx(q + SUB[i] * uPx);
+    n += 1.0;
+    if (i == 0 && fxSeam > uPx) break;
+  }
+  outColor = acc / n;
+}`;
+
 export function effectShader(definition) {
   const uniforms = definition.params
     .map((param) => `uniform ${param.type === 'color' ? 'vec3' : 'float'} p_${param.key};`)
@@ -1800,7 +1839,9 @@ vec2 glassLight(vec2 slope, float shininess) {
   vec3 hv = normalize(LIGHT + vec3(0.0, 0.0, 1.0));
   return vec2(dot(n, LIGHT) - LIGHT.z, pow(max(dot(n, hv), 0.0), shininess));
 }
+float fxSeam;
+void seam(float d) { fxSeam = min(fxSeam, d); }
 ${uniforms}
 ${definition.frag}
-void main() { outColor = fx(vUv * uAsp); }`;
+${definition.frag.includes('seam(') ? SEAM_MAIN : 'void main() { outColor = fx(vUv * uAsp); }'}`;
 }
