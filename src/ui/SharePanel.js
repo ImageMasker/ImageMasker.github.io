@@ -106,6 +106,12 @@ export class SharePanel {
     this.updateSizeInfo();
   }
 
+  setFormat(format) {
+    this.options.format = format === 'jpeg' ? 'jpeg' : 'png';
+    this.refs.format.set(this.options.format);
+    this.saveExportOptions();
+  }
+
   getExportOptions() {
     return { format: this.options.format, size: this.options.size, quality: this.options.quality / 100 };
   }

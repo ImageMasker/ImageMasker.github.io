@@ -217,7 +217,10 @@ export class App {
     this.renderRisMenu();
     refs.rounds = button('Rounds', { id: 'roundsButton', iconName: 'bookmark', className: 'header-button', onClick: () => this.roundsDialog.open() });
     refs.copy = button('Copy', { id: 'Copy', iconName: 'clipboard', className: 'header-button', title: 'Copy image to clipboard', onClick: () => this.copyImage() });
-    refs.download = button('Download', { id: 'Download', iconName: 'download', className: 'header-button', title: 'Download image', onClick: () => this.downloadImage() });
+    refs.download = button('Download', { id: 'Download', iconName: 'download', className: 'header-button split-button-main', title: 'Download image', onClick: () => this.downloadImage() });
+    refs.downloadMenuButton = iconButton('chevronDown', 'Download with a name and file type', null, 'header-button split-button-toggle');
+    this.downloadMenu = new Dropdown(refs.downloadMenuButton, { label: 'Download as', className: 'download-menu', onOpen: () => this.syncDownloadMenu() });
+    this.renderDownloadMenu();
     refs.settings = el('button', { id: 'settingsButton', type: 'button', textContent: 'Settings', 'aria-label': 'Open settings' });
     refs.github = el('button', { id: 'github', type: 'button', 'aria-label': 'GitHub', title: 'Source on GitHub', innerHTML: GITHUB_ICON });
 
@@ -234,7 +237,7 @@ export class App {
       el('div', { className: 'header-spacer' }),
       el('div', { className: 'header-group' }, [refs.cropRis, el('div', { className: 'split-button' }, [refs.ris, refs.risMenuButton])]),
       el('div', { className: 'header-group' }, [refs.rounds]),
-      el('div', { className: 'header-group header-group--export' }, [refs.copy, refs.download]),
+      el('div', { className: 'header-group header-group--export' }, [refs.copy, el('div', { className: 'split-button' }, [refs.download, refs.downloadMenuButton])]),
       el('div', { className: 'chrome-controls' }, [refs.settings, refs.github]),
     ]);
 
@@ -309,6 +312,7 @@ export class App {
       header,
       this.randomMenu.element,
       this.risMenu.element,
+      this.downloadMenu.element,
       el('div', { id: 'container', className: 'app-grid' }, [
         refs.library,
         el('main', { id: 'preview' }, [
@@ -355,7 +359,7 @@ export class App {
     refs.undo.disabled = !store.undoStack.length;
     refs.redo.disabled = !store.redoStack.length;
 
-    for (const control of [refs.startOver, refs.zoomOut, refs.zoomLabel, refs.zoomIn, refs.fit, refs.compare, refs.random, refs.randomMenuButton, refs.copy, refs.download]) {
+    for (const control of [refs.startOver, refs.zoomOut, refs.zoomLabel, refs.zoomIn, refs.fit, refs.compare, refs.random, refs.randomMenuButton, refs.copy, refs.download, refs.downloadMenuButton]) {
       control.disabled = !loaded;
     }
 
@@ -588,6 +592,7 @@ export class App {
     const items = [
       { label: 'Copy image', icon: 'clipboard', shortcut: key('copyCanvas'), action: () => this.copyImage() },
       { label: 'Download image', icon: 'download', action: () => this.downloadImage() },
+      { label: 'Download as…', icon: 'download', action: () => this.downloadMenu.open() },
       { label: 'Copy image & post to Reddit', icon: 'reddit', action: () => this.copyAndPost(title, this.sharePanel.refs.subreddit.value.trim() || 'picturegame') },
       ...(this.canShareFiles() ? [{ label: 'Share image…', icon: 'share', action: () => this.sharePanel.shareImage() }] : []),
       { label: 'Check RIS', icon: 'search', shortcut: key('checkRis'), disabled: this.risBusy, action: () => this.checkRis() },

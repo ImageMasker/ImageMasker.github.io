@@ -4,8 +4,9 @@
 import { el } from '../utils/dom.js';
 
 export class Dropdown {
-  constructor(toggleButton, { label = '', className = '' } = {}) {
+  constructor(toggleButton, { label = '', className = '', onOpen = null } = {}) {
     this.toggleButton = toggleButton;
+    this.onOpen = onOpen;
     this.element = el('div', { className: `context-menu dropdown-menu hidden ${className}`.trim(), role: 'menu', 'aria-label': label });
     this.close = this.close.bind(this);
     this.onOutside = (event) => {
@@ -46,6 +47,7 @@ export class Dropdown {
     element.style.top = `${anchor.bottom + 6}px`;
     element.style.left = `${Math.max(4, Math.min(anchor.right - element.offsetWidth, window.innerWidth - element.offsetWidth - 4))}px`;
     element.querySelector('input, button')?.focus({ preventScroll: true });
+    this.onOpen?.();
     document.addEventListener('pointerdown', this.onOutside, true);
     document.addEventListener('keydown', this.onKey, true);
     window.addEventListener('resize', this.close);

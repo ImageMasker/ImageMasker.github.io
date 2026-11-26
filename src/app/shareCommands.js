@@ -2,7 +2,27 @@
 
 import { createDoc, imageLayer, usedEmojis } from '../core/model.js';
 import { loadEmojiArt } from '../raster/emojiArt.js';
+import { choiceGroup } from '../ui/Dropdown.js';
+import { button } from '../ui/kit.js';
 import { el } from '../utils/dom.js';
+
+const DOWNLOAD_TYPES = [
+  { id: 'png', label: 'PNG', note: 'Exact colours, bigger file' },
+  { id: 'jpeg', label: 'JPEG', note: 'Smaller file' },
+];
+
+const extensionOf = (format) => (format === 'jpeg' ? 'jpg' : 'png');
+
+/** A typed file name without the characters Windows refuses; a typed .png/.jpg/.jpeg picks the type. */
+function parseFileName(text) {
+  const name = text.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').trim();
+  const match = /\.(png|jpe?g)$/i.exec(name);
+
+  return {
+    base: (match ? name.slice(0, match.index) : name).replace(/[. ]+$/, ''),
+    format: match ? (match[1].toLowerCase() === 'png' ? 'png' : 'jpeg') : null,
+  };
+}
 
 export class ShareCommands {
   exportScale(size) {
@@ -92,19 +112,81 @@ export class ShareCommands {
     });
   }
 
-  async downloadImage() {
+  defaultDownloadName() {
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, '0');
+
+    return `round ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
+  }
+
+  /** The Download ▾ menu: a file name and a file type, then Download. */
+  renderDownloadMenu() {
+    const refs = this.refs;
+    const [typeTitle, ...typeItems] = choiceGroup({
+      title: 'File type',
+      type: 'radio',
+      name: 'downloadType',
+      options: DOWNLOAD_TYPES,
+      isChecked: () => false,
+      onChange: (id) => {
+        this.sharePanel.setFormat(id);
+        this.syncDownloadMenu({ focus: false });
+      },
+    });
+
+    refs.downloadName = el('input', { type: 'text', maxlength: '200', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'File name' });
+    refs.downloadExtension = el('span', { className: 'download-name-extension' });
+    refs.downloadTypes = typeItems.map((item) => item.querySelector('input'));
+    refs.downloadName.addEventListener('input', () => this.syncDownloadMenu({ focus: false }));
+
+    const form = el('form', { className: 'download-form' }, [
+      el('div', { className: 'dropdown-title', textContent: 'File name' }),
+      el('div', { className: 'download-name' }, [refs.downloadName, refs.downloadExtension]),
+      el('div', { className: 'context-menu-separator', role: 'separator' }),
+      typeTitle,
+      ...typeItems,
+      el('div', { className: 'context-menu-separator', role: 'separator' }),
+      button('Download', { iconName: 'download', className: 'dropdown-wide' }),
+    ]);
+
+    form.querySelector('.dropdown-wide').type = 'submit';
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const { base, format } = parseFileName(refs.downloadName.value);
+
+      this.downloadMenu.close();
+      void this.downloadImage({ name: base, format });
+    });
+    this.downloadMenu.element.replaceChildren(form);
+  }
+
+  /** Shows the export format and the name the file gets; on opening, selects the name to retype it. */
+  syncDownloadMenu({ focus = true } = {}) {
+    const { downloadName, downloadExtension, downloadTypes } = this.refs;
+    const { format } = this.sharePanel.getExportOptions();
+
+    downloadTypes.forEach((input) => (input.checked = input.value === format));
+    downloadName.placeholder = this.defaultDownloadName();
+    downloadExtension.textContent = parseFileName(downloadName.value).format ? '' : `.${extensionOf(format)}`;
+
+    if (focus) {
+      downloadName.focus({ preventScroll: true });
+      downloadName.select();
+    }
+  }
+
+  /** Downloads the picture with the export settings; `name` and `format` (from Download ▾) override them. */
+  async downloadImage({ name = '', format = null } = {}) {
     if (!this.requireImage('Load an image before downloading.')) {
       return;
     }
 
     await this.whileBusy(this.refs.download, 'Preparing…', async () => {
       try {
-        const options = this.sharePanel.getExportOptions();
+        const options = { ...this.sharePanel.getExportOptions(), ...(format ? { format } : {}) };
         const url = URL.createObjectURL(await this.exportBlob(options));
-        const now = new Date();
-        const pad = (value) => String(value).padStart(2, '0');
-        const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
-        const link = el('a', { href: url, download: `round ${stamp}.${options.format === 'jpeg' ? 'jpg' : 'png'}` });
+        const link = el('a', { href: url, download: `${name || this.defaultDownloadName()}.${extensionOf(options.format)}` });
 
         document.body.appendChild(link);
         link.click();

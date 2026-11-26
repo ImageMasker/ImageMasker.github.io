@@ -687,3 +687,29 @@ select {
 .dropdown-wide {
   width: 100%;
 }
+
+.download-menu {
+  width: 260px;
+}
+
+.download-name {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 4px;
+}
+
+.download-name input {
+  min-width: 0;
+  width: 100%;
+}
+
+.download-name-extension {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.download-form .dropdown-wide {
+  margin-top: 2px;
+}

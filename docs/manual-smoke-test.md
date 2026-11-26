@@ -51,6 +51,7 @@ Lightweight browser checklist after larger changes. Serve the repository over HT
 
 1. Mouse wheel zoom, Space+drag and middle-mouse pan, Fit, 100%, hold Original.
 2. Export each preset. Download, copy to clipboard and Imgur upload must match the editor.
+3. *Download ▾*: type `uw70`, press Enter: the file is `uw70.png` (or `.jpg` with JPEG picked; the pick also changes the Share panel's format). Typing `uw70.jpg` saves a JPEG whatever is picked. Plain *Download* still saves at once with the dated name.
 
 ## Emojis, stamps and clipping
 
