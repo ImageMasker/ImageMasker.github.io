@@ -1063,7 +1063,7 @@ export class App {
   }
 
   addFlagMask(flag, options) {
-    return this.addAssetMask(() => this.assets.fromFlag(flag), { name: flag.name, zoom: 67, deform: false }, options);
+    return this.addAssetMask(() => this.assets.fromFlag(flag), { name: flag.name, zoom: 67 }, options);
   }
 
   addCustomMask(url, options) {
@@ -1079,11 +1079,11 @@ export class App {
     }
   }
 
-  /** A mask image kept in this browser (Custom tab). Repeated patterns stay straight, like flags. */
+  /** A mask image kept in this browser (Custom tab). */
   addBlobMask(blob, name, options = {}) {
     const repeat = Boolean(options.repeat);
 
-    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name, deform: !repeat, repeat: repeat ? { seed: Math.random() * 100 } : null }, options);
+    return this.addAssetMask(() => this.assets.fromBlob(blob, { name }), { name, repeat: repeat ? { seed: Math.random() * 100 } : null }, options);
   }
 
   /** A mask from the community list on media.picturega.me; the moderator chose image or pattern. */
@@ -1092,13 +1092,13 @@ export class App {
 
     return this.addAssetMask(
       () => this.assets.fromUrl(mask.publicUrl, { name: mask.name }),
-      { name: mask.name, deform: !repeat, repeat: repeat ? { seed: Math.random() * 100 } : null },
+      { name: mask.name, repeat: repeat ? { seed: Math.random() * 100 } : null },
       options
     );
   }
 
   retiltMask(layerId) {
-    this.store.apply('Re-tilt mask', (doc) =>
+    this.store.apply('Tilt mask', (doc) =>
       updateLayer(doc, layerId, {
         rotation: ((Math.random() * 4 - 2) * Math.PI) / 180,
         skewX: Math.random() / 5 - 0.1,

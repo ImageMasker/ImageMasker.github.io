@@ -102,9 +102,10 @@ The classic Weave and The wobbler masks are drawn live by the hidden `weave` pat
 (`gl/patterns.js`), rebuilt from Ed Harvey's 2008 paint.net Weave effect and his Wobble warp, which made
 the original pictures (Bendy weave is still its picture: it took more steps than one Wobble pass); their entries in `masks/maskData.js` carry `pattern: { id, params }` and
 `presetPatternLayer()` turns them into pattern layers. Their pictures stay for sessions saved before.
-The same shader (`weavePattern()`) also makes the listed Twill, Herringbone, Basket weave, Rippled weave
-and Wavy twill patterns: a Weave setting picks which strip is on top in each cell, and every woven
-pattern has Shading, Shine, Stretch and two Wobble passes. *From the picture* (`app/emojiFromPicture.js`,
+The same shader (`weavePattern()`) also makes the listed Herringbone and Wavy twill patterns: a Weave
+setting (Plain, Twill, Herringbone, Basket) picks which strip is on top in each cell, and every woven
+pattern has Shading, Shine, Stretch and two Wobble passes. Twill, Basket weave and Rippled weave are
+hidden patterns now, kept for sessions saved with them. *From the picture* (`app/emojiFromPicture.js`,
 `integrations/EmojiDetector.js`) runs MobileCLIP S0's image model (fp16; the 8-bit one gives wrong
 results) through Transformers.js from jsDelivr, and compares the picture with text embeddings of about
 800 emoji descriptions (the palette without its symbols, plus `masks/pictureEmojis.js`) that were computed

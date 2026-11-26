@@ -995,7 +995,7 @@ export class Inspector {
         row([
           this.layerToggle(id, 'Invert', (entry) => entry.invert, (value) => ({ invert: value })),
           button('Reseed warp', { iconName: 'shuffle', onClick: () => app.store.apply('Reseed warp', (doc) => updateLayer(doc, id, (entry) => ({ warpSeed: Math.random(), warp: entry.warp || 30 }))) }),
-          button('Re-tilt', { title: 'New random tilt and skew', onClick: () => app.retiltMask(id) }),
+          button('Tilt', { title: 'Tilt and skew the mask slightly, at random, so it is harder to subtract', onClick: () => app.retiltMask(id) }),
         ]),
       ], { open: false })
     );

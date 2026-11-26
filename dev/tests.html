@@ -38,6 +38,7 @@ import {
   insertMask,
   maskLayer,
   moveLayer,
+  patternLayer,
   rebaseDoc,
   rectLayer,
   removeLayers,
@@ -54,7 +55,7 @@ import { normalizeRepeat } from '../src/raster/repeat.js';
 import { emojiArtUrl, twemojiCode } from '../src/raster/emojiArt.js';
 import { smoothedPath, STAMP_SPACING, strokeGeometry } from '../src/raster/strokes.js';
 import { restoreToolState } from '../src/app/toolState.js';
-import { PATTERNS } from '../src/gl/patterns.js';
+import { hasPattern, PATTERNS } from '../src/gl/patterns.js';
 import { PRESET_MASKS } from '../src/masks/maskData.js';
 import { arrowCurve, arrowParts, curveThrough, fitCurve, shapePath, SHAPE_KINDS } from '../src/raster/shapes.js';
 import { Compositor } from '../src/gl/Compositor.js';
@@ -345,6 +346,21 @@ test('shapes and arrows survive a session round trip and a new picture', () => {
   equal(rebaseDoc(doc, asset(800, 600)).layers[2].width, 10);
 });
 
+test('new overlay masks are added straight', () => {
+  const doc = pictureDoc(400, 300);
+  const layers = [
+    maskLayer(doc, asset(200, 100)),
+    maskLayer(doc, asset(200, 100), { repeat: {} }),
+    patternLayer(doc, 'stripes'),
+    presetPatternLayer(doc, PRESET_MASKS.find((preset) => preset.pattern)),
+    emojiLayer(doc, ['🐶']),
+  ];
+
+  for (const layer of layers) {
+    equal([layer.rotation, layer.skewX, layer.skewY], [0, 0, 0], layer.name);
+  }
+});
+
 test('the classic Weave and The wobbler are weave patterns, kept through a session', () => {
   const doc = pictureDoc(400, 300);
   const weaves = PRESET_MASKS.filter((preset) => preset.pattern);
@@ -361,6 +377,22 @@ test('the classic Weave and The wobbler are weave patterns, kept through a sessi
   }
 
   assert(!PATTERNS.some((pattern) => pattern.id === 'weave' && !pattern.hidden), 'not listed twice');
+});
+
+test('Twill, Basket weave and Rippled weave are not listed, but stay for saved sessions and the Weave setting', () => {
+  const woven = PATTERNS.filter((pattern) => pattern.params.some((param) => param.key === 'wobble2'));
+
+  equal(woven.filter((pattern) => !pattern.hidden).map((pattern) => pattern.name), ['Herringbone', 'Wavy twill']);
+  assert(['twill', 'basket', 'rippledWeave'].every(hasPattern), 'still known');
+
+  for (const pattern of woven) {
+    equal(pattern.params.find((param) => param.key === 'style').options, ['Plain', 'Twill', 'Herringbone', 'Basket'], pattern.name);
+  }
+
+  const doc = pictureDoc(400, 300);
+  const restored = normalizeDoc(JSON.parse(JSON.stringify(insertMask(doc, patternLayer(doc, 'basket')))), () => true).doc.layers[1];
+
+  equal([restored.patternId, restored.name, restored.params.style], ['basket', 'Basket weave', 3]);
 });
 
 test('shape and arrow tool options are restored and checked', () => {

@@ -27,7 +27,9 @@ const DENSITY = (value) => R('density', 'Density', 2, 120, value);
 // gaps cross. Plain is his weave (over one, under one); Twill, Herringbone and Basket change which
 // strip is on top in each cell. Wobble moves each point sideways along `wobangle` by a sine of its
 // position across it; a second pass can go on top. Shading, Shine and Stretch are extras.
-// `weave` itself is reached through the classic presets (masks/maskData.js); the others are listed.
+// `weave` itself is reached through the classic presets (masks/maskData.js). Herringbone and Wavy twill
+// are listed; Twill, Basket weave and Rippled weave are not (the Weave setting and the Wobble sliders
+// of any woven pattern give them) and stay for sessions saved with them.
 
 const WEAVE_STYLES = ['Plain', 'Twill', 'Herringbone', 'Basket'];
 
@@ -181,10 +183,10 @@ vec4 pattern(vec2 p) {
 }`,
   },
   weavePattern({ id: 'weave', name: 'Weave', hidden: true }),
-  weavePattern({ id: 'twill', name: 'Twill', values: { style: 1, angle: 0, density: 16 } }),
+  weavePattern({ id: 'twill', name: 'Twill', hidden: true, values: { style: 1, angle: 0, density: 16 } }),
   weavePattern({ id: 'herringbone', name: 'Herringbone', values: { style: 2, angle: 0, density: 16 } }),
-  weavePattern({ id: 'basket', name: 'Basket weave', values: { style: 3, angle: 0, density: 9, gap: 10, shine: 35 } }),
-  weavePattern({ id: 'rippledWeave', name: 'Rippled weave', values: { density: 13, wobble: 35, wavelen: 3, wobble2: 35, wavelen2: 3, wobangle2: 90 } }),
+  weavePattern({ id: 'basket', name: 'Basket weave', hidden: true, values: { style: 3, angle: 0, density: 9, gap: 10, shine: 35 } }),
+  weavePattern({ id: 'rippledWeave', name: 'Rippled weave', hidden: true, values: { density: 13, wobble: 35, wavelen: 3, wobble2: 35, wavelen2: 3, wobangle2: 90 } }),
   weavePattern({ id: 'wavyTwill', name: 'Wavy twill', values: { style: 1, angle: 0, density: 16, wobble: 60, wavelen: 6, wobangle: 90 } }),
   {
     id: 'mesh',

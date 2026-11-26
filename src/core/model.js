@@ -45,15 +45,6 @@ export function zoomFactor(zoom) {
   return 4 ** ((Number(zoom) - 50) / 50);
 }
 
-/** Random tilt + skew applied to new overlay masks so they are harder to subtract. */
-function randomDeform() {
-  return {
-    rotation: ((Math.random() * 4 - 2) * Math.PI) / 180,
-    skewX: Math.random() / 5 - 0.1,
-    skewY: Math.random() / 5 - 0.1,
-  };
-}
-
 export function imageLayer(doc, asset, { name = 'Image', base = false, rect = null } = {}) {
   let box = rect;
 
@@ -79,14 +70,13 @@ export function imageLayer(doc, asset, { name = 'Image', base = false, rect = nu
 
 const MASK_FX = { hue: 0, invert: false, blur: 0, noise: 0, warp: 0, warpSeed: 0.5 };
 
-export function maskLayer(doc, asset, { name = 'Mask', opacity = 0.75, zoom = 55, deform = true, tile = false, repeat = null } = {}) {
+export function maskLayer(doc, asset, { name = 'Mask', opacity = 0.75, zoom = 55, tile = false, repeat = null } = {}) {
   const fit = Math.max(doc.width / asset.width, doc.height / asset.height);
   const factor = fit * zoomFactor(zoom);
 
   return {
     ...baseLayer('mask', name),
     ...MASK_FX,
-    ...(deform ? randomDeform() : {}),
     source: 'asset',
     assetId: asset.id,
     tile,
@@ -103,14 +93,13 @@ export function maskLayer(doc, asset, { name = 'Mask', opacity = 0.75, zoom = 55
   };
 }
 
-export function patternLayer(doc, patternId, { opacity = 0.75, params = null, deform = true } = {}) {
+export function patternLayer(doc, patternId, { opacity = 0.75, params = null } = {}) {
   const definition = getPattern(patternId);
   const side = Math.max(doc.width, doc.height);
 
   return {
     ...baseLayer('mask', definition.name),
     ...MASK_FX,
-    ...(deform ? randomDeform() : {}),
     source: 'pattern',
     patternId: definition.id,
     params: normalizeParams(definition, params ?? defaultParams(definition)),
@@ -135,13 +124,12 @@ export function presetPatternLayer(doc, preset, { opacity = (preset.defaultAlpha
 }
 
 /** An overlay mask of emojis, tiled across the picture (raster/emoji.js draws it). */
-export function emojiLayer(doc, emojis, { opacity = 0.9, params = null, deform = true, name = '' } = {}) {
+export function emojiLayer(doc, emojis, { opacity = 0.9, params = null, name = '' } = {}) {
   const side = Math.max(doc.width, doc.height);
 
   return {
     ...baseLayer('mask', name || emojiLayerName(emojis)),
     ...MASK_FX,
-    ...(deform ? randomDeform() : {}),
     source: 'emoji',
     emojis: [...emojis],
     params: normalizeParams(EMOJI_MASK, params ?? defaultParams(EMOJI_MASK)),

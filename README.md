@@ -30,7 +30,7 @@ The **Masks** library on the left has four tabs: Effects, Overlays, Other and Cu
     sharing included); the link itself is not kept. Mask URLs saved earlier are still listed and
     can be turned into kept masks the same way.
 
-Overlay masks are slightly rotated and skewed when added so they are harder to subtract, and have opacity, zoom, angle, blend mode, hue, invert, blur, noise and warp controls. Image masks (classic, custom and community) can also be switched to **Repeat as a pattern**: the image is drawn small in staggered rows across the whole picture, like the flag masks, with sliders for the number of rows, its size in each cell and the row offset. Custom and community masks offer *Add as a repeated pattern* in their ⋯ menu.
+Overlay masks are added straight and have opacity, zoom, angle, blend mode, hue, invert, blur, noise and warp controls; **Tilt** rotates and skews one slightly, at random, so it is harder to subtract. Image masks (classic, custom and community) can also be switched to **Repeat as a pattern**: the image is drawn small in staggered rows across the whole picture, like the flag masks, with sliders for the number of rows, its size in each cell and the row offset. Custom and community masks offer *Add as a repeated pattern* in their ⋯ menu.
 
 The little bar on each effect tile is a rough guide to how hard it scrambles the picture. **No mask is guaranteed to beat reverse image search** – always use *Check RIS* before posting.
 
